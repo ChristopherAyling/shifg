@@ -10,9 +10,31 @@ pub fn fill(window: *Window, color: u32) void {
 }
 
 pub fn draw_image(window: *Window, img: image.Image, x0: i32, y0: i32) void {
-    for (@as(usize, x0)..@as(usize, (x0 + img.width))) |x| {
-        for (@as(usize, y0)..@as(usize, y0 + img.height)) |y| {
-            if ((x < window.w) and (x > 0) and (y < window.h) and (y > 0)) {}
+    const img_w: i32 = @intCast(img.w);
+    const img_h: i32 = @intCast(img.h);
+    const win_w: i32 = @intCast(window.w);
+    const win_h: i32 = @intCast(window.h);
+
+    const start_x = @max(x0, 0);
+    const start_y = @max(y0, 0);
+    const end_x = @min(x0 + img_w, win_w);
+    const end_y = @min(y0 + img_h, win_h);
+
+    var y = start_y;
+    while (y < end_y) : (y += 1) {
+        var x = start_x;
+        while (x < end_x) : (x += 1) {
+            const img_x: usize = @intCast(x - x0);
+            const img_y: usize = @intCast(y - y0);
+            const width: usize = @intCast(img.w);
+            const offset = (img_y * width + img_x) * 3;
+
+            // TODO: Actually draw the image pixels here
+            const r: u32 = @intCast(img.data[@as(usize, offset)]);
+            const g: u32 = img.data[offset + 1];
+            const b: u32 = img.data[offset + 2];
+            const color: u32 = (r << 16) | (g << 8) | b;
+            draw_pixel(window, x, y, color, 0);
         }
     }
 }
