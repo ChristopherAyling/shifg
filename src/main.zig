@@ -91,11 +91,11 @@ pub fn main() !void {
             else => {},
         }
 
-        draw.fill(&window, 0x0);
-        draw.draw_image(&window, img, px, py);
+        draw.fill(&screen, 0x0);
+        draw.draw_image(&screen, img, px, py);
         // draw.draw_pixel(&window, 10, 20, 0xFFFFFF, 0);
         // draw.draw_text(&window, "hello", 50, 50, 0x00ff00);
-        ui.drawTextBox(&window, "hey, you are finally awake");
+        ui.drawTextBox(&screen, "hey, you are finally awake");
         t += 1;
 
         screen.setPixel(10, 10, 0xFF0000, 0);

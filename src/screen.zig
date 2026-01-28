@@ -16,18 +16,18 @@ pub const ScreenBuffer = struct {
     data: []u32, // 4x8bit channels
     w: i32,
     h: i32,
-    ids: []u8,
+    ids: []u32,
 
     pub fn init(allocator: Allocator, w: i32, h: i32) !ScreenBuffer {
         return .{
             .data = try allocator.alloc(u32, @intCast(w * h)),
-            .ids = try allocator.alloc(u8, @intCast(w * h)),
+            .ids = try allocator.alloc(u32, @intCast(w * h)),
             .w = w,
             .h = h,
         };
     }
 
-    fn is_in_bounds(self: *ScreenBuffer, x: i32, y: i32) bool {
+    pub fn is_in_bounds(self: *ScreenBuffer, x: i32, y: i32) bool {
         return (x >= 0 and y >= 0 and x < self.w and y < self.h);
     }
 
@@ -39,12 +39,12 @@ pub const ScreenBuffer = struct {
         return @intCast(y * self.w + x);
     }
 
-    fn setId(self: *ScreenBuffer, x: i32, y: i32, id: u8) void {
+    fn setId(self: *ScreenBuffer, x: i32, y: i32, id: u32) void {
         const offset = self.getIdOffset(x, y);
         self.ids[offset] = id;
     }
 
-    pub fn setPixel(self: *ScreenBuffer, x: i32, y: i32, color: u32, id: u8) void {
+    pub fn setPixel(self: *ScreenBuffer, x: i32, y: i32, color: u32, id: u32) void {
         const offset = self.getPixelOffset(x, y);
         self.data[offset] = color;
         self.setId(x, y, id);
