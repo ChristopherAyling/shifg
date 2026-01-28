@@ -46,6 +46,14 @@ pub fn draw_pixel(window: *Window, x: i32, y: i32, color: u32, id: u32) void {
     }
 }
 
+pub fn draw_rec(window: *Window, x0: i32, y0: i32, x1: i32, y1: i32, color: u32, id: u32) void {
+    draw_line(window, x0, y0, x0, y1, color, id);
+    draw_line(window, x0, y0, x1, y0, color, id);
+
+    draw_line(window, x1, y0, x1, y1, color, id);
+    draw_line(window, x0, y1, x1, y1, color, id);
+}
+
 pub fn draw_line(window: *Window, x0: i32, y0: i32, x1: i32, y1: i32, color: u32, id: u32) void {
     var x = x0;
     var y = y0;
