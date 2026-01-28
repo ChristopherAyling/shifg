@@ -1,4 +1,6 @@
 const assert = @import("std").debug.assert;
+const std = @import("std");
+const Allocator = std.mem.Allocator;
 
 pub fn make_color(r: u8, g: u8, b: u8, a: u8) u32 {
     // 0 alpha is fully transparent
@@ -10,22 +12,31 @@ pub fn make_color(r: u8, g: u8, b: u8, a: u8) u32 {
     return (rc << 24) | (gc << 16) | (bc << 8) | ac;
 }
 
-const ScreenBuffer = struct {
+pub const ScreenBuffer = struct {
     data: []u32, // 4x8bit channels
     w: i32,
     h: i32,
     ids: []u8,
+
+    pub fn init(allocator: Allocator, w: i32, h: i32) !ScreenBuffer {
+        return .{
+            .data = try allocator.alloc(u32, @intCast(w * h)),
+            .ids = try allocator.alloc(u8, @intCast(w * h)),
+            .w = w,
+            .h = h,
+        };
+    }
 
     fn is_in_bounds(self: *ScreenBuffer, x: i32, y: i32) bool {
         return (x >= 0 and y >= 0 and x < self.w and y < self.h);
     }
 
     fn getPixelOffset(self: *ScreenBuffer, x: i32, y: i32) usize {
-        return y * self.w + x;
+        return @intCast(y * self.w + x);
     }
 
     fn getIdOffset(self: *ScreenBuffer, x: i32, y: i32) usize {
-        return y * self.w + x;
+        return @intCast(y * self.w + x);
     }
 
     fn setId(self: *ScreenBuffer, x: i32, y: i32, id: u8) void {
@@ -48,8 +59,8 @@ const ScreenBuffer = struct {
         // alpha blend every component
         assert(self.w == fg.w);
         assert(self.h == fg.h);
-        for (0..self.w) |x| {
-            for (0..self.h) |y| {
+        for (0..@intCast(self.w)) |x| {
+            for (0..@intCast(self.h)) |y| {
                 const xu: usize = @intCast(x);
                 const yu: usize = @intCast(y);
                 const bg_pixel = self.getPixel(xu, yu);
@@ -60,22 +71,20 @@ const ScreenBuffer = struct {
         }
     }
 
-    pub fn upscale(self: *ScreenBuffer, out: *ScreenBuffer, scale: usize) void {
+    pub fn upscale(self: *ScreenBuffer, out: *ScreenBuffer, scale: i32) void {
         assert(self.w * scale == out.w);
         assert(self.h * scale == out.h);
 
-        // loop over every pixel on output and calculate input index to draw from
-        for (0..out.w) |ox| {
-            for (0..out.h) |oy| {
-                const oxu: usize = @intCast(ox);
-                const oyu: usize = @intCast(oy);
+        const scale_u: usize = @intCast(scale);
 
+        for (0..@intCast(out.w)) |ox| {
+            for (0..@intCast(out.h)) |oy| {
                 // divide by scale and floor down
-                const uix = @divFloor(oxu, scale);
-                const uiy = @divFloor(oyu, scale);
+                const uix = ox / scale_u;
+                const uiy = oy / scale_u;
 
-                const source_pixel = self.getPixel(uix, uiy);
-                out.setPixel(ox, oy, source_pixel, 0); // TODO handle id
+                const source_pixel = self.getPixel(@intCast(uix), @intCast(uiy));
+                out.setPixel(@intCast(ox), @intCast(oy), source_pixel, 0);
             }
         }
     }
