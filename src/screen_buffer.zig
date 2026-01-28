@@ -1,0 +1,108 @@
+const assert = @import("std").debug.assert;
+
+pub fn make_color(r: u8, g: u8, b: u8, a: u8) u32 {
+    // 0 alpha is fully transparent
+    // 255 alpha is fully opaque
+    const rc: u32 = @intCast(r);
+    const gc: u32 = @intCast(g);
+    const bc: u32 = @intCast(b);
+    const ac: u32 = @intCast(a);
+    return (rc << 24) | (gc << 16) | (bc << 8) | ac;
+}
+
+const ScreenBuffer = struct {
+    data: []u32, // 4x8bit channels
+    w: i32,
+    h: i32,
+    ids: []u8,
+
+    fn is_in_bounds(self: *ScreenBuffer, x: i32, y: i32) bool {
+        return (x >= 0 and y >= 0 and x < self.w and y < self.h);
+    }
+
+    fn getPixelOffset(self: *ScreenBuffer, x: i32, y: i32) usize {
+        return y * self.w + x;
+    }
+
+    fn getIdOffset(self: *ScreenBuffer, x: i32, y: i32) usize {
+        return y * self.w + x;
+    }
+
+    fn setId(self: *ScreenBuffer, x: i32, y: i32, id: u8) void {
+        const offset = self.getIdOffset(x, y);
+        self.ids[offset] = id;
+    }
+
+    pub fn setPixel(self: *ScreenBuffer, x: i32, y: i32, color: u32, id: u8) void {
+        const offset = self.getPixelOffset(x, y);
+        self.data[offset] = color;
+        self.setId(x, y, id);
+    }
+
+    pub fn getPixel(self: *ScreenBuffer, x: i32, y: i32) u32 {
+        const offset = self.getPixelOffset(x, y);
+        return self.data[offset];
+    }
+
+    pub fn add_fg(self: *ScreenBuffer, fg: *ScreenBuffer) void {
+        // alpha blend every component
+        assert(self.w == fg.w);
+        assert(self.h == fg.h);
+        for (0..self.w) |x| {
+            for (0..self.h) |y| {
+                const xu: usize = @intCast(x);
+                const yu: usize = @intCast(y);
+                const bg_pixel = self.getPixel(xu, yu);
+                const fg_pixel = fg.getPixel(xu, yu);
+                const new_pixel = alphaBlend(fg_pixel, bg_pixel);
+                self.setPixel(x, y, new_pixel, 0); // TODO should take on foreground id depending on alpha
+            }
+        }
+    }
+
+    pub fn upscale(self: *ScreenBuffer, out: *ScreenBuffer, scale: usize) void {
+        assert(self.w * scale == out.w);
+        assert(self.h * scale == out.h);
+
+        // loop over every pixel on output and calculate input index to draw from
+        for (0..out.w) |ox| {
+            for (0..out.h) |oy| {
+                const oxu: usize = @intCast(ox);
+                const oyu: usize = @intCast(oy);
+
+                // divide by scale and floor down
+                const uix = @divFloor(oxu, scale);
+                const uiy = @divFloor(oyu, scale);
+
+                const source_pixel = self.getPixel(uix, uiy);
+                out.setPixel(ox, oy, source_pixel, 0); // TODO handle id
+            }
+        }
+    }
+};
+
+pub fn alphaBlend(fg: u32, bg: u32) u32 {
+    // Extract components
+    const fg_r = (fg >> 24) & 0xFF;
+    const fg_g = (fg >> 16) & 0xFF;
+    const fg_b = (fg >> 8) & 0xFF;
+    const fg_a = fg & 0xFF;
+
+    const bg_r = (bg >> 24) & 0xFF;
+    const bg_g = (bg >> 16) & 0xFF;
+    const bg_b = (bg >> 8) & 0xFF;
+    const bg_a = bg & 0xFF;
+
+    // Blend: out = fg * fg_a + bg * (1 - fg_a)
+    // Using 255 as the max alpha value
+    const inv_a = 255 - fg_a;
+
+    const out_r = (fg_r * fg_a + bg_r * inv_a) / 255;
+    const out_g = (fg_g * fg_a + bg_g * inv_a) / 255;
+    const out_b = (fg_b * fg_a + bg_b * inv_a) / 255;
+
+    // For output alpha: out_a = fg_a + bg_a * (1 - fg_a)
+    const out_a = fg_a + (bg_a * inv_a) / 255;
+
+    return (out_r << 24) | (out_g << 16) | (out_b << 8) | out_a;
+}
