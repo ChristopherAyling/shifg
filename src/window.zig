@@ -18,7 +18,7 @@ pub const Window = struct {
         const f = std.mem.zeroInit(c.fenster, .{
             .width = @as(c_int, @intCast(w)), //fmt
             .height = @as(c_int, @intCast(h)),
-            .title = "window title",
+            .title = "game",
             .buf = &buf[0],
         });
         return Window{ .f = f, .w = w, .h = h, .id_buffer = id_buffer };
@@ -26,6 +26,11 @@ pub const Window = struct {
 
     pub fn deinit(self: *Window) void {
         c.fenster_close(&self.f);
+    }
+
+    pub fn sleep(self: *Window) void {
+        _ = self;
+        c.fenster_sleep(30);
     }
 
     pub fn before_loop(self: *Window) void {
