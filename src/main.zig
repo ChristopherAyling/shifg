@@ -43,8 +43,8 @@ pub fn main() !void {
     var window = try Window.init(allocator, 160, 144);
     defer window.deinit();
 
-    const filename: []const u8 = "/Users/chris/gaming/gam1/map_03.png";
-    _ = image.load(filename);
+    const filename: [:0]const u8 = "/Users/chris/gaming/gam1/gam.png";
+    const img = image.load(filename);
 
     window.before_loop();
     var t: f32 = 0;
@@ -52,6 +52,7 @@ pub fn main() !void {
         const command = parseCommand(window);
         _ = command;
         draw.fill(&window, 0x0);
+        draw.draw_image(&window, img, 5, 10);
         draw.draw_pixel(&window, 10, 20, 0xFFFFFF, 0);
         t += 1;
     }

@@ -11,13 +11,13 @@ const c = @cImport({
     @cInclude("stb_image.h");
 });
 
-const Image = struct {
+pub const Image = struct {
     data: []u8,
     w: i32,
     h: i32,
 };
 
-pub fn load(filename: []const u8) Image {
+pub fn load(filename: [:0]const u8) Image {
     var x: c_int = 0;
     var y: c_int = 0;
     var channels_in_file: c_int = 0;

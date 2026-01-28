@@ -1,10 +1,19 @@
 const std = @import("std");
 const storage = @import("storage.zig");
 const Window = @import("window.zig").Window;
+const image = @import("image.zig");
 
 pub fn fill(window: *Window, color: u32) void {
     for (0..window.w * window.h) |i| {
         window.f.buf[i] = color;
+    }
+}
+
+pub fn draw_image(window: *Window, img: image.Image, x0: i32, y0: i32) void {
+    for (@as(usize, x0)..@as(usize, (x0 + img.width))) |x| {
+        for (@as(usize, y0)..@as(usize, y0 + img.height)) |y| {
+            if ((x < window.w) and (x > 0) and (y < window.h) and (y > 0)) {}
+        }
     }
 }
 
