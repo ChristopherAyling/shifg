@@ -30,5 +30,15 @@ pub fn load(filename: [:0]const u8) Image {
     const pixels = @as(usize, @intCast(x)) * @as(usize, @intCast(y));
     const data: [*]u32 = @ptrCast(@alignCast(raw));
 
+    for (0..pixels) |i| {
+        const pixel = data[i];
+        // stb: memory is R,G,B,A -> as u32 little-endian: 0xAABBGGRR
+        // we need: 0x00RRGGBB
+        const r = pixel & 0xFF;
+        const g = (pixel >> 8) & 0xFF;
+        const b = (pixel >> 16) & 0xFF;
+        data[i] = (r << 16) | (g << 8) | b;
+    }
+
     return .{ .data = data[0..pixels], .w = @intCast(x), .h = @intCast(y) };
 }

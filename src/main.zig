@@ -96,6 +96,7 @@ const RenderState = struct {
     screen_upscaled: ScreenBuffer,
     level: ScreenBuffer,
     player_sprite: image.Image,
+    level1_sprite: image.Image,
 };
 
 const PLAYER_VELOCITY = 1;
@@ -198,7 +199,8 @@ pub fn render_step_overworld(game_state: GameState, render_state: *RenderState) 
                 draw.fill_checkerboard(&render_state.level, 6, 0xFF0000, 0x0);
             },
             .prologue_complete => {
-                draw.fill_checkerboard(&render_state.level, 6, 0x00FF00, 0x0);
+                // draw.fill_checkerboard(&render_state.level, 6, 0x00FF00, 0x0);
+                draw.draw_image(&render_state.level, render_state.level1_sprite, 0, 0);
             },
             .tutorial_complete => {
                 draw.fill_checkerboard(&render_state.level, 6, 0x0000FF, 0x0);
@@ -242,14 +244,13 @@ pub fn main() !void {
     var window = try Window.init(allocator, UPSCALED_W, UPSCALED_H);
     defer window.deinit();
 
-    // const filename: [:0]const u8 = "/Users/chris/gaming/gam1/tile2.png";
-    // const player_sprite = image.load(filename);
-    // const player_sprite: image.Image =
+    const player_sprite = image.load("/Users/chris/gaming/gam1/face.png");
+    const level1_sprite = image.load("/Users/chris/gaming/gam1/level1.png");
 
     window.before_loop();
 
     var game_state: GameState = GameState.init();
-    var render_state: RenderState = .{ .screen = screen, .screen_upscaled = screen_upscaled, .level = level, .player_sprite = sprites.PLAYER_SPRITE };
+    var render_state: RenderState = .{ .screen = screen, .screen_upscaled = screen_upscaled, .level = level, .player_sprite = player_sprite, .level1_sprite = level1_sprite };
 
     var inputs = Inputs{};
     while (window.loop()) {
