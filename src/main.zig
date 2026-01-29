@@ -58,6 +58,8 @@ const GameState = struct {
     // player data
     player_x: i32,
     player_y: i32,
+    // camera_x: i32,
+    // camera_y: i32,
 
     dialogue: ?GameDialogueState,
 

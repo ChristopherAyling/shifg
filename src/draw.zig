@@ -22,20 +22,35 @@ pub fn draw_image(screen: *ScreenBuffer, img: image.Image, x0: i32, y0: i32) voi
             const img_x: usize = @intCast(x - x0);
             const img_y: usize = @intCast(y - y0);
             const idx = img_y * @as(usize, @intCast(img.w)) + img_x;
-            screen.setPixel(x, y, img.data[idx], 0);
+            screen.setPixel(x, y, img.data[idx]);
         }
     }
 }
 
-pub fn draw_rec(screen: *ScreenBuffer, x0: i32, y0: i32, x1: i32, y1: i32, color: u32, id: u32) void {
-    draw_line(screen, x0, y0, x0, y1, color, id);
-    draw_line(screen, x0, y0, x1, y0, color, id);
+pub fn draw_rec(screen: *ScreenBuffer, x0: i32, y0: i32, x1: i32, y1: i32, color: u32, fill_color: ?u32) void {
+    // fill
+    if (fill_color) |fill_color_| {
+        const min_x = @min(x0, x1);
+        const max_x = @max(x0, x1);
+        const min_y = @min(y0, y1);
+        const max_y = @max(y0, y1);
 
-    draw_line(screen, x1, y0, x1, y1, color, id);
-    draw_line(screen, x0, y1, x1, y1, color, id);
+        var y = min_y;
+        while (y <= max_y) : (y += 1) {
+            var x = min_x;
+            while (x <= max_x) : (x += 1) {
+                screen.setPixel(x, y, fill_color_);
+            }
+        }
+    }
+    // outline
+    draw_line(screen, x0, y0, x0, y1, color);
+    draw_line(screen, x0, y0, x1, y0, color);
+    draw_line(screen, x1, y0, x1, y1, color);
+    draw_line(screen, x0, y1, x1, y1, color);
 }
 
-pub fn draw_line(screen: *ScreenBuffer, x0: i32, y0: i32, x1: i32, y1: i32, color: u32, id: u32) void {
+pub fn draw_line(screen: *ScreenBuffer, x0: i32, y0: i32, x1: i32, y1: i32, color: u32) void {
     var x = x0;
     var y = y0;
     const dx: i32 = @intCast(@abs(x1 - x0));
@@ -49,7 +64,7 @@ pub fn draw_line(screen: *ScreenBuffer, x0: i32, y0: i32, x1: i32, y1: i32, colo
 
     while (true) {
         if (screen.is_in_bounds(x, y)) {
-            screen.setPixel(x, y, color, id);
+            screen.setPixel(x, y, color);
         }
         if ((x == x1) and (y == y1)) break;
         const err2 = 2 * err;
@@ -98,7 +113,7 @@ pub fn draw_text(screen: *ScreenBuffer, text: []const u8, x0: i32, y0: i32, colo
                         const px: i32 = xc + @as(i32, @intCast(dx));
                         const py: i32 = yc + @as(i32, @intCast(dy));
                         // draw_pixel(window, px, py, color, 0);
-                        screen.setPixel(px, py, color, 0);
+                        screen.setPixel(px, py, color);
                     }
                 }
             }

@@ -16,12 +16,10 @@ pub const ScreenBuffer = struct {
     data: []u32, // 4x8bit channels
     w: i32,
     h: i32,
-    ids: []u32,
 
     pub fn init(allocator: Allocator, w: i32, h: i32) !ScreenBuffer {
         return .{
             .data = try allocator.alloc(u32, @intCast(w * h)),
-            .ids = try allocator.alloc(u32, @intCast(w * h)),
             .w = w,
             .h = h,
         };
@@ -35,19 +33,9 @@ pub const ScreenBuffer = struct {
         return @intCast(y * self.w + x);
     }
 
-    fn getIdOffset(self: *ScreenBuffer, x: i32, y: i32) usize {
-        return @intCast(y * self.w + x);
-    }
-
-    fn setId(self: *ScreenBuffer, x: i32, y: i32, id: u32) void {
-        const offset = self.getIdOffset(x, y);
-        self.ids[offset] = id;
-    }
-
-    pub fn setPixel(self: *ScreenBuffer, x: i32, y: i32, color: u32, id: u32) void {
+    pub fn setPixel(self: *ScreenBuffer, x: i32, y: i32, color: u32) void {
         const offset = self.getPixelOffset(x, y);
         self.data[offset] = color;
-        self.setId(x, y, id);
     }
 
     pub fn getPixel(self: *ScreenBuffer, x: i32, y: i32) u32 {
@@ -66,7 +54,7 @@ pub const ScreenBuffer = struct {
                 const bg_pixel = self.getPixel(xu, yu);
                 const fg_pixel = fg.getPixel(xu, yu);
                 const new_pixel = alphaBlend(fg_pixel, bg_pixel);
-                self.setPixel(x, y, new_pixel, 0); // TODO should take on foreground id depending on alpha
+                self.setPixel(x, y, new_pixel);
             }
         }
     }
@@ -84,7 +72,24 @@ pub const ScreenBuffer = struct {
                 const uiy = oy / scale_u;
 
                 const source_pixel = self.getPixel(@intCast(uix), @intCast(uiy));
-                out.setPixel(@intCast(ox), @intCast(oy), source_pixel, 0);
+                out.setPixel(@intCast(ox), @intCast(oy), source_pixel);
+            }
+        }
+    }
+
+    pub fn view(self: *ScreenBuffer, source: *ScreenBuffer, x0: i32, y0: i32) void {
+        // set default background
+
+        // read from source
+        for (0..self.w) |x| {
+            for (0..self.h) |y| {
+                const source_x = x + x0;
+                const source_y = y + y0;
+
+                if (source.is_in_bounds(source_x, source_y)) {
+                    const color = source.getPixel(source_x, source_y);
+                    self.setPixel(source_x, source_y, color);
+                }
             }
         }
     }

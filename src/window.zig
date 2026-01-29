@@ -7,21 +7,19 @@ const c = @cImport({
 
 pub const Window = struct {
     f: c.fenster,
-    id_buffer: []u32,
     w: u32,
     h: u32,
     debug: bool = true,
     fps: u32 = 60,
     pub fn init(allocator: Allocator, w: u32, h: u32) !Window {
         var buf = try allocator.alloc(u32, w * h);
-        const id_buffer = try allocator.alloc(u32, w * h);
         const f = std.mem.zeroInit(c.fenster, .{
             .width = @as(c_int, @intCast(w)), //fmt
             .height = @as(c_int, @intCast(h)),
             .title = "game",
             .buf = &buf[0],
         });
-        return Window{ .f = f, .w = w, .h = h, .id_buffer = id_buffer };
+        return Window{ .f = f, .w = w, .h = h };
     }
 
     pub fn deinit(self: *Window) void {
