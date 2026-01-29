@@ -10,6 +10,7 @@ const control = @import("control.zig");
 const sprites = @import("sprites.zig");
 const StoryCheckpoint = @import("story.zig").StoryCheckpoint;
 const con = @import("constants.zig");
+const Level = @import("level.zig").Level;
 
 pub const Inputs = control.Inputs;
 pub const updateInputs = control.updateInputs;
@@ -51,6 +52,10 @@ const GameDialogueState = struct {
     }
 };
 
+const LEVELS = std.StaticStringMap([]const u8).initComptime(.{
+    .{ "one", "/Users/chris/gaming/gam1/assets/levels/tutorial" },
+});
+
 const GameState = struct {
     // mode
     mode: GameMode,
@@ -64,6 +69,17 @@ const GameState = struct {
     camera_y: i32,
 
     dialogue: ?GameDialogueState,
+    level: ?Level,
+
+    pub fn ensure_level_loaded(self: *GameState, name: []const u8) void {
+        if (self.level) |current_level| {
+            if (!std.mem.eql(u8, current_level.name, name)) {
+                self.level = Level.from_folder(LEVELS.get(name).?, name);
+            }
+        } else {
+            self.level = Level.from_folder(LEVELS.get(name).?, name);
+        }
+    }
 
     pub fn camera_follow_player(self: *GameState) void {
         self.camera_x = self.player_x - @divFloor(con.NATIVE_W, 2) + @divFloor(sprites.PLAYER_SPRITE.w, 2);
@@ -79,6 +95,7 @@ const GameState = struct {
             .camera_x = 0,
             .camera_y = 0,
             .dialogue = null,
+            .level = null,
         };
     }
 };
@@ -88,7 +105,7 @@ const RenderState = struct {
     screen_upscaled: ScreenBuffer,
     level: ScreenBuffer,
     player_sprite: Image,
-    level1_sprite: Image,
+    // level1_sprite: Image,
 };
 
 const PLAYER_VELOCITY = 1;
@@ -107,6 +124,7 @@ pub fn game_step(game_state: *GameState, inputs: Inputs) void {
 }
 
 pub fn game_step_overworld(game_state: *GameState, inputs: Inputs) void {
+    game_state.ensure_level_loaded("one");
     switch (game_state.ctx.story_checkpoint) {
         .game_start => {
             if (game_state.dialogue == null) {
@@ -192,12 +210,14 @@ pub fn render_step_overworld(game_state: GameState, render_state: *RenderState) 
             },
             .prologue_complete => {
                 draw.fill_checkerboard(&render_state.level, 8, 0x00FF00, 0x0);
-                draw.draw_image(&render_state.level, render_state.level1_sprite, 0, 0);
+                // draw.draw_image(&render_state.level, render_state.level1_sprite, 0, 0);
             },
             .tutorial_complete => {
                 draw.fill_checkerboard(&render_state.level, 8, 0x0000FF, 0x0);
             },
         }
+
+        draw.draw_image(&render_state.level, game_state.level.?.sprite, 0, 0);
 
         // load entities
         draw.draw_image(&render_state.level, render_state.player_sprite, game_state.player_x, game_state.player_y);
@@ -237,12 +257,17 @@ pub fn main() !void {
     defer window.deinit();
 
     const player_sprite = Image.from_file("/Users/chris/gaming/gam1/assets/person2.png");
-    const level1_sprite = Image.from_file("/Users/chris/gaming/gam1/assets/level1.png");
+    // const level1_sprite = Image.from_file("/Users/chris/gaming/gam1/assets/level1.png");
 
     window.before_loop();
 
     var game_state: GameState = GameState.init();
-    var render_state: RenderState = .{ .screen = screen, .screen_upscaled = screen_upscaled, .level = level, .player_sprite = player_sprite, .level1_sprite = level1_sprite };
+    var render_state: RenderState = .{
+        .screen = screen,
+        .screen_upscaled = screen_upscaled,
+        .level = level,
+        .player_sprite = player_sprite,
+    };
 
     var inputs = Inputs{};
     while (window.loop()) {
@@ -250,6 +275,7 @@ pub fn main() !void {
 
         updateInputs(&inputs, window);
         game_step(&game_state, inputs); // TODO pass a dt
+        game_state.ensure_level_loaded("one");
         render_step(game_state, &render_state);
 
         screen.upscale(&screen_upscaled, con.SCALE);
