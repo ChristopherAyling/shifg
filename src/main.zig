@@ -221,6 +221,7 @@ pub fn main() !void {
 
     const filename: [:0]const u8 = "/Users/chris/gaming/gam1/tile2.png";
     const player_sprite = image.load(filename);
+    // const player_sprite: image.Image =
 
     window.before_loop();
 

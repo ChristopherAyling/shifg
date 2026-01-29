@@ -18,11 +18,7 @@ pub const PROLOGUE = DialogueSequence{
     .id = 0,
     .lines = &[_]DialogueLine{
         .{ .speaker_name = "Narrator", .text = "hey" },
-        .{ .speaker_name = "Narrator", .text = "you are finally awake" },
-        .{ .speaker_name = "Narrator", .text = "1" },
-        .{ .speaker_name = "Narrator", .text = "2" },
-        .{ .speaker_name = "Narrator", .text = "3" },
-        .{ .speaker_name = "Narrator", .text = "4" },
+        .{ .speaker_name = "Narrator", .text = "you are finally awake.\nThere is much you should know." },
     },
     .jump_to_story_checkpoint = .prologue_complete,
 };
