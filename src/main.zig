@@ -21,6 +21,10 @@ const UP = 17;
 const DOWN = 18;
 const LEFT = 20;
 const RIGHT = 19;
+const SPACE = 32;
+const A = 65;
+const B = 66;
+const E = 69;
 
 pub fn getInputs(window: Window) Inputs {
     var inputs = Inputs.initEmpty();
@@ -35,6 +39,15 @@ pub fn getInputs(window: Window) Inputs {
     }
     if (window.key(RIGHT)) {
         inputs.set(@intFromEnum(Command.right));
+    }
+    if (window.key(SPACE) or window.key(A)) {
+        inputs.set(@intFromEnum(Command.a));
+    }
+    if (window.key(B)) {
+        inputs.set(@intFromEnum(Command.b));
+    }
+    if (window.key(E)) {
+        inputs.set(@intFromEnum(Command.start));
     }
     return inputs;
 }
@@ -74,7 +87,10 @@ pub fn game_step(game_state: *GameState, inputs: Inputs) void {
 }
 
 pub fn game_step_overworld(game_state: *GameState, inputs: Inputs) void {
-    // std.log.debug("Input {b}", .{inputs.mask});
+    if (inputs.isSet(@intFromEnum(Command.start))) {
+        game_state.mode = .Inventory;
+        return;
+    }
     if (inputs.isSet(@intFromEnum(Command.up))) game_state.player_y -= 1 * PLAYER_VELOCITY;
     if (inputs.isSet(@intFromEnum(Command.down))) game_state.player_y += 1 * PLAYER_VELOCITY;
     if (inputs.isSet(@intFromEnum(Command.left))) game_state.player_x -= 1 * PLAYER_VELOCITY;
@@ -82,18 +98,24 @@ pub fn game_step_overworld(game_state: *GameState, inputs: Inputs) void {
 }
 
 pub fn game_step_inventory(game_state: *GameState, inputs: Inputs) void {
-    _ = game_state;
-    _ = inputs;
+    if (inputs.isSet(@intFromEnum(Command.b))) {
+        game_state.mode = .Overworld;
+    }
 }
 
 pub fn game_step_main_menu(game_state: *GameState, inputs: Inputs) void {
-    _ = game_state;
-    _ = inputs;
+    if (inputs.isSet(@intFromEnum(Command.a))) {
+        game_state.mode = .Overworld;
+    }
 }
 
 // rendering
 
 pub fn render_step(game_state: GameState, render_state: *RenderState) void {
+    // clear screen
+    draw.fill(&render_state.screen, 0x0);
+    draw.fill(&render_state.screen_upscaled, 0x0);
+    // render frame
     switch (game_state.mode) {
         GameMode.MainMenu => render_step_main_menu(game_state, render_state),
         GameMode.Inventory => render_step_inventory(game_state, render_state),
