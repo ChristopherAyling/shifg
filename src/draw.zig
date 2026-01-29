@@ -124,7 +124,7 @@ pub fn draw_text(screen: *ScreenBuffer, text: []const u8, x0: i32, y0: i32, colo
 
 pub fn view(source: *ScreenBuffer, dest: *ScreenBuffer, x0: i32, y0: i32) void {
     // set default background
-    fill(dest, 0xff00ff);
+    fill(dest, 0xffffff);
 
     // read from source
     for (0..@intCast(dest.w)) |x| {
@@ -139,18 +139,6 @@ pub fn view(source: *ScreenBuffer, dest: *ScreenBuffer, x0: i32, y0: i32) void {
         }
     }
 }
-
-// pub fn fill_checkerboard(screen: *ScreenBuffer, tile_size: i32, color1: u32, color2: u32) void {
-//     for (0..@intCast(screen.h)) |y| {
-//         for (0..@intCast(screen.w)) |x| {
-//             const tile_x = @as(i32, @intCast(x)) / tile_size;
-//             const tile_y = @as(i32, @intCast(y)) / tile_size;
-//             const is_even = @mod(tile_x + tile_y, 2) == 0;
-//             const color = if (is_even) color1 else color2;
-//             screen.setPixel(@intCast(x), @intCast(y), color);
-//         }
-//     }
-// }
 
 pub fn fill_checkerboard(screen: *ScreenBuffer, tile_size: i32, color1: u32, color2: u32) void {
     for (0..@intCast(screen.h)) |y| {

@@ -13,6 +13,15 @@ pub const Inputs = control.Inputs;
 pub const updateInputs = control.updateInputs;
 // pub const Command = control.Command;
 
+const LEVEL_W = 512;
+const LEVEL_H = 512;
+
+const NATIVE_W = 160;
+const NATIVE_H = 144;
+const SCALE = 4;
+const UPSCALED_W = NATIVE_W * SCALE;
+const UPSCALED_H = NATIVE_H * SCALE;
+
 const GameMode = enum {
     MainMenu,
     Inventory,
@@ -64,8 +73,8 @@ const GameState = struct {
     dialogue: ?GameDialogueState,
 
     pub fn camera_follow_player(self: *GameState) void {
-        self.camera_x = self.player_x;
-        self.camera_y = self.player_y;
+        self.camera_x = self.player_x - @divFloor(NATIVE_W, 2);
+        self.camera_y = self.player_y - @divFloor(NATIVE_H, 2);
     }
 
     pub fn init() GameState {
@@ -99,6 +108,8 @@ pub fn game_step(game_state: *GameState, inputs: Inputs) void {
         GameMode.Overworld => game_step_overworld(game_state, inputs),
         GameMode.Inventory => game_step_inventory(game_state, inputs),
     }
+
+    game_state.camera_follow_player();
 }
 
 pub fn game_step_overworld(game_state: *GameState, inputs: Inputs) void {
@@ -138,7 +149,6 @@ pub fn game_step_overworld(game_state: *GameState, inputs: Inputs) void {
     if (inputs.directions.contains(.down)) game_state.player_y += 1 * PLAYER_VELOCITY;
     if (inputs.directions.contains(.left)) game_state.player_x -= 1 * PLAYER_VELOCITY;
     if (inputs.directions.contains(.right)) game_state.player_x += 1 * PLAYER_VELOCITY;
-    game_state.camera_follow_player();
 }
 
 pub fn game_step_inventory(game_state: *GameState, inputs: Inputs) void {
@@ -223,15 +233,6 @@ pub fn main() !void {
     defer {
         _ = gpa.deinit();
     }
-
-    const LEVEL_W = 512;
-    const LEVEL_H = 512;
-
-    const NATIVE_W = 160;
-    const NATIVE_H = 144;
-    const SCALE = 4;
-    const UPSCALED_W = NATIVE_W * SCALE;
-    const UPSCALED_H = NATIVE_H * SCALE;
 
     const level: ScreenBuffer = try ScreenBuffer.init(allocator, LEVEL_W, LEVEL_H);
     var screen: ScreenBuffer = try ScreenBuffer.init(allocator, NATIVE_W, NATIVE_H);
