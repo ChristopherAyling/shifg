@@ -15,30 +15,30 @@ pub const Image = struct {
     data: []const u32,
     w: i32,
     h: i32,
-};
 
-pub fn load(filename: [:0]const u8) Image {
-    var x: c_int = undefined;
-    var y: c_int = undefined;
-    var channels_in_file: c_int = undefined;
+    pub fn from_file(filename: [:0]const u8) Image {
+        var x: c_int = undefined;
+        var y: c_int = undefined;
+        var channels_in_file: c_int = undefined;
 
-    const raw = c.stbi_load(filename.ptr, &x, &y, &channels_in_file, 4) orelse {
-        std.debug.print("Failed to load image: {s}\n", .{filename});
-        @panic("Image load failed");
-    };
+        const raw = c.stbi_load(filename.ptr, &x, &y, &channels_in_file, 4) orelse {
+            std.debug.print("Failed to load image: {s}\n", .{filename});
+            @panic("Image load failed");
+        };
 
-    const pixels = @as(usize, @intCast(x)) * @as(usize, @intCast(y));
-    const data: [*]u32 = @ptrCast(@alignCast(raw));
+        const pixels = @as(usize, @intCast(x)) * @as(usize, @intCast(y));
+        const data: [*]u32 = @ptrCast(@alignCast(raw));
 
-    for (0..pixels) |i| {
-        const pixel = data[i];
-        // stb: memory is R,G,B,A -> as u32 little-endian: 0xAABBGGRR
-        // we need: 0x00RRGGBB
-        const r = pixel & 0xFF;
-        const g = (pixel >> 8) & 0xFF;
-        const b = (pixel >> 16) & 0xFF;
-        data[i] = (r << 16) | (g << 8) | b;
+        for (0..pixels) |i| {
+            const pixel = data[i];
+            // stb: memory is R,G,B,A -> as u32 little-endian: 0xAABBGGRR
+            // we need: 0x00RRGGBB
+            const r = pixel & 0xFF;
+            const g = (pixel >> 8) & 0xFF;
+            const b = (pixel >> 16) & 0xFF;
+            data[i] = (r << 16) | (g << 8) | b;
+        }
+
+        return .{ .data = data[0..pixels], .w = @intCast(x), .h = @intCast(y) };
     }
-
-    return .{ .data = data[0..pixels], .w = @intCast(x), .h = @intCast(y) };
-}
+};

@@ -3,25 +3,17 @@ const assert = std.debug.assert;
 const Window = @import("window.zig").Window;
 const draw = @import("draw.zig");
 const ui = @import("ui.zig");
-const image = @import("image.zig");
+const Image = @import("image.zig").Image;
 const ScreenBuffer = @import("screen.zig").ScreenBuffer;
 const dialogue = @import("dialogue.zig");
 const control = @import("control.zig");
 const sprites = @import("sprites.zig");
 const StoryCheckpoint = @import("story.zig").StoryCheckpoint;
+const con = @import("constants.zig");
 
 pub const Inputs = control.Inputs;
 pub const updateInputs = control.updateInputs;
 // pub const Command = control.Command;
-
-const LEVEL_W = 512;
-const LEVEL_H = 512;
-
-const NATIVE_W = 160;
-const NATIVE_H = 144;
-const SCALE = 4;
-const UPSCALED_W = NATIVE_W * SCALE;
-const UPSCALED_H = NATIVE_H * SCALE;
 
 const GameMode = enum {
     MainMenu,
@@ -74,8 +66,8 @@ const GameState = struct {
     dialogue: ?GameDialogueState,
 
     pub fn camera_follow_player(self: *GameState) void {
-        self.camera_x = self.player_x - @divFloor(NATIVE_W, 2) + @divFloor(sprites.PLAYER_SPRITE.w, 2);
-        self.camera_y = self.player_y - @divFloor(NATIVE_H, 2) + @divFloor(sprites.PLAYER_SPRITE.h, 2);
+        self.camera_x = self.player_x - @divFloor(con.NATIVE_W, 2) + @divFloor(sprites.PLAYER_SPRITE.w, 2);
+        self.camera_y = self.player_y - @divFloor(con.NATIVE_H, 2) + @divFloor(sprites.PLAYER_SPRITE.h, 2);
     }
 
     pub fn init() GameState {
@@ -95,8 +87,8 @@ const RenderState = struct {
     screen: ScreenBuffer,
     screen_upscaled: ScreenBuffer,
     level: ScreenBuffer,
-    player_sprite: image.Image,
-    level1_sprite: image.Image,
+    player_sprite: Image,
+    level1_sprite: Image,
 };
 
 const PLAYER_VELOCITY = 1;
@@ -237,15 +229,15 @@ pub fn main() !void {
         _ = gpa.deinit();
     }
 
-    const level: ScreenBuffer = try ScreenBuffer.init(allocator, LEVEL_W, LEVEL_H);
-    var screen: ScreenBuffer = try ScreenBuffer.init(allocator, NATIVE_W, NATIVE_H);
-    var screen_upscaled: ScreenBuffer = try ScreenBuffer.init(allocator, UPSCALED_W, UPSCALED_H);
+    const level: ScreenBuffer = try ScreenBuffer.init(allocator, con.LEVEL_W, con.LEVEL_H);
+    var screen: ScreenBuffer = try ScreenBuffer.init(allocator, con.NATIVE_W, con.NATIVE_H);
+    var screen_upscaled: ScreenBuffer = try ScreenBuffer.init(allocator, con.UPSCALED_W, con.UPSCALED_H);
 
-    var window = try Window.init(allocator, UPSCALED_W, UPSCALED_H);
+    var window = try Window.init(allocator, con.UPSCALED_W, con.UPSCALED_H);
     defer window.deinit();
 
-    const player_sprite = image.load("/Users/chris/gaming/gam1/person1.png");
-    const level1_sprite = image.load("/Users/chris/gaming/gam1/level1.png");
+    const player_sprite = Image.from_file("/Users/chris/gaming/gam1/assets/person2.png");
+    const level1_sprite = Image.from_file("/Users/chris/gaming/gam1/assets/level1.png");
 
     window.before_loop();
 
@@ -260,7 +252,7 @@ pub fn main() !void {
         game_step(&game_state, inputs); // TODO pass a dt
         render_step(game_state, &render_state);
 
-        screen.upscale(&screen_upscaled, SCALE);
+        screen.upscale(&screen_upscaled, con.SCALE);
         blit(render_state.screen_upscaled, &window);
 
         // const frame_end_t = std.time.nanoTimestamp();
