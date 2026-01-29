@@ -112,7 +112,6 @@ pub fn draw_text(screen: *ScreenBuffer, text: []const u8, x0: i32, y0: i32, colo
                     if (not_blank != 0) {
                         const px: i32 = xc + @as(i32, @intCast(dx));
                         const py: i32 = yc + @as(i32, @intCast(dy));
-                        // draw_pixel(window, px, py, color, 0);
                         screen.setPixel(px, py, color);
                     }
                 }

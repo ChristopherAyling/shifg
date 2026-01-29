@@ -7,6 +7,7 @@ const image = @import("image.zig");
 const ScreenBuffer = @import("screen.zig").ScreenBuffer;
 const dialogue = @import("dialogue.zig");
 const control = @import("control.zig");
+const sprites = @import("sprites.zig");
 const StoryCheckpoint = @import("story.zig").StoryCheckpoint;
 
 pub const Inputs = control.Inputs;
@@ -241,14 +242,14 @@ pub fn main() !void {
     var window = try Window.init(allocator, UPSCALED_W, UPSCALED_H);
     defer window.deinit();
 
-    const filename: [:0]const u8 = "/Users/chris/gaming/gam1/tile2.png";
-    const player_sprite = image.load(filename);
+    // const filename: [:0]const u8 = "/Users/chris/gaming/gam1/tile2.png";
+    // const player_sprite = image.load(filename);
     // const player_sprite: image.Image =
 
     window.before_loop();
 
     var game_state: GameState = GameState.init();
-    var render_state: RenderState = .{ .screen = screen, .screen_upscaled = screen_upscaled, .level = level, .player_sprite = player_sprite };
+    var render_state: RenderState = .{ .screen = screen, .screen_upscaled = screen_upscaled, .level = level, .player_sprite = sprites.PLAYER_SPRITE };
 
     var inputs = Inputs{};
     while (window.loop()) {

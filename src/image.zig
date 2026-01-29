@@ -12,7 +12,7 @@ const c = @cImport({
 });
 
 pub const Image = struct {
-    data: []u32,
+    data: []const u32,
     w: i32,
     h: i32,
 };
