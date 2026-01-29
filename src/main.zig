@@ -24,9 +24,7 @@ const RIGHT = 19;
 
 pub fn getInputs(window: Window) Inputs {
     var inputs = Inputs.initEmpty();
-    // var command = Command.none;
     if (window.key(UP)) {
-        // command = Command.up;
         inputs.set(@intFromEnum(Command.up));
     }
     if (window.key(DOWN)) {
@@ -41,7 +39,10 @@ pub fn getInputs(window: Window) Inputs {
     return inputs;
 }
 
-const GameState = struct {};
+const GameState = struct {
+    player_x: i32,
+    player_y: i32,
+};
 
 const RenderState = struct {
     screen: ScreenBuffer,
@@ -49,16 +50,19 @@ const RenderState = struct {
     player_sprite: image.Image,
 };
 
-pub fn game_step(game_state: GameState, inputs: Inputs) void {
-    _ = game_state;
-    // _ = inputs;
-    std.log.debug("Input {b}", .{inputs.mask});
+const PLAYER_VELOCITY = 1;
+
+pub fn game_step(game_state: *GameState, inputs: Inputs) void {
+    // std.log.debug("Input {b}", .{inputs.mask});
+    if (inputs.isSet(@intFromEnum(Command.up))) game_state.player_y -= 1 * PLAYER_VELOCITY;
+    if (inputs.isSet(@intFromEnum(Command.down))) game_state.player_y += 1 * PLAYER_VELOCITY;
+    if (inputs.isSet(@intFromEnum(Command.left))) game_state.player_x -= 1 * PLAYER_VELOCITY;
+    if (inputs.isSet(@intFromEnum(Command.right))) game_state.player_x += 1 * PLAYER_VELOCITY;
 }
 
 pub fn render_step(game_state: GameState, render_state: *RenderState) void {
-    _ = game_state;
     draw.fill(&render_state.screen, 0x0);
-    draw.draw_image(&render_state.screen, render_state.player_sprite, 20, 20);
+    draw.draw_image(&render_state.screen, render_state.player_sprite, game_state.player_x, game_state.player_y);
     ui.drawTextBox(&render_state.screen, "hey, you are finally awake");
 }
 
@@ -94,14 +98,17 @@ pub fn main() !void {
 
     window.before_loop();
 
-    const game_state: GameState = .{};
+    var game_state: GameState = .{
+        .player_x = 50,
+        .player_y = 50,
+    };
     var render_state: RenderState = .{ .screen = screen, .screen_upscaled = screen_upscaled, .player_sprite = player_sprite };
 
     while (window.loop()) {
         // const frame_start_t = std.time.nanoTimestamp();
 
         const command = getInputs(window);
-        game_step(game_state, command); // TODO pass a dt
+        game_step(&game_state, command); // TODO pass a dt
         render_step(game_state, &render_state);
 
         screen.upscale(&screen_upscaled, SCALE);
