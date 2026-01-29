@@ -76,23 +76,6 @@ pub const ScreenBuffer = struct {
             }
         }
     }
-
-    pub fn view(self: *ScreenBuffer, source: *ScreenBuffer, x0: i32, y0: i32) void {
-        // set default background
-
-        // read from source
-        for (0..self.w) |x| {
-            for (0..self.h) |y| {
-                const source_x = x + x0;
-                const source_y = y + y0;
-
-                if (source.is_in_bounds(source_x, source_y)) {
-                    const color = source.getPixel(source_x, source_y);
-                    self.setPixel(source_x, source_y, color);
-                }
-            }
-        }
-    }
 };
 
 pub fn alphaBlend(fg: u32, bg: u32) u32 {

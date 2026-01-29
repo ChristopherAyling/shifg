@@ -1,0 +1,1 @@
+find src -type f -name "*.zig" -exec sh -c 'echo "=== {} ===" && cat "{}"' \; | pbcopy

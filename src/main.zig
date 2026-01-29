@@ -58,10 +58,15 @@ const GameState = struct {
     // player data
     player_x: i32,
     player_y: i32,
-    // camera_x: i32,
-    // camera_y: i32,
+    camera_x: i32,
+    camera_y: i32,
 
     dialogue: ?GameDialogueState,
+
+    pub fn camera_follow_player(self: *GameState) void {
+        self.camera_x = self.player_x;
+        self.camera_y = self.player_y;
+    }
 
     pub fn init() GameState {
         return .{
@@ -69,6 +74,8 @@ const GameState = struct {
             .ctx = .{ .story_checkpoint = .game_start },
             .player_x = 0,
             .player_y = 0,
+            .camera_x = 0,
+            .camera_y = 0,
             .dialogue = null,
         };
     }
@@ -77,6 +84,7 @@ const GameState = struct {
 const RenderState = struct {
     screen: ScreenBuffer,
     screen_upscaled: ScreenBuffer,
+    level: ScreenBuffer,
     player_sprite: image.Image,
 };
 
@@ -130,6 +138,7 @@ pub fn game_step_overworld(game_state: *GameState, inputs: Inputs) void {
     if (inputs.directions.contains(.down)) game_state.player_y += 1 * PLAYER_VELOCITY;
     if (inputs.directions.contains(.left)) game_state.player_x -= 1 * PLAYER_VELOCITY;
     if (inputs.directions.contains(.right)) game_state.player_x += 1 * PLAYER_VELOCITY;
+    game_state.camera_follow_player();
 }
 
 pub fn game_step_inventory(game_state: *GameState, inputs: Inputs) void {
@@ -169,29 +178,35 @@ pub fn render_step_inventory(game_state: GameState, render_state: *RenderState) 
 }
 
 pub fn render_step_overworld(game_state: GameState, render_state: *RenderState) void {
-    // load tiles for needed map
-    switch (game_state.ctx.story_checkpoint) {
-        .game_start => {
-            draw.fill(&render_state.screen, 0xFF0000);
-        },
-        .prologue_complete => {
-            draw.fill(&render_state.screen, 0x00FF00);
-        },
-        .tutorial_complete => {
-            draw.fill(&render_state.screen, 0x0000FF);
-        },
+    // render world
+    {
+        // load tiles for needed map
+        switch (game_state.ctx.story_checkpoint) {
+            .game_start => {
+                // draw.fill(&render_state.level, 0xFF0000);
+                draw.fill_checkerboard(&render_state.level, 6, 0xFF0000, 0x0);
+            },
+            .prologue_complete => {
+                draw.fill_checkerboard(&render_state.level, 6, 0x00FF00, 0x0);
+            },
+            .tutorial_complete => {
+                draw.fill_checkerboard(&render_state.level, 6, 0x0000FF, 0x0);
+            },
+        }
+
+        // load entities
+        draw.draw_image(&render_state.level, render_state.player_sprite, game_state.player_x, game_state.player_y);
+
+        draw.view(&render_state.level, &render_state.screen, game_state.camera_x, game_state.camera_y);
     }
 
-    // load entities
-    draw.draw_image(&render_state.screen, render_state.player_sprite, game_state.player_x, game_state.player_y);
-
-    // overlay dialogue
-
-    if (game_state.dialogue) |current_dialogue| {
-        ui.drawTextBox(&render_state.screen, current_dialogue.getLine().text);
+    // render ui
+    {
+        // overlay dialogue
+        if (game_state.dialogue) |current_dialogue| {
+            ui.drawTextBox(&render_state.screen, current_dialogue.getLine().text);
+        }
     }
-
-    // draw.fill(&render_state.screen, 0x0);
 }
 
 fn blit(screen: ScreenBuffer, window: *Window) void {
@@ -209,12 +224,16 @@ pub fn main() !void {
         _ = gpa.deinit();
     }
 
+    const LEVEL_W = 512;
+    const LEVEL_H = 512;
+
     const NATIVE_W = 160;
     const NATIVE_H = 144;
     const SCALE = 4;
     const UPSCALED_W = NATIVE_W * SCALE;
     const UPSCALED_H = NATIVE_H * SCALE;
 
+    const level: ScreenBuffer = try ScreenBuffer.init(allocator, LEVEL_W, LEVEL_H);
     var screen: ScreenBuffer = try ScreenBuffer.init(allocator, NATIVE_W, NATIVE_H);
     var screen_upscaled: ScreenBuffer = try ScreenBuffer.init(allocator, UPSCALED_W, UPSCALED_H);
 
@@ -228,7 +247,7 @@ pub fn main() !void {
     window.before_loop();
 
     var game_state: GameState = GameState.init();
-    var render_state: RenderState = .{ .screen = screen, .screen_upscaled = screen_upscaled, .player_sprite = player_sprite };
+    var render_state: RenderState = .{ .screen = screen, .screen_upscaled = screen_upscaled, .level = level, .player_sprite = player_sprite };
 
     var inputs = Inputs{};
     while (window.loop()) {
