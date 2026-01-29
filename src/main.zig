@@ -6,28 +6,39 @@ const ui = @import("ui.zig");
 const image = @import("image.zig");
 const ScreenBuffer = @import("screen.zig").ScreenBuffer;
 
-const Command = enum { none, up, down, left, right, a, b, menu };
+const Command = enum {
+    up,
+    down,
+    left,
+    right,
+    a,
+    b,
+    start,
+};
+const Inputs = std.bit_set.IntegerBitSet(@typeInfo(Command).@"enum".fields.len); // 8way dpad + ab + start
 
 const UP = 17;
 const DOWN = 18;
 const LEFT = 20;
 const RIGHT = 19;
 
-pub fn parseCommand(window: Window) Command {
-    var command = Command.none;
+pub fn getInputs(window: Window) Inputs {
+    var inputs = Inputs.initEmpty();
+    // var command = Command.none;
     if (window.key(UP)) {
-        command = Command.up;
+        // command = Command.up;
+        inputs.set(@intFromEnum(Command.up));
     }
     if (window.key(DOWN)) {
-        command = Command.down;
+        inputs.set(@intFromEnum(Command.down));
     }
     if (window.key(LEFT)) {
-        command = Command.left;
+        inputs.set(@intFromEnum(Command.left));
     }
     if (window.key(RIGHT)) {
-        command = Command.right;
+        inputs.set(@intFromEnum(Command.right));
     }
-    return command;
+    return inputs;
 }
 
 const GameState = struct {};
@@ -38,9 +49,10 @@ const RenderState = struct {
     player_sprite: image.Image,
 };
 
-pub fn game_step(game_state: GameState, command: Command) void {
+pub fn game_step(game_state: GameState, inputs: Inputs) void {
     _ = game_state;
-    _ = command;
+    // _ = inputs;
+    std.log.debug("Input {b}", .{inputs.mask});
 }
 
 pub fn render_step(game_state: GameState, render_state: *RenderState) void {
@@ -88,8 +100,8 @@ pub fn main() !void {
     while (window.loop()) {
         // const frame_start_t = std.time.nanoTimestamp();
 
-        const command = parseCommand(window);
-        game_step(game_state, command);
+        const command = getInputs(window);
+        game_step(game_state, command); // TODO pass a dt
         render_step(game_state, &render_state);
 
         screen.upscale(&screen_upscaled, SCALE);
