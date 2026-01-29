@@ -22,7 +22,14 @@ pub fn draw_image(screen: *ScreenBuffer, img: image.Image, x0: i32, y0: i32) voi
             const img_x: usize = @intCast(x - x0);
             const img_y: usize = @intCast(y - y0);
             const idx = img_y * @as(usize, @intCast(img.w)) + img_x;
-            screen.setPixel(x, y, img.data[idx]);
+            const pixel = img.data[idx];
+            if (pixel != 0x0) {
+                screen.setPixel(x, y, pixel);
+            }
+            // const fg = img.data[idx];
+            // const bg = screen.getPixel(x, y);
+            // const blended = @import("screen.zig").alphaBlend(fg, bg);
+            // screen.setPixel(x, y, blended);
         }
     }
 }

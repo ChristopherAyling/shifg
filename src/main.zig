@@ -196,14 +196,14 @@ pub fn render_step_overworld(game_state: GameState, render_state: *RenderState) 
         switch (game_state.ctx.story_checkpoint) {
             .game_start => {
                 // draw.fill(&render_state.level, 0xFF0000);
-                draw.fill_checkerboard(&render_state.level, 6, 0xFF0000, 0x0);
+                draw.fill_checkerboard(&render_state.level, 8, 0xFF0000, 0x0);
             },
             .prologue_complete => {
-                // draw.fill_checkerboard(&render_state.level, 6, 0x00FF00, 0x0);
+                draw.fill_checkerboard(&render_state.level, 8, 0x00FF00, 0x0);
                 draw.draw_image(&render_state.level, render_state.level1_sprite, 0, 0);
             },
             .tutorial_complete => {
-                draw.fill_checkerboard(&render_state.level, 6, 0x0000FF, 0x0);
+                draw.fill_checkerboard(&render_state.level, 8, 0x0000FF, 0x0);
             },
         }
 
@@ -244,7 +244,7 @@ pub fn main() !void {
     var window = try Window.init(allocator, UPSCALED_W, UPSCALED_H);
     defer window.deinit();
 
-    const player_sprite = image.load("/Users/chris/gaming/gam1/face.png");
+    const player_sprite = image.load("/Users/chris/gaming/gam1/person1.png");
     const level1_sprite = image.load("/Users/chris/gaming/gam1/level1.png");
 
     window.before_loop();
