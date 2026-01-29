@@ -7,6 +7,7 @@ const image = @import("image.zig");
 const ScreenBuffer = @import("screen.zig").ScreenBuffer;
 const dialogue = @import("dialogue.zig");
 const control = @import("control.zig");
+const StoryCheckpoint = @import("story.zig").StoryCheckpoint;
 
 pub const Inputs = control.Inputs;
 pub const updateInputs = control.updateInputs;
@@ -16,17 +17,6 @@ const GameMode = enum {
     MainMenu,
     Inventory,
     Overworld,
-};
-
-const StoryCheckpoint = enum {
-    // completely determines what is loaded
-    game_start,
-    prologue_complete,
-    tutorial_complete,
-
-    pub fn isAtLeast(self: StoryCheckpoint, other: StoryCheckpoint) bool {
-        return @intFromEnum(self) >= @intFromEnum(other);
-    }
 };
 
 const GameContext = struct {
@@ -120,6 +110,9 @@ pub fn game_step_overworld(game_state: *GameState, inputs: Inputs) void {
             // how to trigger story events from dialogue being completeded.
             // not all dialogue completions will update story events e.g. reading a sign.
             if (current_dialogue.is_complete()) {
+                if (current_dialogue.dialogue.jump_to_story_checkpoint) |next_check_point| {
+                    game_state.ctx.story_checkpoint = next_check_point;
+                }
                 game_state.dialogue = null;
             }
         }

@@ -1,4 +1,5 @@
 // structs
+const StoryCheckpoint = @import("story.zig").StoryCheckpoint;
 
 pub const DialogueLine = struct {
     speaker_name: []const u8,
@@ -8,6 +9,7 @@ pub const DialogueLine = struct {
 pub const DialogueSequence = struct {
     id: u32,
     lines: []const DialogueLine,
+    jump_to_story_checkpoint: ?StoryCheckpoint = null,
 };
 
 // sequences
@@ -22,6 +24,7 @@ pub const PROLOGUE = DialogueSequence{
         .{ .speaker_name = "Narrator", .text = "3" },
         .{ .speaker_name = "Narrator", .text = "4" },
     },
+    .jump_to_story_checkpoint = .prologue_complete,
 };
 
 pub const TUTORIAL = DialogueSequence{
