@@ -39,7 +39,17 @@ pub fn getInputs(window: Window) Inputs {
     return inputs;
 }
 
+const GameMode = enum {
+    MainMenu,
+    Inventory,
+    Overworld,
+};
+
 const GameState = struct {
+    // mode
+    mode: GameMode,
+
+    // player data
     player_x: i32,
     player_y: i32,
 };
@@ -52,7 +62,18 @@ const RenderState = struct {
 
 const PLAYER_VELOCITY = 1;
 
+// gaming
+
 pub fn game_step(game_state: *GameState, inputs: Inputs) void {
+    // player movement
+    switch (game_state.mode) {
+        GameMode.MainMenu => game_step_main_menu(game_state, inputs),
+        GameMode.Overworld => game_step_overworld(game_state, inputs),
+        GameMode.Inventory => game_step_inventory(game_state, inputs),
+    }
+}
+
+pub fn game_step_overworld(game_state: *GameState, inputs: Inputs) void {
     // std.log.debug("Input {b}", .{inputs.mask});
     if (inputs.isSet(@intFromEnum(Command.up))) game_state.player_y -= 1 * PLAYER_VELOCITY;
     if (inputs.isSet(@intFromEnum(Command.down))) game_state.player_y += 1 * PLAYER_VELOCITY;
@@ -60,7 +81,37 @@ pub fn game_step(game_state: *GameState, inputs: Inputs) void {
     if (inputs.isSet(@intFromEnum(Command.right))) game_state.player_x += 1 * PLAYER_VELOCITY;
 }
 
+pub fn game_step_inventory(game_state: *GameState, inputs: Inputs) void {
+    _ = game_state;
+    _ = inputs;
+}
+
+pub fn game_step_main_menu(game_state: *GameState, inputs: Inputs) void {
+    _ = game_state;
+    _ = inputs;
+}
+
+// rendering
+
 pub fn render_step(game_state: GameState, render_state: *RenderState) void {
+    switch (game_state.mode) {
+        GameMode.MainMenu => render_step_main_menu(game_state, render_state),
+        GameMode.Inventory => render_step_inventory(game_state, render_state),
+        GameMode.Overworld => render_step_overworld(game_state, render_state),
+    }
+}
+
+pub fn render_step_main_menu(game_state: GameState, render_state: *RenderState) void {
+    _ = game_state;
+    ui.drawTextBox(&render_state.screen, "Welcome to Shif. Press Start to play");
+}
+
+pub fn render_step_inventory(game_state: GameState, render_state: *RenderState) void {
+    _ = game_state;
+    ui.drawTextBox(&render_state.screen, "inventory");
+}
+
+pub fn render_step_overworld(game_state: GameState, render_state: *RenderState) void {
     draw.fill(&render_state.screen, 0x0);
     draw.draw_image(&render_state.screen, render_state.player_sprite, game_state.player_x, game_state.player_y);
     ui.drawTextBox(&render_state.screen, "hey, you are finally awake");
@@ -99,6 +150,7 @@ pub fn main() !void {
     window.before_loop();
 
     var game_state: GameState = .{
+        .mode = .MainMenu,
         .player_x = 50,
         .player_y = 50,
     };
