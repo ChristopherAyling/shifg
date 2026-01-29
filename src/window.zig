@@ -28,9 +28,9 @@ pub const Window = struct {
         c.fenster_close(&self.f);
     }
 
-    pub fn sleep(self: *Window) void {
+    pub fn sleep(self: *Window, duration: i64) void {
         _ = self;
-        c.fenster_sleep(30);
+        c.fenster_sleep(duration);
     }
 
     pub fn before_loop(self: *Window) void {

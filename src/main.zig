@@ -30,10 +30,24 @@ pub fn parseCommand(window: Window) Command {
     return command;
 }
 
-pub fn game_step() void {}
+const GameState = struct {};
 
-pub fn render_step() void {
-    // needs to access state / outputs of game step
+const RenderState = struct {
+    screen: ScreenBuffer,
+    screen_upscaled: ScreenBuffer,
+    player_sprite: image.Image,
+};
+
+pub fn game_step(game_state: GameState, command: Command) void {
+    _ = game_state;
+    _ = command;
+}
+
+pub fn render_step(game_state: GameState, render_state: *RenderState) void {
+    _ = game_state;
+    draw.fill(&render_state.screen, 0x0);
+    draw.draw_image(&render_state.screen, render_state.player_sprite, 20, 20);
+    ui.drawTextBox(&render_state.screen, "hey, you are finally awake");
 }
 
 fn blit(screen: ScreenBuffer, window: *Window) void {
@@ -64,43 +78,25 @@ pub fn main() !void {
     defer window.deinit();
 
     const filename: [:0]const u8 = "/Users/chris/gaming/gam1/tile2.png";
-    const img = image.load(filename);
-    std.log.debug("img w: {any} h: {any}", .{ img.w, img.h });
+    const player_sprite = image.load(filename);
 
     window.before_loop();
-    var t: f32 = 0;
 
-    var px: i32 = 0;
-    var py: i32 = 0;
+    const game_state: GameState = .{};
+    var render_state: RenderState = .{ .screen = screen, .screen_upscaled = screen_upscaled, .player_sprite = player_sprite };
 
     while (window.loop()) {
+        // const frame_start_t = std.time.nanoTimestamp();
+
         const command = parseCommand(window);
-        switch (command) {
-            Command.up => {
-                py -= 1;
-            },
-            Command.down => {
-                py += 1;
-            },
-            Command.left => {
-                px -= 1;
-            },
-            Command.right => {
-                px += 1;
-            },
-            else => {},
-        }
+        game_step(game_state, command);
+        render_step(game_state, &render_state);
 
-        draw.fill(&screen, 0x0);
-        draw.draw_image(&screen, img, px, py);
-        // draw.draw_pixel(&window, 10, 20, 0xFFFFFF, 0);
-        // draw.draw_text(&window, "hello", 50, 50, 0x00ff00);
-        ui.drawTextBox(&screen, "hey, you are finally awake");
-        t += 1;
-
-        screen.setPixel(10, 10, 0xFF0000, 0);
         screen.upscale(&screen_upscaled, SCALE);
-        blit(screen_upscaled, &window);
-        window.sleep();
+        blit(render_state.screen_upscaled, &window);
+
+        // const frame_end_t = std.time.nanoTimestamp();
+        // const frame_elapsed_ns = frame_end_t - frame_start_t;
+        // window.sleep(@intCast(frame_elapsed_ns));
     }
 }
