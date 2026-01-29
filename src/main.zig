@@ -74,8 +74,8 @@ const GameState = struct {
     dialogue: ?GameDialogueState,
 
     pub fn camera_follow_player(self: *GameState) void {
-        self.camera_x = self.player_x - @divFloor(NATIVE_W, 2);
-        self.camera_y = self.player_y - @divFloor(NATIVE_H, 2);
+        self.camera_x = self.player_x - @divFloor(NATIVE_W, 2) + @divFloor(sprites.PLAYER_SPRITE.w, 2);
+        self.camera_y = self.player_y - @divFloor(NATIVE_H, 2) + @divFloor(sprites.PLAYER_SPRITE.h, 2);
     }
 
     pub fn init() GameState {
