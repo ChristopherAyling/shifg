@@ -5,52 +5,12 @@ const draw = @import("draw.zig");
 const ui = @import("ui.zig");
 const image = @import("image.zig");
 const ScreenBuffer = @import("screen.zig").ScreenBuffer;
+const dialogue = @import("dialogue.zig");
+const control = @import("control.zig");
 
-const Command = enum {
-    up,
-    down,
-    left,
-    right,
-    a,
-    b,
-    start,
-};
-const Inputs = std.bit_set.IntegerBitSet(@typeInfo(Command).@"enum".fields.len); // 8way dpad + ab + start
-
-const UP = 17;
-const DOWN = 18;
-const LEFT = 20;
-const RIGHT = 19;
-const SPACE = 32;
-const A = 65;
-const B = 66;
-const E = 69;
-
-pub fn getInputs(window: Window) Inputs {
-    var inputs = Inputs.initEmpty();
-    if (window.key(UP)) {
-        inputs.set(@intFromEnum(Command.up));
-    }
-    if (window.key(DOWN)) {
-        inputs.set(@intFromEnum(Command.down));
-    }
-    if (window.key(LEFT)) {
-        inputs.set(@intFromEnum(Command.left));
-    }
-    if (window.key(RIGHT)) {
-        inputs.set(@intFromEnum(Command.right));
-    }
-    if (window.key(SPACE) or window.key(A)) {
-        inputs.set(@intFromEnum(Command.a));
-    }
-    if (window.key(B)) {
-        inputs.set(@intFromEnum(Command.b));
-    }
-    if (window.key(E)) {
-        inputs.set(@intFromEnum(Command.start));
-    }
-    return inputs;
-}
+pub const Inputs = control.Inputs;
+pub const updateInputs = control.updateInputs;
+// pub const Command = control.Command;
 
 const GameMode = enum {
     MainMenu,
@@ -58,13 +18,68 @@ const GameMode = enum {
     Overworld,
 };
 
+const StoryCheckpoint = enum {
+    // completely determines what is loaded
+    game_start,
+    prologue_complete,
+    tutorial_complete,
+
+    pub fn isAtLeast(self: StoryCheckpoint, other: StoryCheckpoint) bool {
+        return @intFromEnum(self) >= @intFromEnum(other);
+    }
+};
+
+const GameContext = struct {
+    // keep data types simple and serialisable.
+    story_checkpoint: StoryCheckpoint,
+};
+
+const GameDialogueState = struct {
+    dialogue_index: usize,
+    dialogue: *const dialogue.DialogueSequence,
+
+    pub fn init(seq: *const dialogue.DialogueSequence) GameDialogueState {
+        return .{
+            .dialogue_index = 0,
+            .dialogue = seq,
+        };
+    }
+
+    pub fn getLine(self: GameDialogueState) dialogue.DialogueLine {
+        return self.dialogue.lines[self.dialogue_index];
+    }
+
+    pub fn advance(self: *GameDialogueState) void {
+        self.dialogue_index += 1;
+        std.log.debug("dialogue index = {any}", .{self.dialogue_index});
+    }
+
+    pub fn is_complete(self: GameDialogueState) bool {
+        return self.dialogue_index >= self.dialogue.lines.len;
+    }
+};
+
 const GameState = struct {
     // mode
     mode: GameMode,
 
+    ctx: GameContext,
+
     // player data
     player_x: i32,
     player_y: i32,
+
+    dialogue: ?GameDialogueState,
+
+    pub fn init() GameState {
+        return .{
+            .mode = .MainMenu,
+            .ctx = .{ .story_checkpoint = .game_start },
+            .player_x = 0,
+            .player_y = 0,
+            .dialogue = null,
+        };
+    }
 };
 
 const RenderState = struct {
@@ -87,24 +102,49 @@ pub fn game_step(game_state: *GameState, inputs: Inputs) void {
 }
 
 pub fn game_step_overworld(game_state: *GameState, inputs: Inputs) void {
-    if (inputs.isSet(@intFromEnum(Command.start))) {
+    switch (game_state.ctx.story_checkpoint) {
+        .game_start => {
+            if (game_state.dialogue == null) {
+                std.log.debug("reinit dia", .{});
+                game_state.dialogue = GameDialogueState.init(&dialogue.PROLOGUE);
+            }
+        },
+        .prologue_complete => {},
+        .tutorial_complete => {},
+    }
+
+    // dialogue overrules everything
+    if (game_state.dialogue) |*current_dialogue| {
+        if (inputs.a.pressed) {
+            current_dialogue.advance();
+            // how to trigger story events from dialogue being completeded.
+            // not all dialogue completions will update story events e.g. reading a sign.
+            if (current_dialogue.is_complete()) {
+                game_state.dialogue = null;
+            }
+        }
+        return;
+    }
+
+    // opening a menu is second highest priority
+    if (inputs.start.pressed) {
         game_state.mode = .Inventory;
         return;
     }
-    if (inputs.isSet(@intFromEnum(Command.up))) game_state.player_y -= 1 * PLAYER_VELOCITY;
-    if (inputs.isSet(@intFromEnum(Command.down))) game_state.player_y += 1 * PLAYER_VELOCITY;
-    if (inputs.isSet(@intFromEnum(Command.left))) game_state.player_x -= 1 * PLAYER_VELOCITY;
-    if (inputs.isSet(@intFromEnum(Command.right))) game_state.player_x += 1 * PLAYER_VELOCITY;
+    if (inputs.directions.contains(.up)) game_state.player_y -= 1 * PLAYER_VELOCITY;
+    if (inputs.directions.contains(.down)) game_state.player_y += 1 * PLAYER_VELOCITY;
+    if (inputs.directions.contains(.left)) game_state.player_x -= 1 * PLAYER_VELOCITY;
+    if (inputs.directions.contains(.right)) game_state.player_x += 1 * PLAYER_VELOCITY;
 }
 
 pub fn game_step_inventory(game_state: *GameState, inputs: Inputs) void {
-    if (inputs.isSet(@intFromEnum(Command.b))) {
+    if (inputs.b.pressed) {
         game_state.mode = .Overworld;
     }
 }
 
 pub fn game_step_main_menu(game_state: *GameState, inputs: Inputs) void {
-    if (inputs.isSet(@intFromEnum(Command.a))) {
+    if (inputs.a.pressed) {
         game_state.mode = .Overworld;
     }
 }
@@ -134,9 +174,29 @@ pub fn render_step_inventory(game_state: GameState, render_state: *RenderState) 
 }
 
 pub fn render_step_overworld(game_state: GameState, render_state: *RenderState) void {
-    draw.fill(&render_state.screen, 0x0);
+    // load tiles for needed map
+    switch (game_state.ctx.story_checkpoint) {
+        .game_start => {
+            draw.fill(&render_state.screen, 0xFF0000);
+        },
+        .prologue_complete => {
+            draw.fill(&render_state.screen, 0x00FF00);
+        },
+        .tutorial_complete => {
+            draw.fill(&render_state.screen, 0x0000FF);
+        },
+    }
+
+    // load entities
     draw.draw_image(&render_state.screen, render_state.player_sprite, game_state.player_x, game_state.player_y);
-    ui.drawTextBox(&render_state.screen, "hey, you are finally awake");
+
+    // overlay dialogue
+
+    if (game_state.dialogue) |current_dialogue| {
+        ui.drawTextBox(&render_state.screen, current_dialogue.getLine().text);
+    }
+
+    // draw.fill(&render_state.screen, 0x0);
 }
 
 fn blit(screen: ScreenBuffer, window: *Window) void {
@@ -171,18 +231,15 @@ pub fn main() !void {
 
     window.before_loop();
 
-    var game_state: GameState = .{
-        .mode = .MainMenu,
-        .player_x = 50,
-        .player_y = 50,
-    };
+    var game_state: GameState = GameState.init();
     var render_state: RenderState = .{ .screen = screen, .screen_upscaled = screen_upscaled, .player_sprite = player_sprite };
 
+    var inputs = Inputs{};
     while (window.loop()) {
         // const frame_start_t = std.time.nanoTimestamp();
 
-        const command = getInputs(window);
-        game_step(&game_state, command); // TODO pass a dt
+        updateInputs(&inputs, window);
+        game_step(&game_state, inputs); // TODO pass a dt
         render_step(game_state, &render_state);
 
         screen.upscale(&screen_upscaled, SCALE);

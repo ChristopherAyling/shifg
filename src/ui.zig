@@ -6,7 +6,7 @@ const image = @import("image.zig");
 const TEXTBOX_X = 5;
 const TEXTBOX_Y = 99;
 
-const TEXT_COLOR = 0xFF0000;
+const TEXT_COLOR = 0x00FFFF;
 const TEXTBOX_COLOR = 0xFFFF00;
 const TEXTBOX_WIDTH = 150;
 const TEXTBOX_HEIGHT = 40;
