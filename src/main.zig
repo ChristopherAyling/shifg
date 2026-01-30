@@ -195,7 +195,7 @@ pub fn render_step(game_state: GameState, render_state: *RenderState) void {
 
 pub fn render_step_main_menu(game_state: GameState, render_state: *RenderState) void {
     _ = game_state;
-    ui.drawTextBox(&render_state.screen, "Welcome to Shif. Press Start to play");
+    ui.drawSplashText(&render_state.screen);
 }
 
 pub fn render_step_inventory(game_state: GameState, render_state: *RenderState) void {
