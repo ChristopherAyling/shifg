@@ -1,7 +1,7 @@
 const std = @import("std");
 const ScreenBuffer = @import("screen.zig").ScreenBuffer;
 const draw = @import("draw.zig");
-const image = @import("image.zig");
+const Image = @import("image.zig").Image;
 
 const con = @import("constants.zig");
 
@@ -13,9 +13,10 @@ const TEXTBOX_COLOR = 0xFFFF00;
 const TEXTBOX_WIDTH = 150;
 const TEXTBOX_HEIGHT = 40;
 
-pub fn drawSplashText(screen: *ScreenBuffer) void {
+pub fn drawSplashText(screen: *ScreenBuffer, splash_sprite: Image) void {
     // draw.draw_rec(screen, TEXTBOX_X, TEXTBOX_Y, TEXTBOX_X + TEXTBOX_WIDTH, TEXTBOX_Y + TEXTBOX_HEIGHT, TEXTBOX_COLOR, 0x555555);
     draw.fill(screen, 0xFFFFFF);
+    draw.draw_image(screen, splash_sprite, 0, 0);
 
     const title = "welcome to shif";
     const subtitle = "press start..";

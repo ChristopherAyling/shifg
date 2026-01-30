@@ -105,6 +105,7 @@ const RenderState = struct {
     screen_upscaled: ScreenBuffer,
     level: ScreenBuffer,
     player_sprite: Image,
+    splash_sprite: Image,
     // level1_sprite: Image,
 };
 
@@ -195,7 +196,7 @@ pub fn render_step(game_state: GameState, render_state: *RenderState) void {
 
 pub fn render_step_main_menu(game_state: GameState, render_state: *RenderState) void {
     _ = game_state;
-    ui.drawSplashText(&render_state.screen);
+    ui.drawSplashText(&render_state.screen, render_state.splash_sprite);
 }
 
 pub fn render_step_inventory(game_state: GameState, render_state: *RenderState) void {
@@ -261,6 +262,7 @@ pub fn main() !void {
     defer window.deinit();
 
     const player_sprite = Image.from_file("/Users/chris/gaming/gam1/assets/person2.png");
+    const splash_sprite = Image.from_file("/Users/chris/gaming/gam1/assets/splash.png");
     // const level1_sprite = Image.from_file("/Users/chris/gaming/gam1/assets/level1.png");
 
     window.before_loop();
@@ -271,6 +273,7 @@ pub fn main() !void {
         .screen_upscaled = screen_upscaled,
         .level = level,
         .player_sprite = player_sprite,
+        .splash_sprite = splash_sprite,
     };
 
     var inputs = Inputs{};
