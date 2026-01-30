@@ -6,7 +6,15 @@ const con = @import("constants.zig");
 // entity is a tagged union of all entity types
 // types: NPC, sign, door, item
 // has an update function called every frame
-const Entity = struct {};
+const Entity = struct {
+    x: i32,
+    y: i32,
+    sprite: Image,
+
+    pub fn update(self: *Entity) void {
+        _ = self;
+    }
+};
 
 const EntityMap = Image;
 
@@ -38,5 +46,8 @@ pub const Level = struct {
     // populate entity buffer
     pub fn spawn_entities(self: Level) void {
         _ = self;
+        // iterate over all non empty squares in the entity map.
+        // the entity map contains entity ids in some cells.
+        //
     }
 };

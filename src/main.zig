@@ -55,6 +55,7 @@ const GameDialogueState = struct {
 
 const LEVELS = std.StaticStringMap([]const u8).initComptime(.{
     .{ "one", "/Users/chris/gaming/gam1/assets/levels/tutorial" },
+    .{ "arch", "/Users/chris/gaming/gam1/assets/levels/parade" },
 });
 
 const GameState = struct {
@@ -124,7 +125,7 @@ pub fn game_step(game_state: *GameState, inputs: Inputs) void {
 
     if (game_state.mode == .Overworld) {
         // TODO lookup story beat -> level name and load the correct level.
-        game_state.ensure_level_loaded("one");
+        game_state.ensure_level_loaded("arch");
     }
 
     game_state.camera_follow_player();
