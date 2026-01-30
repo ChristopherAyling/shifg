@@ -1,6 +1,9 @@
 pub const LEVEL_W = 512;
 pub const LEVEL_H = 512;
 
+pub const LEVEL_W_HALF = @divFloor(LEVEL_W, 2);
+pub const LEVEL_H_HALF = @divFloor(LEVEL_H, 2);
+
 pub const NATIVE_W = 160;
 pub const NATIVE_H = 144;
 pub const SCALE = 4;
@@ -12,3 +15,6 @@ pub const NATIVE_H_HALF = @divFloor(NATIVE_H, 2);
 
 pub const FONT_W = 3;
 pub const FONT_H = 5;
+
+pub const PLAYER_W = 4;
+pub const PLAYER_H = 4;

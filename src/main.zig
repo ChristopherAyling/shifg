@@ -84,16 +84,22 @@ const GameState = struct {
     }
 
     pub fn camera_follow_player(self: *GameState) void {
-        self.camera_x = self.player_x - @divFloor(con.NATIVE_W, 2) + @divFloor(sprites.PLAYER_SPRITE.w, 2);
-        self.camera_y = self.player_y - @divFloor(con.NATIVE_H, 2) + @divFloor(sprites.PLAYER_SPRITE.h, 2);
+        self.camera_x = self.player_x - @divFloor(con.NATIVE_W, 2) + @divFloor(con.PLAYER_W, 2);
+        self.camera_y = self.player_y - @divFloor(con.NATIVE_H, 2) + @divFloor(con.PLAYER_H, 2);
+
+        self.camera_x = @max(self.camera_x, con.NATIVE_W_HALF);
+        self.camera_y = @max(self.camera_y, con.NATIVE_H_HALF);
+
+        self.camera_x = @min(self.camera_x, con.LEVEL_W - con.NATIVE_W);
+        self.camera_y = @min(self.camera_y, con.LEVEL_H - con.NATIVE_H);
     }
 
     pub fn init() GameState {
         return .{
             .mode = .MainMenu,
             .ctx = .{ .story_checkpoint = .game_start },
-            .player_x = 0,
-            .player_y = 0,
+            .player_x = con.LEVEL_W_HALF,
+            .player_y = con.LEVEL_H_HALF,
             .camera_x = 0,
             .camera_y = 0,
             .dialogue = null,
@@ -267,7 +273,7 @@ pub fn main() !void {
     var window = try Window.init(allocator, con.UPSCALED_W, con.UPSCALED_H);
     defer window.deinit();
 
-    const player_sprite = Image.from_file("/Users/chris/gaming/gam1/assets/person2.png");
+    const player_sprite = Image.from_file("/Users/chris/gaming/gam1/assets/genly.png");
     const splash_sprite = Image.from_file("/Users/chris/gaming/gam1/assets/splash.png");
     // const level1_sprite = Image.from_file("/Users/chris/gaming/gam1/assets/level1.png");
 
@@ -281,6 +287,8 @@ pub fn main() !void {
         .player_sprite = player_sprite,
         .splash_sprite = splash_sprite,
     };
+
+    sprites.load_all_sprites();
 
     var inputs = Inputs{};
     while (window.loop()) {
