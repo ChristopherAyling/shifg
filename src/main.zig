@@ -10,6 +10,7 @@ const control = @import("control.zig");
 const sprites = @import("sprites.zig");
 const StoryCheckpoint = @import("story.zig").StoryCheckpoint;
 const con = @import("constants.zig");
+const effects = @import("effects.zig");
 const Level = @import("level.zig").Level;
 
 pub const Inputs = control.Inputs;
@@ -226,6 +227,9 @@ pub fn render_step_overworld(game_state: GameState, render_state: *RenderState) 
 
         // load entities
         draw.draw_image(&render_state.level, render_state.player_sprite, game_state.player_x, game_state.player_y);
+
+        // add effects
+        effects.snow(&render_state.level, 0);
 
         draw.view(&render_state.level, &render_state.screen, game_state.camera_x, game_state.camera_y);
     }
