@@ -120,11 +120,15 @@ pub fn game_step(game_state: *GameState, inputs: Inputs) void {
         GameMode.Inventory => game_step_inventory(game_state, inputs),
     }
 
+    if (game_state.mode == .Overworld) {
+        // TODO lookup story beat -> level name and load the correct level.
+        game_state.ensure_level_loaded("one");
+    }
+
     game_state.camera_follow_player();
 }
 
 pub fn game_step_overworld(game_state: *GameState, inputs: Inputs) void {
-    game_state.ensure_level_loaded("one");
     switch (game_state.ctx.story_checkpoint) {
         .game_start => {
             if (game_state.dialogue == null) {
@@ -275,7 +279,6 @@ pub fn main() !void {
 
         updateInputs(&inputs, window);
         game_step(&game_state, inputs); // TODO pass a dt
-        game_state.ensure_level_loaded("one");
         render_step(game_state, &render_state);
 
         screen.upscale(&screen_upscaled, con.SCALE);
