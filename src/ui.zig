@@ -8,8 +8,8 @@ const con = @import("constants.zig");
 const TEXTBOX_X = 5;
 const TEXTBOX_Y = 99;
 
-const TEXT_COLOR = 0x00FFFF;
-const TEXTBOX_COLOR = 0xFFFF00;
+const TEXT_COLOR = 0x22EEEE;
+const TEXTBOX_COLOR = 0x22AA88;
 const TEXTBOX_WIDTH = 150;
 const TEXTBOX_HEIGHT = 40;
 
@@ -24,7 +24,8 @@ pub fn drawSplashText(screen: *ScreenBuffer, splash_sprite: Image) void {
     draw.draw_text(screen, subtitle, con.NATIVE_W_HALF - (@divFloor(subtitle.len, 2) * (con.FONT_W + 2)), con.NATIVE_H_HALF + 30, 0x666666);
 }
 
-pub fn drawTextBox(screen: *ScreenBuffer, text: []const u8) void {
+pub fn drawTextBox(screen: *ScreenBuffer, speaker: []const u8, text: []const u8) void {
     draw.draw_rec(screen, TEXTBOX_X, TEXTBOX_Y, TEXTBOX_X + TEXTBOX_WIDTH, TEXTBOX_Y + TEXTBOX_HEIGHT, TEXTBOX_COLOR, 0x555555);
-    draw.draw_text(screen, text, TEXTBOX_X + 5, TEXTBOX_Y + 5, TEXT_COLOR);
+    draw.draw_text(screen, speaker, TEXTBOX_X + 3, TEXTBOX_Y + 3, 0xFFFFFF);
+    draw.draw_text(screen, text, TEXTBOX_X + 5, TEXTBOX_Y + 12, TEXT_COLOR);
 }

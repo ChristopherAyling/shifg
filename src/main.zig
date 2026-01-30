@@ -201,7 +201,7 @@ pub fn render_step_main_menu(game_state: GameState, render_state: *RenderState) 
 
 pub fn render_step_inventory(game_state: GameState, render_state: *RenderState) void {
     _ = game_state;
-    ui.drawTextBox(&render_state.screen, "inventory");
+    ui.drawTextBox(&render_state.screen, "", "inventory");
 }
 
 pub fn render_step_overworld(game_state: GameState, render_state: *RenderState) void {
@@ -234,7 +234,8 @@ pub fn render_step_overworld(game_state: GameState, render_state: *RenderState) 
     {
         // overlay dialogue
         if (game_state.dialogue) |current_dialogue| {
-            ui.drawTextBox(&render_state.screen, current_dialogue.getLine().text);
+            const line = current_dialogue.getLine();
+            ui.drawTextBox(&render_state.screen, line.speaker_name, line.text);
         }
     }
 }
