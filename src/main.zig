@@ -112,9 +112,7 @@ const RenderState = struct {
     screen: ScreenBuffer,
     screen_upscaled: ScreenBuffer,
     level: ScreenBuffer,
-    player_sprite: Image,
-    splash_sprite: Image,
-    // level1_sprite: Image,
+    storage: sprites.SpriteStorage,
 };
 
 const PLAYER_VELOCITY = 1;
@@ -204,7 +202,7 @@ pub fn render_step(game_state: GameState, render_state: *RenderState) void {
 
 pub fn render_step_main_menu(game_state: GameState, render_state: *RenderState) void {
     _ = game_state;
-    ui.drawSplashText(&render_state.screen, render_state.splash_sprite);
+    ui.drawSplashText(&render_state.screen, render_state.storage.get(.splash));
 }
 
 pub fn render_step_inventory(game_state: GameState, render_state: *RenderState) void {
@@ -233,7 +231,7 @@ pub fn render_step_overworld(game_state: GameState, render_state: *RenderState) 
         draw.draw_image(&render_state.level, game_state.level.?.sprite, 0, 0);
 
         // load entities
-        draw.draw_image(&render_state.level, render_state.player_sprite, game_state.player_x, game_state.player_y);
+        draw.draw_image(&render_state.level, render_state.storage.get(.genly), game_state.player_x, game_state.player_y);
 
         // add effects
         effects.snow(&render_state.level, 0);
@@ -273,9 +271,8 @@ pub fn main() !void {
     var window = try Window.init(allocator, con.UPSCALED_W, con.UPSCALED_H);
     defer window.deinit();
 
-    const player_sprite = Image.from_file("/Users/chris/gaming/gam1/assets/genly.png");
-    const splash_sprite = Image.from_file("/Users/chris/gaming/gam1/assets/splash.png");
-    // const level1_sprite = Image.from_file("/Users/chris/gaming/gam1/assets/level1.png");
+    var storage = sprites.SpriteStorage.init();
+    storage.load();
 
     window.before_loop();
 
@@ -284,11 +281,8 @@ pub fn main() !void {
         .screen = screen,
         .screen_upscaled = screen_upscaled,
         .level = level,
-        .player_sprite = player_sprite,
-        .splash_sprite = splash_sprite,
+        .storage = storage,
     };
-
-    sprites.load_all_sprites();
 
     var inputs = Inputs{};
     while (window.loop()) {
