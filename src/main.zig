@@ -12,9 +12,13 @@ const StoryCheckpoint = @import("story.zig").StoryCheckpoint;
 const con = @import("constants.zig");
 const effects = @import("effects.zig");
 const Level = @import("level.zig").Level;
+const entity = @import("entity.zig");
 
-pub const Inputs = control.Inputs;
-pub const updateInputs = control.updateInputs;
+const Npc = entity.Npc;
+const Item = entity.Item;
+
+const Inputs = control.Inputs;
+const updateInputs = control.updateInputs;
 // pub const Command = control.Command;
 
 const GameMode = enum {
@@ -70,16 +74,28 @@ const GameState = struct {
     camera_x: i32,
     camera_y: i32,
 
+    // entities
+    npcs: [1000]Npc = .{Npc{}} ** 1000,
+    items: [1000]Item = .{Item{}} ** 1000,
+
+    // stuff
     dialogue: ?GameDialogueState,
     level: ?Level,
+
+    pub fn load_level(self: *GameState, name: []const u8) void {
+        const new_level = Level.from_folder(LEVELS.get(name).?, name);
+        new_level.load_entities(&self.npcs);
+        self.level = new_level;
+    }
 
     pub fn ensure_level_loaded(self: *GameState, name: []const u8) void {
         if (self.level) |current_level| {
             if (!std.mem.eql(u8, current_level.name, name)) {
-                self.level = Level.from_folder(LEVELS.get(name).?, name);
+                self.load_level(name);
             }
         } else {
-            self.level = Level.from_folder(LEVELS.get(name).?, name);
+            // self.level = Level.from_folder(LEVELS.get(name).?, name);
+            self.load_level(name);
         }
     }
 
@@ -231,7 +247,17 @@ pub fn render_step_overworld(game_state: GameState, render_state: *RenderState) 
         draw.draw_image(&render_state.level, game_state.level.?.sprite, 0, 0);
 
         // load entities
-        draw.draw_image(&render_state.level, render_state.storage.get(.genly), game_state.player_x, game_state.player_y);
+        {
+            // player
+            draw.draw_image(&render_state.level, render_state.storage.get(.genly), game_state.player_x, game_state.player_y);
+            // npcs
+            for (game_state.npcs) |npc| {
+                if (npc.active) {
+                    draw.draw_image(&render_state.level, render_state.storage.get(npc.spritekey), npc.x, npc.y);
+                }
+            }
+            // items
+        }
 
         // add effects
         effects.snow(&render_state.level, 0);

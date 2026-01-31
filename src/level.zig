@@ -2,19 +2,13 @@ const std = @import("std");
 const assert = std.debug.assert;
 const Image = @import("image.zig").Image;
 const con = @import("constants.zig");
+const entity = @import("entity.zig");
+const Npc = entity.Npc;
+const Item = entity.Item;
 
 // entity is a tagged union of all entity types
 // types: NPC, sign, door, item
 // has an update function called every frame
-const Entity = struct {
-    x: i32,
-    y: i32,
-    sprite: Image,
-
-    pub fn update(self: *Entity) void {
-        _ = self;
-    }
-};
 
 const EntityMap = Image;
 
@@ -44,10 +38,24 @@ pub const Level = struct {
     }
 
     // populate entity buffer
-    pub fn spawn_entities(self: Level) void {
+    pub fn load_entities(self: Level, npcs: []Npc) void {
         _ = self;
         // iterate over all non empty squares in the entity map.
         // the entity map contains entity ids in some cells.
-        //
+        // npcs
+        npcs[0] = Npc{
+            .active = true,
+            .spritekey = .argaven,
+            .x = 230,
+            .y = 270,
+        };
+
+        npcs[1] = Npc{
+            .active = true,
+            .spritekey = .estraven,
+            .x = 220,
+            .y = 270,
+        };
+        // items
     }
 };
