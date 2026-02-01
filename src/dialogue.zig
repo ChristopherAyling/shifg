@@ -1,4 +1,6 @@
 // structs
+const std = @import("std");
+const assert = std.debug.assert;
 const StoryCheckpoint = @import("story.zig").StoryCheckpoint;
 
 pub const DialogueLine = struct {
@@ -29,10 +31,62 @@ pub const PROLOGUE = DialogueSequence{
     .jump_to_story_checkpoint = .prologue_complete,
 };
 
+pub const PARADE_ARGAVEN = DialogueSequence{
+    .id = 0,
+    .lines = &[_]DialogueLine{
+        .{ .speaker_name = "Argaven:", .text = "i am argaven" },
+    },
+};
+
+pub const PARADE_ESTRAVEN = DialogueSequence{
+    .id = 0,
+    .lines = &[_]DialogueLine{
+        .{ .speaker_name = "Estraven:", .text = "I am a future traitor" },
+    },
+};
+
 pub const TUTORIAL = DialogueSequence{
     .id = 0,
     .lines = &[_]DialogueLine{
         .{ .speaker_name = "Narrator", .text = "like a gameboy" },
         .{ .speaker_name = "Narrator", .text = "arrow keys, a, b, e=start" },
     },
+};
+
+// TODO probably have some lookup like system like with sprites
+
+pub const MISSING = DialogueSequence{
+    .id = 0,
+    .lines = &[_]DialogueLine{
+        .{ .speaker_name = "past you:", .text = "knock knock" },
+        .{ .speaker_name = "past you:", .text = "interupting cow" },
+        .{ .speaker_name = "past you:", .text = "moo" },
+    },
+};
+
+pub const DialogueState = struct {
+    dialogue_index: usize = 0,
+    dialogue: *const DialogueSequence,
+
+    pub fn init(seq: *const DialogueSequence) DialogueState {
+        std.log.debug("dialogue len {any}", .{seq.lines.len});
+        return .{
+            .dialogue_index = 0,
+            .dialogue = seq,
+        };
+    }
+
+    pub fn getLine(self: DialogueState) DialogueLine {
+        assert(self.dialogue_index < self.dialogue.lines.len);
+        return self.dialogue.lines[self.dialogue_index];
+    }
+
+    pub fn advance(self: *DialogueState) void {
+        self.dialogue_index += 1;
+        std.log.debug("dialogue index = {any}", .{self.dialogue_index});
+    }
+
+    pub fn is_complete(self: DialogueState) bool {
+        return self.dialogue_index >= self.dialogue.lines.len;
+    }
 };

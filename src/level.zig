@@ -5,12 +5,13 @@ const con = @import("constants.zig");
 const entity = @import("entity.zig");
 const Npc = entity.Npc;
 const Item = entity.Item;
+const dialogue = @import("dialogue.zig");
 
 // entity is a tagged union of all entity types
 // types: NPC, sign, door, item
 // has an update function called every frame
 
-const EntityMap = Image;
+const EntityMap = Image; // u32: spritekey|spritekey|dialoguekey|dialoguekey. 16b keys for each. also don't need to use 8bit sections
 
 pub const Level = struct {
     name: []const u8, // can lookup a static map
@@ -48,6 +49,7 @@ pub const Level = struct {
             .spritekey = .argaven,
             .x = 230,
             .y = 270,
+            .dialogue = dialogue.PARADE_ARGAVEN,
         };
 
         npcs[1] = Npc{
@@ -55,6 +57,7 @@ pub const Level = struct {
             .spritekey = .estraven,
             .x = 220,
             .y = 270,
+            .dialogue = dialogue.PARADE_ESTRAVEN,
         };
         // items
     }

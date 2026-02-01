@@ -5,7 +5,9 @@ const draw = @import("draw.zig");
 const ui = @import("ui.zig");
 const Image = @import("image.zig").Image;
 const ScreenBuffer = @import("screen.zig").ScreenBuffer;
-const dialogue = @import("dialogue.zig");
+const DialogueState = @import("dialogue.zig").DialogueState;
+const DialogueSequence = @import("dialogue.zig").DialogueSequence;
+const dialogues = @import("dialogue.zig");
 const control = @import("control.zig");
 const sprites = @import("sprites.zig");
 const StoryCheckpoint = @import("story.zig").StoryCheckpoint;
@@ -32,31 +34,6 @@ const GameContext = struct {
     story_checkpoint: StoryCheckpoint,
 };
 
-const GameDialogueState = struct {
-    dialogue_index: usize,
-    dialogue: *const dialogue.DialogueSequence,
-
-    pub fn init(seq: *const dialogue.DialogueSequence) GameDialogueState {
-        return .{
-            .dialogue_index = 0,
-            .dialogue = seq,
-        };
-    }
-
-    pub fn getLine(self: GameDialogueState) dialogue.DialogueLine {
-        return self.dialogue.lines[self.dialogue_index];
-    }
-
-    pub fn advance(self: *GameDialogueState) void {
-        self.dialogue_index += 1;
-        std.log.debug("dialogue index = {any}", .{self.dialogue_index});
-    }
-
-    pub fn is_complete(self: GameDialogueState) bool {
-        return self.dialogue_index >= self.dialogue.lines.len;
-    }
-};
-
 const LEVELS = std.StaticStringMap([]const u8).initComptime(.{
     .{ "one", "/Users/chris/gaming/gam1/assets/levels/tutorial" },
     .{ "arch", "/Users/chris/gaming/gam1/assets/levels/parade" },
@@ -79,8 +56,18 @@ const GameState = struct {
     items: [1000]Item = .{Item{}} ** 1000,
 
     // stuff
-    dialogue: ?GameDialogueState,
+    dialogue: ?DialogueState,
     level: ?Level,
+
+    pub fn setDialogue(self: *GameState, dlog: *const DialogueSequence) void {
+        std.log.debug("setting dialogue", .{});
+        self.dialogue = DialogueState.init(dlog);
+    }
+
+    pub fn clearDialogue(self: *GameState) void {
+        std.log.debug("clearing dialogue", .{});
+        self.dialogue = null;
+    }
 
     pub fn load_level(self: *GameState, name: []const u8) void {
         const new_level = Level.from_folder(LEVELS.get(name).?, name);
@@ -156,7 +143,7 @@ pub fn game_step_overworld(game_state: *GameState, inputs: Inputs) void {
         .game_start => {
             if (game_state.dialogue == null) {
                 std.log.debug("reinit dia", .{});
-                game_state.dialogue = GameDialogueState.init(&dialogue.PROLOGUE);
+                game_state.setDialogue(&dialogues.PROLOGUE);
             }
         },
         .prologue_complete => {},
@@ -173,7 +160,7 @@ pub fn game_step_overworld(game_state: *GameState, inputs: Inputs) void {
                 if (current_dialogue.dialogue.jump_to_story_checkpoint) |next_check_point| {
                     game_state.ctx.story_checkpoint = next_check_point;
                 }
-                game_state.dialogue = null;
+                game_state.clearDialogue();
             }
         }
         return;
@@ -184,6 +171,22 @@ pub fn game_step_overworld(game_state: *GameState, inputs: Inputs) void {
         game_state.mode = .Inventory;
         return;
     }
+
+    // world interaction
+    if (inputs.a.pressed) {
+        // check if any entities close enough by
+        // check npcs
+        for (&game_state.npcs) |*npc| {
+            if (!npc.active) continue;
+            if ((@abs(npc.x - game_state.player_x) < 12) and (@abs(npc.y - game_state.player_y)) < 12) {
+                game_state.setDialogue(&npc.dialogue);
+                return;
+            }
+        }
+        // check items
+    }
+
+    // movement
     if (inputs.directions.contains(.up)) game_state.player_y -= 1 * PLAYER_VELOCITY;
     if (inputs.directions.contains(.down)) game_state.player_y += 1 * PLAYER_VELOCITY;
     if (inputs.directions.contains(.left)) game_state.player_x -= 1 * PLAYER_VELOCITY;
