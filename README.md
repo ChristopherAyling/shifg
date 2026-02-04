@@ -1,8 +1,10 @@
 # Game
 
-RPG/DnD/Baldurs gate kind of game.
+```bash
+zig build run
+```
 
-Need to figure out audio too.
+RPG/DnD/Baldurs gate kind of game.
 
 Tile based like pokemon.
 

@@ -9,9 +9,17 @@ pub const MusicTrack = enum {
     overworld,
 };
 
+pub const SfxTrack = enum {
+    click,
+};
+
 const music_paths = std.EnumArray(MusicTrack, [:0]const u8).init(.{
     .splash = "assets/audio/music/missing.wav",
     .overworld = "assets/audio/music/overworld.wav",
+});
+
+const sfx_paths = std.EnumArray(SfxTrack, [:0]const u8).init(.{
+    .click = "assets/audio/sfx/click.wav",
 });
 
 pub const AudioSystem = struct {
@@ -43,6 +51,11 @@ pub const AudioSystem = struct {
         c.ma_sound_set_looping(&self.music, 1);
         c.ma_sound_set_volume(&self.music, 0.4);
         _ = c.ma_sound_start(&self.music);
+    }
+
+    pub fn playSound(self: *AudioSystem, track: SfxTrack) void {
+        const sfx_path = sfx_paths.get(track);
+        _ = c.ma_engine_play_sound(&self.engine, sfx_path.ptr, null);
     }
 
     pub fn stopMusic(self: *AudioSystem) void {
