@@ -15,6 +15,7 @@ const con = @import("constants.zig");
 const effects = @import("effects.zig");
 const Level = @import("level.zig").Level;
 const entity = @import("entity.zig");
+const audio = @import("audio.zig");
 
 const Npc = entity.Npc;
 const Item = entity.Item;
@@ -50,6 +51,8 @@ const GameState = struct {
     player_y: i32,
     camera_x: i32,
     camera_y: i32,
+
+    audio_system: audio.AudioSystem,
 
     // entities
     npcs: [1000]Npc = .{Npc{}} ** 1000,
@@ -100,6 +103,7 @@ const GameState = struct {
     pub fn init() GameState {
         return .{
             .mode = .MainMenu,
+            .audio_system = audio.AudioSystem.init(),
             .ctx = .{ .story_checkpoint = .game_start },
             .player_x = con.LEVEL_W_HALF,
             .player_y = con.LEVEL_H_HALF,

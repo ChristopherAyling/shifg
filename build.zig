@@ -27,6 +27,12 @@ pub fn build(b: *std.Build) void {
         // .optimize = optimize,
     });
 
+    b.installDirectory(.{
+        .source_dir = b.path("assets/"),
+        .install_dir = .bin,
+        .install_subdir = "assets",
+    });
+
     exe.addIncludePath(b.path("src"));
     exe.addCSourceFile(.{ .file = b.path("src/fenster.c"), .flags = &[_][]const u8{} });
 
@@ -37,6 +43,10 @@ pub fn build(b: *std.Build) void {
         else => {},
     }
     exe.linkLibC();
+
+    exe.linkFramework("AudioToolbox");
+    exe.linkFramework("CoreAudio");
+    exe.linkFramework("CoreFoundation");
 
     // This declares intent for the executable to be installed into the
     // standard location when the user invokes the "install" step (the default
