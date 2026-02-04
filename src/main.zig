@@ -143,6 +143,8 @@ pub fn game_step(game_state: *GameState, inputs: Inputs) void {
 }
 
 pub fn game_step_overworld(game_state: *GameState, inputs: Inputs) void {
+    game_state.audio_system.setMusic(.overworld);
+
     switch (game_state.ctx.story_checkpoint) {
         .game_start => {
             if (game_state.dialogue == null) {
@@ -319,8 +321,6 @@ pub fn main() !void {
         .level = level,
         .storage = storage,
     };
-
-    game_state.audio_system.setMusic(.splash);
 
     var inputs = Inputs{};
     while (window.loop()) {
