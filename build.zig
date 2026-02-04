@@ -35,6 +35,7 @@ pub fn build(b: *std.Build) void {
 
     exe.addIncludePath(b.path("src"));
     exe.addCSourceFile(.{ .file = b.path("src/fenster.c"), .flags = &[_][]const u8{} });
+    exe.addCSourceFile(.{ .file = b.path("src/miniaudio.c"), .flags = &[_][]const u8{} });
 
     switch (target.result.os.tag) {
         .macos => exe.linkFramework("Cocoa"),

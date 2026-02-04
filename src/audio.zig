@@ -1,10 +1,6 @@
 const std = @import("std");
 
 const c = @cImport({
-    @cDefine("MINIAUDIO_IMPLEMENTATION", "1");
-    @cDefine("MA_IMPLEMENTATION", "1");
-    @cDefine("MA_NO_RUNTIME_LINKING", "1");
-
     @cInclude("miniaudio.h");
 });
 
@@ -19,17 +15,16 @@ const music_paths = std.EnumArray(MusicTrack, [:0]const u8).init(.{
 });
 
 pub const AudioSystem = struct {
-    engine: c.ma_engine,
+    engine: c.ma_engine = undefined,
+    engine_initialized: bool = false,
     current_track: ?MusicTrack = null,
     music: ?c.ma_sound = null,
 
-    pub fn init() AudioSystem {
-        var engine: c.ma_engine = undefined;
-        if (c.ma_engine_init(null, &engine) != c.MA_SUCCESS) @panic("audio engine init failed");
-
-        return .{
-            .engine = engine,
-        };
+    /// Call this after the AudioSystem has been placed at its final memory location (e.g. on the heap).
+    /// Do NOT call this on a stack-local AudioSystem — ma_engine is too large for the stack.
+    pub fn init(self: *AudioSystem) void {
+        if (c.ma_engine_init(null, &self.engine) != c.MA_SUCCESS) @panic("audio engine init failed");
+        self.engine_initialized = true;
     }
 
     pub fn setMusic(self: *AudioSystem, track: MusicTrack) void {

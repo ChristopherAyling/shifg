@@ -103,7 +103,7 @@ const GameState = struct {
     pub fn init() GameState {
         return .{
             .mode = .MainMenu,
-            .audio_system = audio.AudioSystem.init(),
+            .audio_system = .{},
             .ctx = .{ .story_checkpoint = .game_start },
             .player_x = con.LEVEL_W_HALF,
             .player_y = con.LEVEL_H_HALF,
@@ -211,7 +211,7 @@ pub fn game_step_main_menu(game_state: *GameState, inputs: Inputs) void {
 
 // rendering
 
-pub fn render_step(game_state: GameState, render_state: *RenderState) void {
+pub fn render_step(game_state: *const GameState, render_state: *RenderState) void {
     // clear screen
     draw.fill(&render_state.screen, 0x0);
     draw.fill(&render_state.screen_upscaled, 0x0);
@@ -223,17 +223,17 @@ pub fn render_step(game_state: GameState, render_state: *RenderState) void {
     }
 }
 
-pub fn render_step_main_menu(game_state: GameState, render_state: *RenderState) void {
+pub fn render_step_main_menu(game_state: *const GameState, render_state: *RenderState) void {
     _ = game_state;
     ui.drawSplashText(&render_state.screen, render_state.storage.get(.splash));
 }
 
-pub fn render_step_inventory(game_state: GameState, render_state: *RenderState) void {
+pub fn render_step_inventory(game_state: *const GameState, render_state: *RenderState) void {
     _ = game_state;
     ui.drawTextBox(&render_state.screen, "", "inventory");
 }
 
-pub fn render_step_overworld(game_state: GameState, render_state: *RenderState) void {
+pub fn render_step_overworld(game_state: *const GameState, render_state: *RenderState) void {
     // render world
     {
         // load tiles for needed map
@@ -309,7 +309,10 @@ pub fn main() !void {
 
     window.before_loop();
 
-    var game_state: GameState = GameState.init();
+    const game_state: *GameState = try allocator.create(GameState);
+    game_state.* = GameState.init();
+    game_state.audio_system.init();
+    defer allocator.destroy(game_state);
     var render_state: RenderState = .{
         .screen = screen,
         .screen_upscaled = screen_upscaled,
@@ -322,7 +325,7 @@ pub fn main() !void {
         // const frame_start_t = std.time.nanoTimestamp();
 
         updateInputs(&inputs, window);
-        game_step(&game_state, inputs); // TODO pass a dt
+        game_step(game_state, inputs); // TODO pass a dt
         render_step(game_state, &render_state);
 
         screen.upscale(&screen_upscaled, con.SCALE);
