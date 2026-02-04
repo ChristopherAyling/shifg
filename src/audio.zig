@@ -10,8 +10,8 @@ pub const MusicTrack = enum {
 };
 
 const music_paths = std.EnumArray(MusicTrack, [:0]const u8).init(.{
-    .splash = "assets/audio/music/splash.ogg",
-    .overworld = "assets/audio/music/splash.ogg",
+    .splash = "assets/audio/music/missing.ogg",
+    .overworld = "assets/audio/music/missing.ogg",
 });
 
 pub const AudioSystem = struct {
@@ -36,7 +36,7 @@ pub const AudioSystem = struct {
 
         const music_path = music_paths.get(track);
         var new_music: c.ma_sound = undefined;
-        if (c.ma_sound_init_from_file(&self.engine, music_path.ptr, 0, null, null, &new_music)) @panic("audio file init failed");
+        _ = c.ma_sound_init_from_file(&self.engine, music_path.ptr, 0, null, null, &new_music); //) @panic("audio file init failed");
         c.ma_sound_set_looping(&new_music, 1);
         c.ma_sound_set_volume(&new_music, 0.4);
         _ = c.ma_sound_start(&new_music);

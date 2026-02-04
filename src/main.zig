@@ -320,6 +320,8 @@ pub fn main() !void {
         .storage = storage,
     };
 
+    game_state.audio_system.setMusic(.splash);
+
     var inputs = Inputs{};
     while (window.loop()) {
         // const frame_start_t = std.time.nanoTimestamp();
