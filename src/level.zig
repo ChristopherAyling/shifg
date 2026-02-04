@@ -41,6 +41,10 @@ pub const Level = struct {
     // populate entity buffer
     pub fn load_entities(self: Level, npcs: []Npc) void {
         _ = self;
+        // mark all existing entities as inactive
+        for (npcs) |*npc| {
+            npc.active = false;
+        }
         // iterate over all non empty squares in the entity map.
         // the entity map contains entity ids in some cells.
         // npcs
