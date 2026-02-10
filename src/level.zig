@@ -11,30 +11,31 @@ const dialogue = @import("dialogue.zig");
 // types: NPC, sign, door, item
 // has an update function called every frame
 
-const EntityMap = Image; // u32: spritekey|spritekey|dialoguekey|dialoguekey. 16b keys for each. also don't need to use 8bit sections
+// const EntityMap = Image; // u32: spritekey|spritekey|dialoguekey|dialoguekey. 16b keys for each. also don't need to use 8bit sections
 
 pub const Level = struct {
     name: []const u8, // can lookup a static map
-    sprite: Image,
-    entity_map: EntityMap,
+    bg: Image,
+    fg: Image,
 
     pub fn from_folder(path: []const u8, name: []const u8) Level {
         var buf: [256]u8 = undefined;
 
-        const sprite_path = std.fmt.bufPrintZ(&buf, "{s}/sprite.png", .{path}) catch unreachable;
-        const sprite = Image.from_file(sprite_path);
+        const bg_path = std.fmt.bufPrintZ(&buf, "{s}/bg.png", .{path}) catch unreachable;
+        const bg = Image.from_file(bg_path);
 
-        const entity_path = std.fmt.bufPrintZ(&buf, "{s}/entity_map.png", .{path}) catch unreachable;
-        const entity_map = EntityMap.from_file(entity_path);
+        const fg_path = std.fmt.bufPrintZ(&buf, "{s}/fg.png", .{path}) catch unreachable;
+        const fg = Image.from_file(fg_path);
+
+        // const entity_path = std.fmt.bufPrintZ(&buf, "{s}/entities.shif", .{path}) catch unreachable;
+        // _ = entity_path;
+        // const entity_map = EntityMap.from_file(entity_path);
         // TODO assert they are the same size etc
-
-        assert(sprite.w == entity_map.w);
-        assert(sprite.h == entity_map.h);
 
         return .{
             .name = name,
-            .sprite = sprite,
-            .entity_map = entity_map,
+            .bg = bg,
+            .fg = fg,
         };
     }
 

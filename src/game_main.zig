@@ -254,7 +254,7 @@ pub fn render_step_overworld(game_state: *const GameState, render_state: *Render
             },
         }
 
-        draw.draw_image(&render_state.level, game_state.level.?.sprite, 0, 0);
+        draw.draw_image(&render_state.level, game_state.level.?.bg, 0, 0);
 
         // load entities
         {
@@ -268,6 +268,8 @@ pub fn render_step_overworld(game_state: *const GameState, render_state: *Render
             }
             // items
         }
+
+        draw.draw_image(&render_state.level, game_state.level.?.fg, 0, 0);
 
         // add effects
         effects.snow(&render_state.level, 0);
