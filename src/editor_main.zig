@@ -47,6 +47,7 @@ const EditorState = struct {
 
     // adding
     add_selection: i32 = 0,
+    max_add_selection: i32 = 2,
 
     pub fn initFromSavedLevel(path: []const u8) EditorState {
         return .{
@@ -70,6 +71,7 @@ const EditorState = struct {
             .Navigate => {
                 if (inputs.a.pressed) {
                     self.mode = .Add;
+                    self.add_selection = 0;
                 } else {
                     if (inputs.directions.contains(.up)) self.tile_cursor_y -= 1 * TILE_CURSOR_VELOCITY;
                     if (inputs.directions.contains(.down)) self.tile_cursor_y += 1 * TILE_CURSOR_VELOCITY;
@@ -80,11 +82,12 @@ const EditorState = struct {
             .Add => {
                 if (inputs.b.pressed) {
                     self.mode = .Navigate;
+                } else if (inputs.a.pressed) {
+                    // TODO place NPC in array and therefore world
+                    self.mode = .Navigate;
                 } else {
-                    // if (inputs.directions.contains(.up)) self.add_selection = @min(self.add_selection, self.add_selection + 1);
-                    // if (inputs.directions.contains(.down)) self.add_selection = @max(self.add_selection, self.add_selection - 1);
-                    if (inputs.directions.contains(.up)) self.add_selection += 1;
-                    if (inputs.directions.contains(.down)) self.add_selection -= 1;
+                    if (inputs.up.pressed) self.add_selection = @max(0, self.add_selection - 1);
+                    if (inputs.down.pressed) self.add_selection = @min(self.max_add_selection, self.add_selection + 1);
                 }
             },
             .Menu => {},
