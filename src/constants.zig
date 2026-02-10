@@ -16,5 +16,5 @@ pub const NATIVE_H_HALF = @divFloor(NATIVE_H, 2);
 pub const FONT_W = 3;
 pub const FONT_H = 5;
 
-pub const PLAYER_W = 4;
-pub const PLAYER_H = 4;
+pub const PLAYER_W = 8;
+pub const PLAYER_H = 8;

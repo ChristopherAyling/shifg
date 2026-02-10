@@ -90,3 +90,5 @@ pub const DialogueState = struct {
         return self.dialogue_index >= self.dialogue.lines.len;
     }
 };
+
+// TODO have dialogues be looked up by keys

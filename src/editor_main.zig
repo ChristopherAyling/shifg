@@ -3,6 +3,7 @@ const assert = std.debug.assert;
 const Window = @import("window.zig").Window;
 const draw = @import("draw.zig");
 const ui = @import("ui.zig");
+const eui = @import("editor_ui.zig");
 const Image = @import("image.zig").Image;
 const ScreenBuffer = @import("screen.zig").ScreenBuffer;
 const DialogueState = @import("dialogue.zig").DialogueState;
@@ -25,7 +26,18 @@ const updateInputs = control.updateInputs;
 
 const TILE_CURSOR_VELOCITY = 1;
 
+const EditorMode = enum {
+    Navigate, // move cursor around. a_pressed->ADD, b_pressed->remove(), start->MENU/SETTINGS
+    Add, // choose an NPC from a menu to place
+    Menu, // save, load, rename, change music etc
+    // MOVE
+    // EDIT/INSPECT
+    // PLAY
+
+};
+
 const EditorState = struct {
+    mode: EditorMode = .Navigate,
     tile_cursor_x: i32 = con.LEVEL_W_HALF,
     tile_cursor_y: i32 = con.LEVEL_H_HALF,
     camera_x: i32 = 0,
@@ -33,16 +45,8 @@ const EditorState = struct {
     npcs: [1000]Npc = .{Npc{}} ** 1000,
     level: Level,
 
-    // pub fn initFromBackgroundImageFile(background_path: []const u8, level_folder: []const u8) !EditorState {
-    //     var buf: [256]u8 = undefined;
-    //     // create new level in level folder
-    //     {
-    //         try std.fs.makeDirAbsolute(level_folder);
-    //         const new_background_path = try std.fmt.bufPrintZ(&buf, "{s}/background.png", .{background_path});
-    //         try std.fs.copyFileAbsolute(background_path, new_background_path, .{});
-    //     }
-    //     return EditorState.initFromSavedLevel(level_folder);
-    // }
+    // adding
+    add_selection: i32 = 0,
 
     pub fn initFromSavedLevel(path: []const u8) EditorState {
         return .{
@@ -62,10 +66,29 @@ const EditorState = struct {
     }
 
     pub fn step(self: *EditorState, inputs: Inputs) void {
-        if (inputs.directions.contains(.up)) self.tile_cursor_y -= 1 * TILE_CURSOR_VELOCITY;
-        if (inputs.directions.contains(.down)) self.tile_cursor_y += 1 * TILE_CURSOR_VELOCITY;
-        if (inputs.directions.contains(.left)) self.tile_cursor_x -= 1 * TILE_CURSOR_VELOCITY;
-        if (inputs.directions.contains(.right)) self.tile_cursor_x += 1 * TILE_CURSOR_VELOCITY;
+        switch (self.mode) {
+            .Navigate => {
+                if (inputs.a.pressed) {
+                    self.mode = .Add;
+                } else {
+                    if (inputs.directions.contains(.up)) self.tile_cursor_y -= 1 * TILE_CURSOR_VELOCITY;
+                    if (inputs.directions.contains(.down)) self.tile_cursor_y += 1 * TILE_CURSOR_VELOCITY;
+                    if (inputs.directions.contains(.left)) self.tile_cursor_x -= 1 * TILE_CURSOR_VELOCITY;
+                    if (inputs.directions.contains(.right)) self.tile_cursor_x += 1 * TILE_CURSOR_VELOCITY;
+                }
+            },
+            .Add => {
+                if (inputs.b.pressed) {
+                    self.mode = .Navigate;
+                } else {
+                    // if (inputs.directions.contains(.up)) self.add_selection = @min(self.add_selection, self.add_selection + 1);
+                    // if (inputs.directions.contains(.down)) self.add_selection = @max(self.add_selection, self.add_selection - 1);
+                    if (inputs.directions.contains(.up)) self.add_selection += 1;
+                    if (inputs.directions.contains(.down)) self.add_selection -= 1;
+                }
+            },
+            .Menu => {},
+        }
 
         self.camera_follow_tile_cursor();
     }
@@ -78,17 +101,25 @@ const RenderState = struct {
     storage: sprites.SpriteStorage,
 
     pub fn step(self: *RenderState, editor_state: *EditorState) void {
-        draw.fill(&self.screen, 0x0);
-        draw.fill(&self.screen_upscaled, 0x0);
-
+        // set glaring defaults so we can easily spot render errors
+        draw.fill(&self.screen, 0xFF0000);
+        draw.fill(&self.screen_upscaled, 0x00FF00);
         draw.fill_checkerboard(&self.level, 8, 0xFF00FF, 0x0);
 
+        // render level
         draw.draw_image(&self.level, editor_state.level.bg, 0, 0);
         draw.draw_image(&self.level, editor_state.level.fg, 0, 0);
-
         draw.draw_image(&self.level, self.storage.get(.cursor), editor_state.tile_cursor_x, editor_state.tile_cursor_y);
-
         draw.view(&self.level, &self.screen, editor_state.camera_x, editor_state.camera_y);
+
+        // render ui
+        if (editor_state.mode == .Add) {
+            // ui.drawTextBox(&self.screen, "menu", "select an NPC");
+            eui.draw_sprite_selector(&self.screen, &self.storage, editor_state.add_selection);
+        }
+
+        // upscale
+        self.screen.upscale(&self.screen_upscaled, con.SCALE);
     }
 };
 
@@ -116,8 +147,8 @@ pub fn main() !void {
     }
 
     const level_screen: ScreenBuffer = try ScreenBuffer.init(allocator, con.LEVEL_W, con.LEVEL_H);
-    var screen: ScreenBuffer = try ScreenBuffer.init(allocator, con.NATIVE_W, con.NATIVE_H);
-    var screen_upscaled: ScreenBuffer = try ScreenBuffer.init(allocator, con.UPSCALED_W, con.UPSCALED_H);
+    const screen: ScreenBuffer = try ScreenBuffer.init(allocator, con.NATIVE_W, con.NATIVE_H);
+    const screen_upscaled: ScreenBuffer = try ScreenBuffer.init(allocator, con.UPSCALED_W, con.UPSCALED_H);
 
     var window = try Window.init(allocator, con.UPSCALED_W, con.UPSCALED_H);
     defer window.deinit();
@@ -141,7 +172,6 @@ pub fn main() !void {
         editor_state.step(inputs);
         render_state.step(&editor_state);
 
-        screen.upscale(&screen_upscaled, con.SCALE);
         blit(render_state.screen_upscaled, &window);
     }
 }

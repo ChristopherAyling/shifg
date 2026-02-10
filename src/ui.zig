@@ -2,7 +2,6 @@ const std = @import("std");
 const ScreenBuffer = @import("screen.zig").ScreenBuffer;
 const draw = @import("draw.zig");
 const Image = @import("image.zig").Image;
-
 const con = @import("constants.zig");
 
 const TEXTBOX_X = 5;
