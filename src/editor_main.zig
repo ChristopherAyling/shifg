@@ -23,24 +23,26 @@ const Item = entity.Item;
 const Inputs = control.Inputs;
 const updateInputs = control.updateInputs;
 
+const TILE_CURSOR_VELOCITY = 1;
+
 const EditorState = struct {
     tile_cursor_x: i32 = con.LEVEL_W_HALF,
     tile_cursor_y: i32 = con.LEVEL_H_HALF,
     camera_x: i32 = 0,
     camera_y: i32 = 0,
     npcs: [1000]Npc = .{Npc{}} ** 1000,
-    level: Level = undefined,
+    level: Level,
 
-    pub fn initFromBackgroundImageFile(background_path: []const u8, level_folder: []const u8) !EditorState {
-        var buf: [256]u8 = undefined;
-        // create new level in level folder
-        {
-            try std.fs.makeDirAbsolute(level_folder);
-            const new_background_path = try std.fmt.bufPrintZ(&buf, "{s}/background.png", .{background_path});
-            try std.fs.copyFileAbsolute(background_path, new_background_path, .{});
-        }
-        return EditorState.initFromSavedLevel(level_folder);
-    }
+    // pub fn initFromBackgroundImageFile(background_path: []const u8, level_folder: []const u8) !EditorState {
+    //     var buf: [256]u8 = undefined;
+    //     // create new level in level folder
+    //     {
+    //         try std.fs.makeDirAbsolute(level_folder);
+    //         const new_background_path = try std.fmt.bufPrintZ(&buf, "{s}/background.png", .{background_path});
+    //         try std.fs.copyFileAbsolute(background_path, new_background_path, .{});
+    //     }
+    //     return EditorState.initFromSavedLevel(level_folder);
+    // }
 
     pub fn initFromSavedLevel(path: []const u8) EditorState {
         return .{
@@ -60,7 +62,11 @@ const EditorState = struct {
     }
 
     pub fn step(self: *EditorState, inputs: Inputs) void {
-        _ = inputs;
+        if (inputs.directions.contains(.up)) self.tile_cursor_y -= 1 * TILE_CURSOR_VELOCITY;
+        if (inputs.directions.contains(.down)) self.tile_cursor_y += 1 * TILE_CURSOR_VELOCITY;
+        if (inputs.directions.contains(.left)) self.tile_cursor_x -= 1 * TILE_CURSOR_VELOCITY;
+        if (inputs.directions.contains(.right)) self.tile_cursor_x += 1 * TILE_CURSOR_VELOCITY;
+
         self.camera_follow_tile_cursor();
     }
 };
@@ -77,7 +83,12 @@ const RenderState = struct {
 
         draw.fill_checkerboard(&self.level, 8, 0xFF00FF, 0x0);
 
-        draw.view(&self.level, &self.screen, editor_state.tile_cursor_x, editor_state.tile_cursor_y);
+        draw.draw_image(&self.level, editor_state.level.bg, 0, 0);
+        draw.draw_image(&self.level, editor_state.level.fg, 0, 0);
+
+        draw.draw_image(&self.level, self.storage.get(.cursor), editor_state.tile_cursor_x, editor_state.tile_cursor_y);
+
+        draw.view(&self.level, &self.screen, editor_state.camera_x, editor_state.camera_y);
     }
 };
 
