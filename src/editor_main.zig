@@ -134,7 +134,7 @@ const EditorState = struct {
                 } else if (inputs.b.pressed) {
                     // delete npc if close by
                     var npc_iter = self.things.iter();
-                    while (npc_iter.next_kind(.NPC)) |*npc| {
+                    while (npc_iter.next_kind(.NPC)) |npc| {
                         if ((@abs(npc.x - self.tile_cursor_x) < 12) and (@abs(npc.y - self.tile_cursor_y)) < 12) {
                             npc.active = false;
                             return;

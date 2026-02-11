@@ -18,32 +18,32 @@ pub const Thing = struct {
 };
 
 pub const ThingIterator = struct {
-    items: []const Thing,
+    items: []Thing,
     index: usize = 1,
 
-    pub fn next(self: *ThingIterator) ?Thing {
+    pub fn next(self: *ThingIterator) ?*Thing {
         while (self.index < self.items.len) {
-            const item = self.items[self.index];
+            const idx = self.index;
             self.index += 1;
-            return item;
+            return &self.items[idx];
         }
         return null;
     }
 
-    pub fn next_kind(self: *ThingIterator, kind: Kind) ?Thing {
+    pub fn next_kind(self: *ThingIterator, kind: Kind) ?*Thing {
         while (self.index < self.items.len) {
-            const item = self.items[self.index];
+            const idx = self.index;
             self.index += 1;
-            if (item.kind == kind) return item;
+            if (self.items[idx].kind == kind) return &self.items[idx];
         }
         return null;
     }
 
-    pub fn next_active(self: *ThingIterator) ?Thing {
+    pub fn next_active(self: *ThingIterator) ?*Thing {
         while (self.index < self.items.len) {
-            const item = self.items[self.index];
+            const idx = self.index;
             self.index += 1;
-            if (item.active) return item;
+            if (self.items[idx].active) return &self.items[idx];
         }
         return null;
     }
@@ -88,7 +88,7 @@ pub const ThingPool = struct {
         return ref;
     }
 
-    pub fn iter(self: *const ThingPool) ThingIterator {
+    pub fn iter(self: *ThingPool) ThingIterator {
         return .{ .items = &self.things };
     }
 
