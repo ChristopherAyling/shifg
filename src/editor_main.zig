@@ -51,6 +51,14 @@ const EditorState = struct {
     add_selection: usize = 0,
     max_add_selection: usize = 2,
 
+    fn first_free_slot(self: EditorState) usize {
+        // TODO handle case of having no free spots
+        for (self.npcs, 0..) |npc, i| {
+            if (!npc.active) return i;
+        }
+        return 0;
+    }
+
     pub fn initFromSavedLevel(path: []const u8) EditorState {
         return .{
             .level = Level.from_folder(path, "level"),
@@ -74,6 +82,15 @@ const EditorState = struct {
                 if (inputs.a.pressed) {
                     self.mode = .Add;
                     self.add_selection = 0;
+                } else if (inputs.b.pressed) {
+                    // delete npc if close by
+                    for (&self.npcs) |*npc| {
+                        if (!npc.active) continue;
+                        if ((@abs(npc.x - self.tile_cursor_x) < 12) and (@abs(npc.y - self.tile_cursor_y)) < 12) {
+                            npc.active = false;
+                            return;
+                        }
+                    }
                 } else {
                     if (inputs.directions.contains(.up)) self.tile_cursor_y -= 1 * TILE_CURSOR_VELOCITY;
                     if (inputs.directions.contains(.down)) self.tile_cursor_y += 1 * TILE_CURSOR_VELOCITY;
@@ -86,8 +103,8 @@ const EditorState = struct {
                     self.mode = .Navigate;
                 } else if (inputs.a.pressed) {
                     // TODO place NPC in array and therefore world
-                    const new_npc_index: usize = 0;
-                    self.npcs[new_npc_index] = Npc{
+                    // const new_npc_index: usize = 0;
+                    self.npcs[self.first_free_slot()] = Npc{
                         .active = true,
                         .spritekey = NPC_SPRITE_KEYS[self.add_selection],
                         .x = self.tile_cursor_x,
