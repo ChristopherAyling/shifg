@@ -261,13 +261,9 @@ const RenderState = struct {
             }
         }
 
-        // for (editor_state.things) |thing| {
         var iter = editor_state.things.iter();
         while (iter.next_active()) |thing| {
-            if (thing.active) {
-                draw.draw_image(&self.level, self.storage.get(thing.spritekey), thing.x, thing.y);
-                unreachable;
-            }
+            draw.draw_image(&self.level, self.storage.get(thing.spritekey), thing.x, thing.y);
         }
         draw.view(&self.level, &self.screen, editor_state.camera_x, editor_state.camera_y);
 
@@ -338,7 +334,10 @@ pub fn main() !void {
 
     editor_state.things.dbg();
 
-    // _ = editor_state.things.add(.NPC);
+    const ref = editor_state.things.add(.NPC);
+    var npc = editor_state.things.get(ref);
+    npc.x = con.LEVEL_W_HALF;
+    npc.y = con.LEVEL_H_HALF;
 
     var render_state: RenderState = .{
         .screen = screen,

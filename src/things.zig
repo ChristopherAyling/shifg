@@ -45,8 +45,9 @@ pub const ThingRef = struct {
 };
 
 pub const ThingPool = struct {
+    // slot 0 = NIL slot.
     things: [1000]Thing = .{Thing{}} ** 1000,
-    nextFreeSlot: usize = 0,
+    nextFreeSlot: usize = 1, // TODO use a freelist
 
     pub fn reset(self: *ThingPool) void {
         var it = self.iter();
@@ -55,17 +56,18 @@ pub const ThingPool = struct {
         }
     }
 
+    pub fn get(self: *ThingPool, ref: ThingRef) *Thing {
+        return &self.things[ref.slot];
+    }
+
     pub fn add(self: *ThingPool, kind: Kind) ThingRef {
-        _ = self;
-        _ = kind;
-        unreachable;
-        // self.things[self.nextFreeSlot] = .{
-        //     .kind = kind,
-        //     .active = true,
-        // };
-        // const ref: ThingRef = .{ .slot = self.nextFreeSlot };
-        // self.nextFreeSlot += 1;
-        // return ref;
+        self.things[self.nextFreeSlot] = .{
+            .kind = kind,
+            .active = true,
+        };
+        const ref: ThingRef = .{ .slot = self.nextFreeSlot };
+        self.nextFreeSlot += 1;
+        return ref;
     }
 
     pub fn iter(self: *const ThingPool) ThingIterator {
