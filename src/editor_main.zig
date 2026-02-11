@@ -18,7 +18,7 @@ const Level = @import("level.zig").Level;
 const entity = @import("entity.zig");
 const audio = @import("audio.zig");
 
-const Things = @import("things.zig").Things;
+const Things = @import("things.zig").ThingPool;
 // const ThingIterator = @import("things.zig").ThingIterator;
 
 const Npc = entity.Npc;
@@ -260,6 +260,16 @@ const RenderState = struct {
                 draw.draw_image(&self.level, self.storage.get(npc.spritekey), npc.x, npc.y);
             }
         }
+
+        // for (editor_state.things) |thing| {
+        var iter = editor_state.things.iter();
+        while (iter.next_active()) |thing| {
+            if (thing.active) {
+                draw.draw_image(&self.level, self.storage.get(thing.spritekey), thing.x, thing.y);
+                std.log.debug("name: {s}, spritekey: {s}, active: {any}", .{ thing.name, @tagName(thing.spritekey), thing.active });
+                unreachable;
+            }
+        }
         draw.view(&self.level, &self.screen, editor_state.camera_x, editor_state.camera_y);
 
         // render ui
@@ -326,6 +336,10 @@ pub fn main() !void {
     editor_state.audio_system.init();
     editor_state.load();
     defer allocator.destroy(editor_state);
+
+    editor_state.things.dbg();
+
+    // _ = editor_state.things.add(.NPC);
 
     var render_state: RenderState = .{
         .screen = screen,

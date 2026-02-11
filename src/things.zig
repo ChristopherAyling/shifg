@@ -1,3 +1,4 @@
+const std = @import("std");
 const sprites = @import("sprites.zig");
 
 pub const Kind = enum {
@@ -20,6 +21,15 @@ pub const ThingIterator = struct {
     items: []const Thing,
     index: usize = 1,
 
+    pub fn next(self: *ThingIterator) ?Thing {
+        while (self.index < self.items.len) {
+            const item = self.items[self.index];
+            self.index += 1;
+            return item;
+        }
+        return null;
+    }
+
     pub fn next_active(self: *ThingIterator) ?Thing {
         while (self.index < self.items.len) {
             const item = self.items[self.index];
@@ -31,24 +41,47 @@ pub const ThingIterator = struct {
 };
 
 pub const ThingRef = struct {
-    idx: usize,
+    slot: usize,
 };
 
-pub const Things = struct {
+pub const ThingPool = struct {
     things: [1000]Thing = .{Thing{}} ** 1000,
     nextFreeSlot: usize = 0,
 
-    pub fn add(self: *Things, kind: Kind) *ThingRef {
-        self.things[self.nextFreeSlot] = .{
-            .kind = kind,
-            .active = true,
-        };
-        const ptr = &self.things[self.nextFreeSlot];
-        self.nextFreeSlot += 1;
-        return ptr;
+    pub fn reset(self: *ThingPool) void {
+        var it = self.iter();
+        while (it.next()) |item| {
+            item.active = false;
+        }
     }
 
-    pub fn iter(self: Things) ThingIterator {
-        return .{ .items = self.things };
+    pub fn add(self: *ThingPool, kind: Kind) ThingRef {
+        _ = self;
+        _ = kind;
+        unreachable;
+        // self.things[self.nextFreeSlot] = .{
+        //     .kind = kind,
+        //     .active = true,
+        // };
+        // const ref: ThingRef = .{ .slot = self.nextFreeSlot };
+        // self.nextFreeSlot += 1;
+        // return ref;
+    }
+
+    pub fn iter(self: ThingPool) ThingIterator {
+        return .{ .items = &self.things };
+    }
+
+    pub fn len_active(self: ThingPool) usize {
+        var count: usize = 0;
+        var it = self.iter();
+        while (it.next_active()) |_| {
+            count += 1;
+        }
+        return count;
+    }
+
+    pub fn dbg(self: ThingPool) void {
+        std.log.debug("THINGPOOL DBG: len_active: {any}/{any}", .{ self.len_active(), self.things.len });
     }
 };
