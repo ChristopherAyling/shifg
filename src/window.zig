@@ -11,12 +11,12 @@ pub const Window = struct {
     h: u32,
     debug: bool = true,
     fps: u32 = 60,
-    pub fn init(allocator: Allocator, w: u32, h: u32) !Window {
+    pub fn init(allocator: Allocator, w: u32, h: u32, title: [:0]const u8) !Window {
         var buf = try allocator.alloc(u32, w * h);
         const f = std.mem.zeroInit(c.fenster, .{
             .width = @as(c_int, @intCast(w)), //fmt
             .height = @as(c_int, @intCast(h)),
-            .title = "game",
+            .title = title,
             .buf = &buf[0],
         });
         return Window{ .f = f, .w = w, .h = h };

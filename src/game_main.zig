@@ -306,7 +306,7 @@ pub fn main() !void {
     var screen: ScreenBuffer = try ScreenBuffer.init(allocator, con.NATIVE_W, con.NATIVE_H);
     var screen_upscaled: ScreenBuffer = try ScreenBuffer.init(allocator, con.UPSCALED_W, con.UPSCALED_H);
 
-    var window = try Window.init(allocator, con.UPSCALED_W, con.UPSCALED_H);
+    var window = try Window.init(allocator, con.UPSCALED_W, con.UPSCALED_H, "shif");
     defer window.deinit();
 
     var storage = sprites.SpriteStorage.init();

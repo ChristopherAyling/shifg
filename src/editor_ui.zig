@@ -8,10 +8,10 @@ const con = @import("constants.zig");
 const Storage = sprites.SpriteStorage;
 const SpriteKey = sprites.SpriteKey;
 
-pub fn draw_sprite_selector(screen: *ScreenBuffer, storage: *Storage, idx: i32) void {
+pub fn draw_sprite_selector(screen: *ScreenBuffer, storage: *Storage, idx: usize, sprite_keys: []const SpriteKey) void {
     // _ = idx;
     const PADDING = 4;
-    const N_SPRITES = 3;
+    const N_SPRITES: i32 = @intCast(sprite_keys.len);
     draw.draw_rec(
         screen,
         0,
@@ -21,10 +21,11 @@ pub fn draw_sprite_selector(screen: *ScreenBuffer, storage: *Storage, idx: i32) 
         0x00F0F0,
         0x787276,
     );
-    draw.draw_image(screen, storage.get(.genly), PADDING, PADDING);
-    draw.draw_image(screen, storage.get(.estraven), PADDING, (con.PLAYER_H + PADDING) * 1 + PADDING);
-    draw.draw_image(screen, storage.get(.argaven), PADDING, (con.PLAYER_H + PADDING) * 2 + PADDING);
+    for (sprite_keys, 0..) |sprite_key, i| {
+        const ii: i32 = @intCast(i);
+        draw.draw_image(screen, storage.get(sprite_key), PADDING, (con.PLAYER_H + PADDING) * ii + PADDING);
+    }
 
-    draw.draw_image(screen, storage.get(.cursor), PADDING, (con.PLAYER_H + PADDING) * idx + PADDING);
-    std.log.debug("idx: {any}", .{idx});
+    const iidx: i32 = @intCast(idx);
+    draw.draw_image(screen, storage.get(.cursor), PADDING, (con.PLAYER_H + PADDING) * iidx + PADDING);
 }

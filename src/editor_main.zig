@@ -26,6 +26,8 @@ const updateInputs = control.updateInputs;
 
 const TILE_CURSOR_VELOCITY = 1;
 
+const NPC_SPRITE_KEYS = &[_]sprites.SpriteKey{ .argaven, .estraven, .genly };
+
 const EditorMode = enum {
     Navigate, // move cursor around. a_pressed->ADD, b_pressed->remove(), start->MENU/SETTINGS
     Add, // choose an NPC from a menu to place
@@ -46,8 +48,8 @@ const EditorState = struct {
     level: Level,
 
     // adding
-    add_selection: i32 = 0,
-    max_add_selection: i32 = 2,
+    add_selection: usize = 0,
+    max_add_selection: usize = 2,
 
     pub fn initFromSavedLevel(path: []const u8) EditorState {
         return .{
@@ -84,9 +86,16 @@ const EditorState = struct {
                     self.mode = .Navigate;
                 } else if (inputs.a.pressed) {
                     // TODO place NPC in array and therefore world
+                    const new_npc_index: usize = 0;
+                    self.npcs[new_npc_index] = Npc{
+                        .active = true,
+                        .spritekey = NPC_SPRITE_KEYS[self.add_selection],
+                        .x = self.tile_cursor_x,
+                        .y = self.tile_cursor_y,
+                    };
                     self.mode = .Navigate;
                 } else {
-                    if (inputs.up.pressed) self.add_selection = @max(0, self.add_selection - 1);
+                    if (inputs.up.pressed) self.add_selection -|= 1;
                     if (inputs.down.pressed) self.add_selection = @min(self.max_add_selection, self.add_selection + 1);
                 }
             },
@@ -113,12 +122,16 @@ const RenderState = struct {
         draw.draw_image(&self.level, editor_state.level.bg, 0, 0);
         draw.draw_image(&self.level, editor_state.level.fg, 0, 0);
         draw.draw_image(&self.level, self.storage.get(.cursor), editor_state.tile_cursor_x, editor_state.tile_cursor_y);
+        for (editor_state.npcs) |npc| {
+            if (npc.active) {
+                draw.draw_image(&self.level, self.storage.get(npc.spritekey), npc.x, npc.y);
+            }
+        }
         draw.view(&self.level, &self.screen, editor_state.camera_x, editor_state.camera_y);
 
         // render ui
         if (editor_state.mode == .Add) {
-            // ui.drawTextBox(&self.screen, "menu", "select an NPC");
-            eui.draw_sprite_selector(&self.screen, &self.storage, editor_state.add_selection);
+            eui.draw_sprite_selector(&self.screen, &self.storage, editor_state.add_selection, NPC_SPRITE_KEYS);
         }
 
         // upscale
@@ -153,7 +166,7 @@ pub fn main() !void {
     const screen: ScreenBuffer = try ScreenBuffer.init(allocator, con.NATIVE_W, con.NATIVE_H);
     const screen_upscaled: ScreenBuffer = try ScreenBuffer.init(allocator, con.UPSCALED_W, con.UPSCALED_H);
 
-    var window = try Window.init(allocator, con.UPSCALED_W, con.UPSCALED_H);
+    var window = try Window.init(allocator, con.UPSCALED_W, con.UPSCALED_H, "shif - editor");
     defer window.deinit();
     window.before_loop();
 
