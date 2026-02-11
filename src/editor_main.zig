@@ -18,6 +18,9 @@ const Level = @import("level.zig").Level;
 const entity = @import("entity.zig");
 const audio = @import("audio.zig");
 
+const Things = @import("things.zig").Things;
+// const ThingIterator = @import("things.zig").ThingIterator;
+
 const Npc = entity.Npc;
 const Item = entity.Item;
 
@@ -60,10 +63,14 @@ const EditorState = struct {
     tile_cursor_y: i32 = con.LEVEL_H_HALF,
     camera_x: i32 = 0,
     camera_y: i32 = 0,
+    // things: [1000]Thing = .{Thing{}} ** 1000,
     npcs: [1000]Npc = .{Npc{}} ** 1000,
     level: Level,
 
-    audio_system: audio.AudioSystem,
+    /// new things system
+    things: Things = .{},
+
+    audio_system: audio.AudioSystem = undefined,
 
     // adding
     add_selection_index: usize = 0,
@@ -75,7 +82,6 @@ const EditorState = struct {
     pub fn initFromSavedLevel(path: []const u8) EditorState {
         return .{
             .level = Level.from_folder(path, "level"),
-            .audio_system = undefined,
         };
     }
 
