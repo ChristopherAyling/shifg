@@ -63,6 +63,8 @@ const EditorState = struct {
     npcs: [1000]Npc = .{Npc{}} ** 1000,
     level: Level,
 
+    audio_system: audio.AudioSystem,
+
     // adding
     add_selection_index: usize = 0,
 
@@ -87,6 +89,7 @@ const EditorState = struct {
     pub fn initFromSavedLevel(path: []const u8) EditorState {
         return .{
             .level = Level.from_folder(path, "level"),
+            .audio_system = undefined,
         };
     }
 
@@ -106,6 +109,7 @@ const EditorState = struct {
             .Navigate => {
                 if (inputs.start.pressed) {
                     self.mode = .Menu;
+                    self.audio_system.playSound(.close);
                 } else if (inputs.a.pressed) {
                     self.mode = .Add;
                     self.add_selection_index = 0;
@@ -128,7 +132,9 @@ const EditorState = struct {
             .Add => {
                 if (inputs.b.pressed) {
                     self.mode = .Navigate;
+                    self.audio_system.playSound(.close);
                 } else if (inputs.a.pressed) {
+                    self.audio_system.playSound(.click);
                     // TODO place NPC in array and therefore world
                     // const new_npc_index: usize = 0;
                     self.npcs[self.first_free_slot()] = Npc{
@@ -146,8 +152,10 @@ const EditorState = struct {
             .Menu => {
                 if (inputs.start.pressed or inputs.b.pressed) {
                     self.mode = .Navigate;
+                    self.audio_system.playSound(.close);
                 } else if (inputs.a.pressed) {
                     // TODO
+                    self.audio_system.playSound(.click);
                     switch (self.menu_selection_index) {
                         0 => {
                             // save
@@ -181,6 +189,7 @@ const EditorState = struct {
                 if (inputs.start.pressed or inputs.b.pressed) {
                     self.mode = .Menu;
                     self.menu_selection_index = 3;
+                    self.audio_system.playSound(.close);
                 } else if (inputs.a.pressed) {
                     self.level.music = @enumFromInt(self.submenu_selection_index);
                     self.mode = .Navigate;
@@ -194,6 +203,7 @@ const EditorState = struct {
                 if (inputs.start.pressed or inputs.b.pressed) {
                     self.mode = .Menu;
                     self.menu_selection_index = 4;
+                    self.audio_system.playSound(.close);
                 } else if (inputs.a.pressed) {
                     // TODO set level.effectkey
                     self.mode = .Navigate;
@@ -290,7 +300,11 @@ pub fn main() !void {
     var storage = sprites.SpriteStorage.init();
     storage.load();
 
-    var editor_state = EditorState.initFromSavedLevel("assets/levels/parade");
+    // var editor_state = EditorState.initFromSavedLevel("assets/levels/parade");
+    var editor_state: *EditorState = try allocator.create(EditorState);
+    editor_state.* = EditorState.initFromSavedLevel("assets/levels/parade");
+    editor_state.audio_system.init();
+    defer allocator.destroy(editor_state);
 
     var render_state: RenderState = .{
         .screen = screen,
@@ -303,7 +317,7 @@ pub fn main() !void {
     while (window.loop()) {
         updateInputs(&inputs, window);
         editor_state.step(inputs);
-        render_state.step(&editor_state);
+        render_state.step(editor_state);
 
         blit(render_state.screen_upscaled, &window);
     }

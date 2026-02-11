@@ -11,6 +11,7 @@ pub const MusicTrack = enum {
 
 pub const SfxTrack = enum {
     click,
+    close,
 };
 
 const music_paths = std.EnumArray(MusicTrack, [:0]const u8).init(.{
@@ -20,6 +21,7 @@ const music_paths = std.EnumArray(MusicTrack, [:0]const u8).init(.{
 
 const sfx_paths = std.EnumArray(SfxTrack, [:0]const u8).init(.{
     .click = "assets/audio/sfx/click.wav",
+    .close = "assets/audio/sfx/close.wav",
 });
 
 pub const AudioSystem = struct {
