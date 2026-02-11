@@ -26,12 +26,26 @@ const updateInputs = control.updateInputs;
 
 const TILE_CURSOR_VELOCITY = 1;
 
-const NPC_SPRITE_KEYS = &[_]sprites.SpriteKey{ .argaven, .estraven, .genly };
+const NPC_SPRITE_KEYS = &[_]sprites.SpriteKey{
+    .argaven,
+    .estraven,
+    .genly,
+};
+var MENU_LABELS: []const []const u8 = &.{
+    "save",
+    "load",
+    "rename",
+    "music",
+    "effects",
+};
+
+var MENU_MUSIC_LABELS: []const []const u8 = std.meta.fieldNames(audio.MusicTrack);
 
 const EditorMode = enum {
     Navigate, // move cursor around. a_pressed->ADD, b_pressed->remove(), start->MENU/SETTINGS
     Add, // choose an NPC from a menu to place
-    Menu, // save, load, rename, change music etc
+    Menu, // save, load, rename, change music, effects etc
+    MenuMusic,
     // MOVE
     // EDIT/INSPECT
     // PLAY
@@ -48,8 +62,11 @@ const EditorState = struct {
     level: Level,
 
     // adding
-    add_selection: usize = 0,
-    max_add_selection: usize = 2,
+    add_selection_index: usize = 0,
+
+    // menu
+    menu_selection_index: usize = 0,
+    submenu_selection_index: usize = 0,
 
     fn first_free_slot(self: EditorState) usize {
         // TODO handle case of having no free spots
@@ -79,9 +96,11 @@ const EditorState = struct {
     pub fn step(self: *EditorState, inputs: Inputs) void {
         switch (self.mode) {
             .Navigate => {
-                if (inputs.a.pressed) {
+                if (inputs.start.pressed) {
+                    self.mode = .Menu;
+                } else if (inputs.a.pressed) {
                     self.mode = .Add;
-                    self.add_selection = 0;
+                    self.add_selection_index = 0;
                 } else if (inputs.b.pressed) {
                     // delete npc if close by
                     for (&self.npcs) |*npc| {
@@ -106,17 +125,41 @@ const EditorState = struct {
                     // const new_npc_index: usize = 0;
                     self.npcs[self.first_free_slot()] = Npc{
                         .active = true,
-                        .spritekey = NPC_SPRITE_KEYS[self.add_selection],
+                        .spritekey = NPC_SPRITE_KEYS[self.add_selection_index],
                         .x = self.tile_cursor_x,
                         .y = self.tile_cursor_y,
                     };
                     self.mode = .Navigate;
                 } else {
-                    if (inputs.up.pressed) self.add_selection -|= 1;
-                    if (inputs.down.pressed) self.add_selection = @min(self.max_add_selection, self.add_selection + 1);
+                    if (inputs.up.pressed) self.add_selection_index -|= 1;
+                    if (inputs.down.pressed) self.add_selection_index = @min(@as(i32, @intCast(NPC_SPRITE_KEYS.len - 1)), self.add_selection_index + 1);
                 }
             },
-            .Menu => {},
+            .Menu => {
+                if (inputs.start.pressed or inputs.b.pressed) {
+                    self.mode = .Navigate;
+                } else if (inputs.a.pressed) {
+                    // TODO
+                    self.mode = .MenuMusic;
+                    self.submenu_selection_index = 0;
+                } else {
+                    if (inputs.up.pressed) self.menu_selection_index -|= 1;
+                    if (inputs.down.pressed) self.menu_selection_index = @min(MENU_LABELS.len - 1, self.menu_selection_index + 1);
+                }
+            },
+            .MenuMusic => {
+                if (inputs.start.pressed or inputs.b.pressed) {
+                    self.mode = .Menu;
+                    self.menu_selection_index = 3;
+                } else if (inputs.a.pressed) {
+                    self.level.music = @enumFromInt(self.submenu_selection_index);
+                    self.mode = .Navigate;
+                } else {
+                    if (inputs.up.pressed) self.submenu_selection_index -|= 1;
+                    if (inputs.down.pressed) self.submenu_selection_index = @min(MENU_MUSIC_LABELS.len - 1, self.submenu_selection_index + 1);
+                }
+                // TODO start playing the song that is being hovered
+            },
         }
 
         self.camera_follow_tile_cursor();
@@ -147,8 +190,18 @@ const RenderState = struct {
         draw.view(&self.level, &self.screen, editor_state.camera_x, editor_state.camera_y);
 
         // render ui
-        if (editor_state.mode == .Add) {
-            eui.draw_sprite_selector(&self.screen, &self.storage, editor_state.add_selection, NPC_SPRITE_KEYS);
+        switch (editor_state.mode) {
+            .Navigate => {},
+            .Add => {
+                eui.draw_sprite_menu(&self.screen, &self.storage, editor_state.add_selection_index, NPC_SPRITE_KEYS);
+            },
+            .Menu => {
+                eui.draw_text_menu(&self.screen, 0, 0, editor_state.menu_selection_index, MENU_LABELS);
+            },
+            .MenuMusic => {
+                eui.draw_text_menu(&self.screen, 0, 0, editor_state.menu_selection_index, MENU_LABELS);
+                eui.draw_text_menu(&self.screen, 16, 8, editor_state.submenu_selection_index, MENU_MUSIC_LABELS);
+            },
         }
 
         // upscale

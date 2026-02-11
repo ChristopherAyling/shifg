@@ -6,6 +6,7 @@ const entity = @import("entity.zig");
 const Npc = entity.Npc;
 const Item = entity.Item;
 const dialogue = @import("dialogue.zig");
+const audio = @import("audio.zig");
 
 // entity is a tagged union of all entity types
 // types: NPC, sign, door, item
@@ -17,6 +18,7 @@ pub const Level = struct {
     name: []const u8, // can lookup a static map
     bg: Image,
     fg: Image,
+    music: audio.MusicTrack,
 
     pub fn from_folder(path: []const u8, name: []const u8) Level {
         var buf: [256]u8 = undefined;
@@ -36,6 +38,7 @@ pub const Level = struct {
             .name = name,
             .bg = bg,
             .fg = fg,
+            .music = undefined,
         };
     }
 
