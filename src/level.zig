@@ -19,6 +19,7 @@ pub const Level = struct {
     bg: Image,
     fg: Image,
     music: audio.MusicTrack,
+    // TODO effects bitset
 
     pub fn from_folder(path: []const u8, name: []const u8) Level {
         var buf: [256]u8 = undefined;

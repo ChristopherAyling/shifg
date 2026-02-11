@@ -180,3 +180,11 @@ pub fn matrix(screen: *ScreenBuffer, t: usize) void {
         }
     }
 }
+
+pub const EffectKeys = enum {
+    snow,
+    rain,
+    fireflies,
+    starfield,
+    matrix,
+};

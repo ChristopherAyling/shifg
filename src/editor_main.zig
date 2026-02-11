@@ -40,12 +40,14 @@ var MENU_LABELS: []const []const u8 = &.{
 };
 
 var MENU_MUSIC_LABELS: []const []const u8 = std.meta.fieldNames(audio.MusicTrack);
+var MENU_EFFECTS_LABELS: []const []const u8 = std.meta.fieldNames(effects.EffectKeys);
 
 const EditorMode = enum {
     Navigate, // move cursor around. a_pressed->ADD, b_pressed->remove(), start->MENU/SETTINGS
     Add, // choose an NPC from a menu to place
     Menu, // save, load, rename, change music, effects etc
-    MenuMusic,
+    MenuMusic, // music submenu
+    MenuEffects, // save()
     // MOVE
     // EDIT/INSPECT
     // PLAY
@@ -67,6 +69,12 @@ const EditorState = struct {
     // menu
     menu_selection_index: usize = 0,
     submenu_selection_index: usize = 0,
+
+    fn save(self: EditorState) void {
+        _ = self;
+        std.log.debug("saving level...", .{});
+        std.log.debug("... level saved", .{});
+    }
 
     fn first_free_slot(self: EditorState) usize {
         // TODO handle case of having no free spots
@@ -140,8 +148,30 @@ const EditorState = struct {
                     self.mode = .Navigate;
                 } else if (inputs.a.pressed) {
                     // TODO
-                    self.mode = .MenuMusic;
-                    self.submenu_selection_index = 0;
+                    switch (self.menu_selection_index) {
+                        0 => {
+                            // save
+                            self.save();
+                            // TODO add toast or one time message or something
+                        },
+                        1 => {
+                            // load
+                        },
+                        2 => {
+                            // rename
+                        },
+                        3 => {
+                            // music
+                            self.mode = .MenuMusic;
+                            self.submenu_selection_index = 0; // TODO default this to current music index
+                        },
+                        4 => {
+                            // effects
+                            self.mode = .MenuEffects;
+                            self.submenu_selection_index = 0; // TODO default this to current effects index
+                        },
+                        else => {},
+                    }
                 } else {
                     if (inputs.up.pressed) self.menu_selection_index -|= 1;
                     if (inputs.down.pressed) self.menu_selection_index = @min(MENU_LABELS.len - 1, self.menu_selection_index + 1);
@@ -159,6 +189,19 @@ const EditorState = struct {
                     if (inputs.down.pressed) self.submenu_selection_index = @min(MENU_MUSIC_LABELS.len - 1, self.submenu_selection_index + 1);
                 }
                 // TODO start playing the song that is being hovered
+            },
+            .MenuEffects => {
+                if (inputs.start.pressed or inputs.b.pressed) {
+                    self.mode = .Menu;
+                    self.menu_selection_index = 4;
+                } else if (inputs.a.pressed) {
+                    // TODO set level.effectkey
+                    self.mode = .Navigate;
+                } else {
+                    if (inputs.up.pressed) self.submenu_selection_index -|= 1;
+                    if (inputs.down.pressed) self.submenu_selection_index = @min(MENU_EFFECTS_LABELS.len - 1, self.submenu_selection_index + 1);
+                }
+                // TODO preview effect that is being hovered
             },
         }
 
@@ -201,6 +244,10 @@ const RenderState = struct {
             .MenuMusic => {
                 eui.draw_text_menu(&self.screen, 0, 0, editor_state.menu_selection_index, MENU_LABELS);
                 eui.draw_text_menu(&self.screen, 16, 8, editor_state.submenu_selection_index, MENU_MUSIC_LABELS);
+            },
+            .MenuEffects => {
+                eui.draw_text_menu(&self.screen, 0, 0, editor_state.menu_selection_index, MENU_LABELS);
+                eui.draw_text_menu(&self.screen, 16, 8, editor_state.submenu_selection_index, MENU_EFFECTS_LABELS);
             },
         }
 
