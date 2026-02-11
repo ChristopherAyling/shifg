@@ -68,11 +68,11 @@ pub const ThingPool = struct {
         // return ref;
     }
 
-    pub fn iter(self: ThingPool) ThingIterator {
+    pub fn iter(self: *const ThingPool) ThingIterator {
         return .{ .items = &self.things };
     }
 
-    pub fn len_active(self: ThingPool) usize {
+    pub fn len_active(self: *const ThingPool) usize {
         var count: usize = 0;
         var it = self.iter();
         while (it.next_active()) |_| {
@@ -81,7 +81,7 @@ pub const ThingPool = struct {
         return count;
     }
 
-    pub fn dbg(self: ThingPool) void {
+    pub fn dbg(self: *const ThingPool) void {
         std.log.debug("THINGPOOL DBG: len_active: {any}/{any}", .{ self.len_active(), self.things.len });
     }
 };

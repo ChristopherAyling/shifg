@@ -96,7 +96,7 @@ const EditorState = struct {
     }
 
     fn load(self: *EditorState) void {
-        const file = std.fs.openFileAbsolute("/Users/chris/gaming/gam1/data.bin", .{}) catch unreachable;
+        const file = std.fs.openFileAbsolute("/Users/chris/gaming/gam1/data.bin", .{}) catch return;
         defer file.close();
         _ = file.readAll(std.mem.asBytes(&self.npcs)) catch unreachable;
     }
@@ -266,7 +266,6 @@ const RenderState = struct {
         while (iter.next_active()) |thing| {
             if (thing.active) {
                 draw.draw_image(&self.level, self.storage.get(thing.spritekey), thing.x, thing.y);
-                std.log.debug("name: {s}, spritekey: {s}, active: {any}", .{ thing.name, @tagName(thing.spritekey), thing.active });
                 unreachable;
             }
         }
