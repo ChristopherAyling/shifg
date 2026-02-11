@@ -72,10 +72,27 @@ const EditorState = struct {
     menu_selection_index: usize = 0,
     submenu_selection_index: usize = 0,
 
+    pub fn initFromSavedLevel(path: []const u8) EditorState {
+        return .{
+            .level = Level.from_folder(path, "level"),
+            .audio_system = undefined,
+        };
+    }
+
     fn save(self: EditorState) void {
-        _ = self;
         std.log.debug("saving level...", .{});
+
+        const file = std.fs.createFileAbsolute("/Users/chris/gaming/gam1/data.bin", .{ .truncate = true }) catch unreachable;
+        defer file.close();
+        file.writeAll(std.mem.asBytes(&self.npcs)) catch unreachable;
+
         std.log.debug("... level saved", .{});
+    }
+
+    fn load(self: *EditorState) void {
+        const file = std.fs.openFileAbsolute("/Users/chris/gaming/gam1/data.bin", .{}) catch unreachable;
+        defer file.close();
+        _ = file.readAll(std.mem.asBytes(&self.npcs)) catch unreachable;
     }
 
     fn first_free_slot(self: EditorState) usize {
@@ -84,13 +101,6 @@ const EditorState = struct {
             if (!npc.active) return i;
         }
         return 0;
-    }
-
-    pub fn initFromSavedLevel(path: []const u8) EditorState {
-        return .{
-            .level = Level.from_folder(path, "level"),
-            .audio_system = undefined,
-        };
     }
 
     pub fn camera_follow_tile_cursor(self: *EditorState) void {
@@ -113,6 +123,7 @@ const EditorState = struct {
                 } else if (inputs.a.pressed) {
                     self.mode = .Add;
                     self.add_selection_index = 0;
+                    self.audio_system.playSound(.close);
                 } else if (inputs.b.pressed) {
                     // delete npc if close by
                     for (&self.npcs) |*npc| {
@@ -190,6 +201,8 @@ const EditorState = struct {
                     self.mode = .Menu;
                     self.menu_selection_index = 3;
                     self.audio_system.playSound(.close);
+                    // set music back to chosen
+                    self.audio_system.setMusic(self.level.music);
                 } else if (inputs.a.pressed) {
                     self.level.music = @enumFromInt(self.submenu_selection_index);
                     self.mode = .Navigate;
@@ -198,6 +211,7 @@ const EditorState = struct {
                     if (inputs.down.pressed) self.submenu_selection_index = @min(MENU_MUSIC_LABELS.len - 1, self.submenu_selection_index + 1);
                 }
                 // TODO start playing the song that is being hovered
+                self.audio_system.setMusic(@enumFromInt(self.submenu_selection_index));
             },
             .MenuEffects => {
                 if (inputs.start.pressed or inputs.b.pressed) {
@@ -304,6 +318,7 @@ pub fn main() !void {
     var editor_state: *EditorState = try allocator.create(EditorState);
     editor_state.* = EditorState.initFromSavedLevel("assets/levels/parade");
     editor_state.audio_system.init();
+    editor_state.load();
     defer allocator.destroy(editor_state);
 
     var render_state: RenderState = .{
