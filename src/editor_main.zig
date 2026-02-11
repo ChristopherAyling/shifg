@@ -21,8 +21,8 @@ const audio = @import("audio.zig");
 const Things = @import("things.zig").ThingPool;
 // const ThingIterator = @import("things.zig").ThingIterator;
 
-const Npc = entity.Npc;
-const Item = entity.Item;
+// const Npc = entity.Npc;
+// const Item = entity.Item;
 
 const Inputs = control.Inputs;
 const updateInputs = control.updateInputs;
@@ -64,7 +64,7 @@ const EditorState = struct {
     camera_x: i32 = 0,
     camera_y: i32 = 0,
     // things: [1000]Thing = .{Thing{}} ** 1000,
-    npcs: [1000]Npc = .{Npc{}} ** 1000,
+    // npcs: [1000]Npc = .{Npc{}} ** 1000,
     level: Level,
 
     /// new things system
@@ -90,24 +90,25 @@ const EditorState = struct {
 
         const file = std.fs.createFileAbsolute("/Users/chris/gaming/gam1/data.bin", .{ .truncate = true }) catch unreachable;
         defer file.close();
-        file.writeAll(std.mem.asBytes(&self.npcs)) catch unreachable;
+        file.writeAll(std.mem.asBytes(&self.things)) catch unreachable;
 
         std.log.debug("... level saved", .{});
     }
 
     fn load(self: *EditorState) void {
-        const file = std.fs.openFileAbsolute("/Users/chris/gaming/gam1/data.bin", .{}) catch return;
-        defer file.close();
-        _ = file.readAll(std.mem.asBytes(&self.npcs)) catch unreachable;
+        _ = self;
+        // const file = std.fs.openFileAbsolute("/Users/chris/gaming/gam1/data.bin", .{}) catch return;
+        // defer file.close();
+        // _ = file.readAll(std.mem.asBytes(&self.things)) catch unreachable;
     }
 
-    fn first_free_slot(self: EditorState) usize {
-        // TODO handle case of having no free spots
-        for (self.npcs, 0..) |npc, i| {
-            if (!npc.active) return i;
-        }
-        return 0;
-    }
+    // fn first_free_slot(self: EditorState) usize {
+    //     // TODO handle case of having no free spots
+    //     for (self.npcs, 0..) |npc, i| {
+    //         if (!npc.active) return i;
+    //     }
+    //     return 0;
+    // }
 
     pub fn camera_follow_tile_cursor(self: *EditorState) void {
         self.camera_x = self.tile_cursor_x - @divFloor(con.NATIVE_W, 2) + @divFloor(con.PLAYER_W, 2);
@@ -132,13 +133,20 @@ const EditorState = struct {
                     self.audio_system.playSound(.close);
                 } else if (inputs.b.pressed) {
                     // delete npc if close by
-                    for (&self.npcs) |*npc| {
-                        if (!npc.active) continue;
+                    var npc_iter = self.things.iter();
+                    while (npc_iter.next_kind(.NPC)) |*npc| {
                         if ((@abs(npc.x - self.tile_cursor_x) < 12) and (@abs(npc.y - self.tile_cursor_y)) < 12) {
                             npc.active = false;
                             return;
                         }
                     }
+                    // for (&self.npcs) |*npc| {
+                    //     if (!npc.active) continue;
+                    //     if ((@abs(npc.x - self.tile_cursor_x) < 12) and (@abs(npc.y - self.tile_cursor_y)) < 12) {
+                    //         npc.active = false;
+                    //         return;
+                    //     }
+                    // }
                 } else {
                     if (inputs.directions.contains(.up)) self.tile_cursor_y -= 1 * TILE_CURSOR_VELOCITY;
                     if (inputs.directions.contains(.down)) self.tile_cursor_y += 1 * TILE_CURSOR_VELOCITY;
@@ -154,12 +162,14 @@ const EditorState = struct {
                     self.audio_system.playSound(.click);
                     // TODO place NPC in array and therefore world
                     // const new_npc_index: usize = 0;
-                    self.npcs[self.first_free_slot()] = Npc{
-                        .active = true,
-                        .spritekey = NPC_SPRITE_KEYS[self.add_selection_index],
-                        .x = self.tile_cursor_x,
-                        .y = self.tile_cursor_y,
-                    };
+                    // self.npcs[self.first_free_slot()] = Npc{
+                    //     .active = true,
+                    //     .spritekey = NPC_SPRITE_KEYS[self.add_selection_index],
+                    //     .x = self.tile_cursor_x,
+                    //     .y = self.tile_cursor_y,
+                    // };
+                    _ = self.things.add_npc(NPC_SPRITE_KEYS[self.add_selection_index], self.tile_cursor_x, self.tile_cursor_y);
+
                     self.mode = .Navigate;
                 } else {
                     if (inputs.up.pressed) self.add_selection_index -|= 1;
@@ -255,11 +265,11 @@ const RenderState = struct {
         draw.draw_image(&self.level, editor_state.level.bg, 0, 0);
         draw.draw_image(&self.level, editor_state.level.fg, 0, 0);
         draw.draw_image(&self.level, self.storage.get(.cursor), editor_state.tile_cursor_x, editor_state.tile_cursor_y);
-        for (editor_state.npcs) |npc| {
-            if (npc.active) {
-                draw.draw_image(&self.level, self.storage.get(npc.spritekey), npc.x, npc.y);
-            }
-        }
+        // for (editor_state.npcs) |npc| {
+        //     if (npc.active) {
+        //         draw.draw_image(&self.level, self.storage.get(npc.spritekey), npc.x, npc.y);
+        //     }
+        // }
 
         var iter = editor_state.things.iter();
         while (iter.next_active()) |thing| {
@@ -332,12 +342,12 @@ pub fn main() !void {
     editor_state.load();
     defer allocator.destroy(editor_state);
 
-    editor_state.things.dbg();
+    // editor_state.things.dbg();
 
-    const ref = editor_state.things.add(.NPC);
-    var npc = editor_state.things.get(ref);
-    npc.x = con.LEVEL_W_HALF;
-    npc.y = con.LEVEL_H_HALF;
+    // const ref = editor_state.things.add(.NPC);
+    // var npc = editor_state.things.get(ref);
+    // npc.x = con.LEVEL_W_HALF;
+    // npc.y = con.LEVEL_H_HALF;
 
     var render_state: RenderState = .{
         .screen = screen,

@@ -30,6 +30,15 @@ pub const ThingIterator = struct {
         return null;
     }
 
+    pub fn next_kind(self: *ThingIterator, kind: Kind) ?Thing {
+        while (self.index < self.items.len) {
+            const item = self.items[self.index];
+            self.index += 1;
+            if (item.kind == kind) return item;
+        }
+        return null;
+    }
+
     pub fn next_active(self: *ThingIterator) ?Thing {
         while (self.index < self.items.len) {
             const item = self.items[self.index];
@@ -67,6 +76,15 @@ pub const ThingPool = struct {
         };
         const ref: ThingRef = .{ .slot = self.nextFreeSlot };
         self.nextFreeSlot += 1;
+        return ref;
+    }
+
+    pub fn add_npc(self: *ThingPool, spritekey: sprites.SpriteKey, x: i32, y: i32) ThingRef {
+        const ref = self.add(.NPC);
+        const npc = self.get(ref);
+        npc.spritekey = spritekey;
+        npc.x = x;
+        npc.y = y;
         return ref;
     }
 
