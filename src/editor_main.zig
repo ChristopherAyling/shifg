@@ -18,7 +18,7 @@ const Level = @import("level.zig").Level;
 const entity = @import("entity.zig");
 const audio = @import("audio.zig");
 
-const Things = @import("things.zig").ThingPool;
+const ThingPool = @import("things.zig").ThingPool;
 // const ThingIterator = @import("things.zig").ThingIterator;
 
 // const Npc = entity.Npc;
@@ -68,7 +68,7 @@ const EditorState = struct {
     level: Level,
 
     /// new things system
-    things: Things = .{},
+    things: ThingPool = .{},
 
     audio_system: audio.AudioSystem = undefined,
 
@@ -102,14 +102,6 @@ const EditorState = struct {
         // _ = file.readAll(std.mem.asBytes(&self.things)) catch unreachable;
     }
 
-    // fn first_free_slot(self: EditorState) usize {
-    //     // TODO handle case of having no free spots
-    //     for (self.npcs, 0..) |npc, i| {
-    //         if (!npc.active) return i;
-    //     }
-    //     return 0;
-    // }
-
     pub fn camera_follow_tile_cursor(self: *EditorState) void {
         self.camera_x = self.tile_cursor_x - @divFloor(con.NATIVE_W, 2) + @divFloor(con.PLAYER_W, 2);
         self.camera_y = self.tile_cursor_y - @divFloor(con.NATIVE_H, 2) + @divFloor(con.PLAYER_H, 2);
@@ -140,13 +132,6 @@ const EditorState = struct {
                             return;
                         }
                     }
-                    // for (&self.npcs) |*npc| {
-                    //     if (!npc.active) continue;
-                    //     if ((@abs(npc.x - self.tile_cursor_x) < 12) and (@abs(npc.y - self.tile_cursor_y)) < 12) {
-                    //         npc.active = false;
-                    //         return;
-                    //     }
-                    // }
                 } else {
                     if (inputs.directions.contains(.up)) self.tile_cursor_y -= 1 * TILE_CURSOR_VELOCITY;
                     if (inputs.directions.contains(.down)) self.tile_cursor_y += 1 * TILE_CURSOR_VELOCITY;
@@ -160,14 +145,6 @@ const EditorState = struct {
                     self.audio_system.playSound(.close);
                 } else if (inputs.a.pressed) {
                     self.audio_system.playSound(.click);
-                    // TODO place NPC in array and therefore world
-                    // const new_npc_index: usize = 0;
-                    // self.npcs[self.first_free_slot()] = Npc{
-                    //     .active = true,
-                    //     .spritekey = NPC_SPRITE_KEYS[self.add_selection_index],
-                    //     .x = self.tile_cursor_x,
-                    //     .y = self.tile_cursor_y,
-                    // };
                     _ = self.things.add_npc(NPC_SPRITE_KEYS[self.add_selection_index], self.tile_cursor_x, self.tile_cursor_y);
 
                     self.mode = .Navigate;
