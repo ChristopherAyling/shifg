@@ -36,6 +36,8 @@ pub const Inputs = struct {
     start: ButtonState = .{},
     up: ButtonState = .{},
     down: ButtonState = .{},
+    left: ButtonState = .{},
+    right: ButtonState = .{},
 
     pub const Direction = enum { up, down, left, right };
 };
@@ -54,4 +56,6 @@ pub fn updateInputs(inputs: *Inputs, window: Window) void {
     inputs.start.update(window.key(E));
     inputs.up.update(window.key(UP));
     inputs.down.update(window.key(DOWN));
+    inputs.left.update(window.key(LEFT));
+    inputs.right.update(window.key(RIGHT));
 }

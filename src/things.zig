@@ -15,42 +15,94 @@ pub const Thing = struct {
     y: i32 = 0,
     spritekey: sprites.SpriteKey = .missing,
     reputation: i32 = 0,
+
+    pub fn manhat_dist(self: Thing, x: i32, y: i32) i32 {
+        const x_dist: i32 = @intCast(@abs(self.x - x));
+        const y_dist: i32 = @intCast(@abs(self.y - y));
+        return x_dist + y_dist;
+    }
+};
+
+const NIL_SLOT = 0;
+
+pub const ThingRef = struct {
+    slot: usize,
+
+    pub fn from_slot(slot: usize) ThingRef {
+        return .{ .slot = slot };
+    }
+
+    pub fn nil() ThingRef {
+        return .{ .slot = NIL_SLOT };
+    }
+
+    pub fn is_nil(self: ThingRef) bool {
+        return self.slot == NIL_SLOT;
+    }
 };
 
 pub const ThingIterator = struct {
     items: []Thing,
-    index: usize = 1,
+    current_slot: usize = 1,
 
     pub fn next(self: *ThingIterator) ?*Thing {
-        while (self.index < self.items.len) {
-            const idx = self.index;
-            self.index += 1;
-            return &self.items[idx];
+        while (self.current_slot < self.items.len) {
+            const slot = self.current_slot;
+            self.current_slot += 1;
+            return &self.items[slot];
         }
         return null;
     }
 
     pub fn next_kind(self: *ThingIterator, kind: Kind) ?*Thing {
-        while (self.index < self.items.len) {
-            const idx = self.index;
-            self.index += 1;
-            if (self.items[idx].kind == kind) return &self.items[idx];
+        while (self.current_slot < self.items.len) {
+            const slot = self.current_slot;
+            self.current_slot += 1;
+            if (self.items[slot].kind == kind) return &self.items[slot];
         }
         return null;
     }
 
     pub fn next_active(self: *ThingIterator) ?*Thing {
-        while (self.index < self.items.len) {
-            const idx = self.index;
-            self.index += 1;
-            if (self.items[idx].active) return &self.items[idx];
+        while (self.current_slot < self.items.len) {
+            const slot = self.current_slot;
+            self.current_slot += 1;
+            if (self.items[slot].active) return &self.items[slot];
         }
         return null;
     }
 };
 
-pub const ThingRef = struct {
-    slot: usize,
+pub const ThingRefIterator = struct {
+    items: []Thing,
+    current_slot: usize = 1,
+
+    pub fn next(self: *ThingRefIterator) ?ThingRef {
+        while (self.current_slot < self.items.len) {
+            const slot = self.current_slot;
+            self.current_slot += 1;
+            return ThingRef.from_slot(slot);
+        }
+        return null;
+    }
+
+    pub fn next_kind(self: *ThingRefIterator, kind: Kind) ?ThingRef {
+        while (self.current_slot < self.items.len) {
+            const slot = self.current_slot;
+            self.current_slot += 1;
+            if (self.items[slot].kind == kind) return ThingRef.from_slot(slot);
+        }
+        return null;
+    }
+
+    pub fn next_active(self: *ThingRefIterator) ?ThingRef {
+        while (self.current_slot < self.items.len) {
+            const slot = self.current_slot;
+            self.current_slot += 1;
+            if (self.items[slot].active) return ThingRef.from_slot(slot);
+        }
+        return null;
+    }
 };
 
 pub const ThingPool = struct {
@@ -67,6 +119,19 @@ pub const ThingPool = struct {
 
     pub fn get(self: *ThingPool, ref: ThingRef) *Thing {
         return &self.things[ref.slot];
+    }
+
+    pub fn get_or_null(self: *ThingPool, ref: ThingRef) ?*Thing {
+        if (ref.is_nil()) return null;
+        return &self.things[ref.slot];
+    }
+
+    pub fn get_nil_ref() ThingRef {
+        return ThingRef.nil();
+    }
+
+    pub fn get_nil(self: *ThingPool) *Thing {
+        return &self.things[NIL_SLOT];
     }
 
     pub fn add(self: *ThingPool, kind: Kind) ThingRef {
@@ -89,6 +154,10 @@ pub const ThingPool = struct {
     }
 
     pub fn iter(self: *ThingPool) ThingIterator {
+        return .{ .items = &self.things };
+    }
+
+    pub fn iter_ref(self: *ThingPool) ThingRefIterator {
         return .{ .items = &self.things };
     }
 

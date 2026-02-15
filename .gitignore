@@ -9,6 +9,8 @@
 # Cheers!
 # -andrewrk
 
+data.bin
+
 .zig-cache/
 zig-out/
 /release/

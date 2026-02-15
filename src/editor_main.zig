@@ -63,8 +63,6 @@ const EditorState = struct {
     tile_cursor_y: i32 = con.LEVEL_H_HALF,
     camera_x: i32 = 0,
     camera_y: i32 = 0,
-    // things: [1000]Thing = .{Thing{}} ** 1000,
-    // npcs: [1000]Npc = .{Npc{}} ** 1000,
     level: Level,
 
     /// new things system
@@ -86,20 +84,19 @@ const EditorState = struct {
     }
 
     fn save(self: EditorState) void {
-        std.log.debug("saving level...", .{});
-
+        std.log.debug("saving level ...", .{});
         const file = std.fs.createFileAbsolute("/Users/chris/gaming/gam1/data.bin", .{ .truncate = true }) catch unreachable;
         defer file.close();
         file.writeAll(std.mem.asBytes(&self.things)) catch unreachable;
-
         std.log.debug("... level saved", .{});
     }
 
     fn load(self: *EditorState) void {
-        _ = self;
-        // const file = std.fs.openFileAbsolute("/Users/chris/gaming/gam1/data.bin", .{}) catch return;
-        // defer file.close();
-        // _ = file.readAll(std.mem.asBytes(&self.things)) catch unreachable;
+        std.log.debug("loading level ...", .{});
+        const file = std.fs.openFileAbsolute("/Users/chris/gaming/gam1/data.bin", .{}) catch return;
+        defer file.close();
+        _ = file.readAll(std.mem.asBytes(&self.things)) catch unreachable;
+        std.log.debug("... level loaded", .{});
     }
 
     pub fn camera_follow_tile_cursor(self: *EditorState) void {
@@ -125,18 +122,39 @@ const EditorState = struct {
                     self.audio_system.playSound(.close);
                 } else if (inputs.b.pressed) {
                     // delete npc if close by
+                    std.log.debug("trying to delete", .{});
                     var npc_iter = self.things.iter();
                     while (npc_iter.next_kind(.NPC)) |npc| {
-                        if ((@abs(npc.x - self.tile_cursor_x) < 12) and (@abs(npc.y - self.tile_cursor_y)) < 12) {
+                        if ((@abs(npc.x - self.tile_cursor_x) < 8) and (@abs(npc.y - self.tile_cursor_y)) < 8) {
                             npc.active = false;
-                            return;
+                            std.log.debug("deleted", .{});
+                            // return;
                         }
                     }
+                } else if (inputs.b.held and inputs.left.pressed) {
+                    // find closest thing and set tile cursor to be there
+                    var closest_ref = ThingPool.get_nil_ref();
+                    var closest_dist: i32 = std.math.maxInt(i32);
+                    var it = self.things.iter_ref();
+                    while (it.next_active()) |ref| {
+                        const thing = self.things.get(ref);
+                        const dist = thing.manhat_dist(self.tile_cursor_x, self.tile_cursor_y);
+                        if (dist < closest_dist) {
+                            closest_dist = dist;
+                            closest_ref = ref;
+                        }
+                    }
+                    if (self.things.get_or_null(closest_ref)) |closest| {
+                        self.tile_cursor_x = closest.x;
+                        self.tile_cursor_y = closest.y;
+                    }
                 } else {
-                    if (inputs.directions.contains(.up)) self.tile_cursor_y -= 1 * TILE_CURSOR_VELOCITY;
-                    if (inputs.directions.contains(.down)) self.tile_cursor_y += 1 * TILE_CURSOR_VELOCITY;
-                    if (inputs.directions.contains(.left)) self.tile_cursor_x -= 1 * TILE_CURSOR_VELOCITY;
-                    if (inputs.directions.contains(.right)) self.tile_cursor_x += 1 * TILE_CURSOR_VELOCITY;
+                    if (!inputs.b.held) {
+                        if (inputs.directions.contains(.up)) self.tile_cursor_y -= 1 * TILE_CURSOR_VELOCITY;
+                        if (inputs.directions.contains(.down)) self.tile_cursor_y += 1 * TILE_CURSOR_VELOCITY;
+                        if (inputs.directions.contains(.left)) self.tile_cursor_x -= 1 * TILE_CURSOR_VELOCITY;
+                        if (inputs.directions.contains(.right)) self.tile_cursor_x += 1 * TILE_CURSOR_VELOCITY;
+                    }
                 }
             },
             .Add => {
@@ -168,6 +186,7 @@ const EditorState = struct {
                         },
                         1 => {
                             // load
+                            self.load();
                         },
                         2 => {
                             // rename
