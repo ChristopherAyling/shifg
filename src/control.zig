@@ -1,14 +1,23 @@
 const std = @import("std");
 const Window = @import("window.zig").Window;
 
-const UP = 17;
-const DOWN = 18;
-const LEFT = 20;
-const RIGHT = 19;
-const SPACE = 32;
-const A = 65;
-const B = 66;
-const E = 69;
+// keys
+const W_KEY = 87;
+const S_KEY = 83;
+const A_KEY = 65;
+const D_KEY = 68;
+const SPACE_KEY = 32;
+const E_KEY = 69;
+const B_KEY = 66;
+
+// controls
+const UP = W_KEY;
+const DOWN = S_KEY;
+const LEFT = A_KEY;
+const RIGHT = D_KEY;
+const A = SPACE_KEY;
+const B = B_KEY;
+const START = E_KEY;
 
 const ButtonState = struct {
     pressed: bool = false,
@@ -51,9 +60,9 @@ pub fn updateInputs(inputs: *Inputs, window: Window) void {
     if (window.key(RIGHT)) inputs.directions.insert(.right);
 
     // handle button presses
-    inputs.a.update(window.key(A) or window.key(SPACE));
+    inputs.a.update(window.key(A));
     inputs.b.update(window.key(B));
-    inputs.start.update(window.key(E));
+    inputs.start.update(window.key(START));
     inputs.up.update(window.key(UP));
     inputs.down.update(window.key(DOWN));
     inputs.left.update(window.key(LEFT));
