@@ -177,7 +177,8 @@ pub fn game_step_overworld(game_state: *GameState, inputs: Inputs) void {
     if (inputs.a.pressed) {
         var it = game_state.things.iter();
         while (it.next_active_near(game_state.player_x, game_state.player_y, 8)) |thing| {
-            game_state.setDialogue(&thing.dialogue);
+            _ = thing;
+            // TODO: implement dialogue system
         }
     }
 
@@ -203,7 +204,7 @@ pub fn game_step_main_menu(game_state: *GameState, inputs: Inputs) void {
 
 // rendering
 
-pub fn render_step(game_state: *const GameState, render_state: *RenderState) void {
+pub fn render_step(game_state: *GameState, render_state: *RenderState) void {
     // clear screen
     draw.fill(&render_state.screen, 0x0);
     draw.fill(&render_state.screen_upscaled, 0x0);
@@ -225,7 +226,7 @@ pub fn render_step_inventory(game_state: *const GameState, render_state: *Render
     ui.drawTextBox(&render_state.screen, "", "inventory");
 }
 
-pub fn render_step_overworld(game_state: *const GameState, render_state: *RenderState) void {
+pub fn render_step_overworld(game_state: *GameState, render_state: *RenderState) void {
     // render world
     {
         // load tiles for needed map
@@ -251,15 +252,9 @@ pub fn render_step_overworld(game_state: *const GameState, render_state: *Render
             draw.draw_image(&render_state.level, render_state.storage.get(.genly), game_state.player_x, game_state.player_y);
             // every thing
             var it = game_state.things.iter();
-            while (it.next_active()) |*thing| {
+            while (it.next_active()) |thing| {
                 draw.draw_image(&render_state.level, render_state.storage.get(thing.spritekey), thing.x, thing.y);
             }
-            // for (game_state.npcs) |npc| {
-            //     if (npc.active) {
-            //         draw.draw_image(&render_state.level, render_state.storage.get(npc.spritekey), npc.x, npc.y);
-            //     }
-            // }
-            // items
         }
 
         draw.draw_image(&render_state.level, game_state.level.?.fg, 0, 0);
