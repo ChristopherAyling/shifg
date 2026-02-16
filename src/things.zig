@@ -168,10 +168,28 @@ pub const ThingPool = struct {
 
     pub fn add_npc(self: *ThingPool, spritekey: sprites.SpriteKey, x: i32, y: i32) ThingRef {
         const ref = self.add(.NPC);
-        const npc = self.get(ref);
-        npc.spritekey = spritekey;
-        npc.x = x;
-        npc.y = y;
+        const thing = self.get(ref);
+        thing.spritekey = spritekey;
+        thing.x = x;
+        thing.y = y;
+        return ref;
+    }
+
+    pub fn add_player(self: *ThingPool, spritekey: sprites.SpriteKey, x: i32, y: i32) ThingRef {
+        const ref = self.add(.PLAYER);
+        const thing = self.get(ref);
+        thing.spritekey = spritekey;
+        thing.x = x;
+        thing.y = y;
+        return ref;
+    }
+
+    pub fn add_item(self: *ThingPool, spritekey: sprites.SpriteKey, x: i32, y: i32) ThingRef {
+        const ref = self.add(.ITEM);
+        const thing = self.get(ref);
+        thing.spritekey = spritekey;
+        thing.x = x;
+        thing.y = y;
         return ref;
     }
 

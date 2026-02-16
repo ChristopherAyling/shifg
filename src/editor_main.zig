@@ -24,11 +24,21 @@ const updateInputs = control.updateInputs;
 
 const TILE_CURSOR_VELOCITY = 1;
 
+// TODO collect these into a single traverseable structure
+const PLAYER_SPRITE_KEYS = &[_]sprites.SpriteKey{
+    .genly,
+};
+
 const NPC_SPRITE_KEYS = &[_]sprites.SpriteKey{
     .argaven,
     .estraven,
-    .genly,
 };
+
+const ITEM_SPRITE_KEYS = &[_]sprites.SpriteKey{
+    .redflag,
+    .potion,
+};
+
 var MENU_LABELS: []const []const u8 = &.{
     "save",
     "load",
@@ -73,6 +83,7 @@ const EditorState = struct {
     // menu
     menu_selection_index: usize = 0,
     submenu_selection_index: usize = 0,
+    submenu_len: usize = 0,
 
     pub fn initFromSavedLevel(path: []const u8) EditorState {
         const state: EditorState = .{
@@ -151,17 +162,33 @@ const EditorState = struct {
                 }
             },
             .Add => {
+                self.submenu_len = 3;
                 if (inputs.b.pressed) {
                     self.mode = .Navigate;
                     self.audio_system.playSound(.close);
                 } else if (inputs.a.pressed) {
                     self.audio_system.playSound(.click);
-                    _ = self.things.add_npc(NPC_SPRITE_KEYS[self.add_selection_index], self.tile_cursor_x, self.tile_cursor_y);
+                    switch (self.submenu_selection_index) {
+                        0 => {
+                            _ = self.things.add_npc(NPC_SPRITE_KEYS[self.add_selection_index], self.tile_cursor_x, self.tile_cursor_y);
+                        },
+                        1 => {
+                            _ = self.things.add_player(PLAYER_SPRITE_KEYS[self.add_selection_index], self.tile_cursor_x, self.tile_cursor_y);
+                        },
+                        2 => {
+                            _ = self.things.add_item(ITEM_SPRITE_KEYS[self.add_selection_index], self.tile_cursor_x, self.tile_cursor_y);
+                        },
+                        else => {
+                            _ = self.things.add_npc(NPC_SPRITE_KEYS[self.add_selection_index], self.tile_cursor_x, self.tile_cursor_y);
+                        },
+                    }
 
                     self.mode = .Navigate;
                 } else {
                     if (inputs.up.pressed) self.add_selection_index -|= 1;
                     if (inputs.down.pressed) self.add_selection_index = @min(@as(i32, @intCast(NPC_SPRITE_KEYS.len - 1)), self.add_selection_index + 1);
+                    if (inputs.left.pressed) self.submenu_selection_index -|= 1;
+                    if (inputs.right.pressed) self.submenu_selection_index = (self.submenu_selection_index + 1) % self.submenu_len;
                 }
             },
             .Menu => {
@@ -270,7 +297,20 @@ const RenderState = struct {
         switch (editor_state.mode) {
             .Navigate => {},
             .Add => {
-                eui.draw_sprite_menu(&self.screen, 0, 0, &self.storage, editor_state.add_selection_index, NPC_SPRITE_KEYS, "NPC");
+                switch (editor_state.submenu_selection_index) {
+                    0 => {
+                        eui.draw_sprite_menu(&self.screen, 0, 0, &self.storage, editor_state.add_selection_index, NPC_SPRITE_KEYS, "NPC");
+                    },
+                    1 => {
+                        eui.draw_sprite_menu(&self.screen, 0, 0, &self.storage, editor_state.add_selection_index, PLAYER_SPRITE_KEYS, "PLY");
+                    },
+                    2 => {
+                        eui.draw_sprite_menu(&self.screen, 0, 0, &self.storage, editor_state.add_selection_index, ITEM_SPRITE_KEYS, "ITM");
+                    },
+                    else => {
+                        eui.draw_sprite_menu(&self.screen, 0, 0, &self.storage, editor_state.add_selection_index, NPC_SPRITE_KEYS, "NPC");
+                    },
+                }
             },
             .Menu => {
                 eui.draw_text_menu(&self.screen, 0, 0, editor_state.menu_selection_index, MENU_LABELS);
