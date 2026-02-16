@@ -8,26 +8,42 @@ const con = @import("constants.zig");
 const Storage = sprites.SpriteStorage;
 const SpriteKey = sprites.SpriteKey;
 
-pub fn draw_sprite_menu(screen: *ScreenBuffer, storage: *Storage, idx: usize, sprite_keys: []const SpriteKey) void {
+pub fn draw_sprite_menu(screen: *ScreenBuffer, x0: i32, y0: i32, storage: *Storage, idx: usize, sprite_keys: []const SpriteKey, title: []const u8) void {
     // _ = idx;
-    const PADDING = 4;
+    const PADDING: i32 = 4;
     const N_SPRITES: i32 = @intCast(sprite_keys.len);
+    const TITLE_WIDTH: i32 = PADDING + @as(i32, @intCast(title.len * con.FONT_W + 1)) + PADDING;
+    const SPRITE_WIDTH: i32 = PADDING + con.PLAYER_W + PADDING;
+    const REC_WIDTH: i32 = @max(TITLE_WIDTH, SPRITE_WIDTH);
     draw.draw_rec(
         screen,
-        0,
-        0,
-        con.PLAYER_W + (2 * PADDING),
-        (con.PLAYER_H + PADDING) * N_SPRITES + PADDING,
+        x0,
+        y0,
+        x0 + REC_WIDTH,
+        y0 + (con.PLAYER_H + PADDING) * N_SPRITES + PADDING + con.FONT_H + PADDING,
         0x00F0F0,
         0x787276,
     );
+
+    draw.draw_text(screen, title, x0 + PADDING, y0 + PADDING, 0xFFFFFF);
+
     for (sprite_keys, 0..) |sprite_key, i| {
         const ii: i32 = @intCast(i);
-        draw.draw_image(screen, storage.get(sprite_key), PADDING, (con.PLAYER_H + PADDING) * ii + PADDING);
+        draw.draw_image(
+            screen,
+            storage.get(sprite_key),
+            x0 + PADDING,
+            y0 + (con.PLAYER_H + PADDING) * ii + PADDING + con.FONT_H + PADDING,
+        );
     }
 
     const iidx: i32 = @intCast(idx);
-    draw.draw_image(screen, storage.get(.cursor), PADDING, (con.PLAYER_H + PADDING) * iidx + PADDING);
+    draw.draw_image(
+        screen,
+        storage.get(.cursor),
+        x0 + PADDING,
+        y0 + (con.PLAYER_H + PADDING) * iidx + PADDING + con.FONT_H + PADDING,
+    );
 }
 
 pub fn draw_text_menu(screen: *ScreenBuffer, x0: i32, y0: i32, idx: usize, labels: []const []const u8) void {

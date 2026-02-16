@@ -270,7 +270,7 @@ const RenderState = struct {
         switch (editor_state.mode) {
             .Navigate => {},
             .Add => {
-                eui.draw_sprite_menu(&self.screen, &self.storage, editor_state.add_selection_index, NPC_SPRITE_KEYS);
+                eui.draw_sprite_menu(&self.screen, 0, 0, &self.storage, editor_state.add_selection_index, NPC_SPRITE_KEYS, "NPC");
             },
             .Menu => {
                 eui.draw_text_menu(&self.screen, 0, 0, editor_state.menu_selection_index, MENU_LABELS);
@@ -326,7 +326,7 @@ pub fn main() !void {
 
     // var editor_state = EditorState.initFromSavedLevel("assets/levels/parade");
     var editor_state: *EditorState = try allocator.create(EditorState);
-    editor_state.* = EditorState.initFromSavedLevel("/Users/chris/gaming/gam1/assets/levels/parade");
+    editor_state.* = EditorState.initFromSavedLevel("/Users/chris/gaming/gam1/assets/levels/cornelia");
     editor_state.audio_system.init();
     editor_state.load();
     defer allocator.destroy(editor_state);

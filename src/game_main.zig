@@ -314,21 +314,13 @@ pub fn main() !void {
         .storage = storage,
     };
 
-    // game_state.audio_system.playSound(.click);
-
     var inputs = Inputs{};
     while (window.loop()) {
-        // const frame_start_t = std.time.nanoTimestamp();
-
         updateInputs(&inputs, window);
         game_step(game_state, inputs); // TODO pass a dt
         render_step(game_state, &render_state);
 
         screen.upscale(&screen_upscaled, con.SCALE);
         blit(render_state.screen_upscaled, &window);
-
-        // const frame_end_t = std.time.nanoTimestamp();
-        // const frame_elapsed_ns = frame_end_t - frame_start_t;
-        // window.sleep(@intCast(frame_elapsed_ns));
     }
 }

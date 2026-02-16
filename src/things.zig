@@ -5,6 +5,8 @@ pub const Kind = enum {
     UNSET,
     NPC,
     ITEM,
+    DOOR,
+    PLAYER,
 };
 
 pub const Thing = struct {
@@ -24,6 +26,7 @@ pub const Thing = struct {
     }
 };
 
+const MAX_THINGS = 1000;
 const NIL_SLOT = 0;
 
 pub const ThingRef = struct {
@@ -113,7 +116,7 @@ pub const ThingRefIterator = struct {
 
 pub const ThingPool = struct {
     // slot 0 = NIL slot.
-    things: [1000]Thing = .{Thing{}} ** 1000,
+    things: [MAX_THINGS]Thing = .{Thing{}} ** MAX_THINGS,
     nextFreeSlot: usize = 1, // TODO use a freelist
 
     pub fn from_file(self: *ThingPool, path: []const u8) void {
@@ -136,6 +139,7 @@ pub const ThingPool = struct {
     }
 
     pub fn get(self: *ThingPool, ref: ThingRef) *Thing {
+        if (ref.slot >= MAX_THINGS or ref.slot < 0) return self.get_nil();
         return &self.things[ref.slot];
     }
 
