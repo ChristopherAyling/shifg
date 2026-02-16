@@ -38,6 +38,14 @@ pub const AudioSystem = struct {
         self.engine_initialized = true;
     }
 
+    pub fn deinit(self: *AudioSystem) void {
+        self.stopMusic();
+        if (self.engine_initialized) {
+            c.ma_engine_uninit(&self.engine);
+            self.engine_initialized = false;
+        }
+    }
+
     pub fn setMusic(self: *AudioSystem, track: MusicTrack) void {
         if (track == self.current_track) return;
 

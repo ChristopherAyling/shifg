@@ -45,6 +45,7 @@ var MENU_LABELS: []const []const u8 = &.{
     "rename",
     "music",
     "effects",
+    "quit",
 };
 
 var MENU_MUSIC_LABELS: []const []const u8 = std.meta.fieldNames(audio.MusicTrack);
@@ -66,6 +67,7 @@ const EditorState = struct {
     level: Level,
     path: []const u8,
 
+    quit: bool = false,
     mode: EditorMode = .Navigate,
     tile_cursor_x: i32 = con.LEVEL_W_HALF,
     tile_cursor_y: i32 = con.LEVEL_H_HALF,
@@ -93,10 +95,19 @@ const EditorState = struct {
         return state;
     }
 
+    pub fn deinit(self: *EditorState) void {
+        self.audio_system.deinit();
+    }
+
     fn save(self: *EditorState) void {
         std.log.debug("saving level ...", .{});
         self.level.save_things(&self.things);
         std.log.debug("... level saved", .{});
+    }
+
+    fn save_and_quit(self: *EditorState) void {
+        self.save();
+        self.quit = true;
     }
 
     fn load(self: *EditorState) void {
@@ -217,6 +228,9 @@ const EditorState = struct {
                             // effects
                             self.mode = .MenuEffects;
                             self.submenu_selection_index = 0; // TODO default this to current effects index
+                        },
+                        5 => {
+                            self.quit = true;
                         },
                         else => {},
                     }
@@ -366,6 +380,7 @@ pub fn main() !void {
     editor_state.* = EditorState.initFromSavedLevel("/Users/chris/gaming/gam1/assets/levels/cornelia");
     editor_state.audio_system.init();
     editor_state.load();
+    defer editor_state.deinit();
     defer allocator.destroy(editor_state);
 
     var render_state: RenderState = .{
@@ -382,5 +397,7 @@ pub fn main() !void {
         render_state.step(editor_state);
 
         blit(render_state.screen_upscaled, &window);
+
+        if (editor_state.quit) break;
     }
 }
