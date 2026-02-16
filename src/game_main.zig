@@ -14,11 +14,8 @@ const StoryCheckpoint = @import("story.zig").StoryCheckpoint;
 const con = @import("constants.zig");
 const effects = @import("effects.zig");
 const Level = @import("level.zig").Level;
-const entity = @import("entity.zig");
 const audio = @import("audio.zig");
-
-const Npc = entity.Npc;
-const Item = entity.Item;
+const ThingPool = @import("things.zig").ThingPool;
 
 const Inputs = control.Inputs;
 const updateInputs = control.updateInputs;
@@ -55,8 +52,7 @@ const GameState = struct {
     audio_system: audio.AudioSystem,
 
     // entities
-    npcs: [1000]Npc = .{Npc{}} ** 1000,
-    items: [1000]Item = .{Item{}} ** 1000,
+    things: ThingPool = .{},
 
     // stuff
     dialogue: ?DialogueState,
@@ -74,7 +70,6 @@ const GameState = struct {
 
     pub fn load_level(self: *GameState, name: []const u8) void {
         const new_level = Level.from_folder(LEVELS.get(name).?, name);
-        new_level.load_entities(&self.npcs);
         self.level = new_level;
     }
 
@@ -180,16 +175,10 @@ pub fn game_step_overworld(game_state: *GameState, inputs: Inputs) void {
 
     // world interaction
     if (inputs.a.pressed) {
-        // check if any entities close enough by
-        // check npcs
-        for (&game_state.npcs) |*npc| {
-            if (!npc.active) continue;
-            if ((@abs(npc.x - game_state.player_x) < 12) and (@abs(npc.y - game_state.player_y)) < 12) {
-                game_state.setDialogue(&npc.dialogue);
-                return;
-            }
+        var it = game_state.things.iter();
+        while (it.next_active_near(game_state.player_x, game_state.player_y, 8)) |thing| {
+            game_state.setDialogue(&thing.dialogue);
         }
-        // check items
     }
 
     // movement
@@ -260,12 +249,16 @@ pub fn render_step_overworld(game_state: *const GameState, render_state: *Render
         {
             // player
             draw.draw_image(&render_state.level, render_state.storage.get(.genly), game_state.player_x, game_state.player_y);
-            // npcs
-            for (game_state.npcs) |npc| {
-                if (npc.active) {
-                    draw.draw_image(&render_state.level, render_state.storage.get(npc.spritekey), npc.x, npc.y);
-                }
+            // every thing
+            var it = game_state.things.iter();
+            while (it.next_active()) |*thing| {
+                draw.draw_image(&render_state.level, render_state.storage.get(thing.spritekey), thing.x, thing.y);
             }
+            // for (game_state.npcs) |npc| {
+            //     if (npc.active) {
+            //         draw.draw_image(&render_state.level, render_state.storage.get(npc.spritekey), npc.x, npc.y);
+            //     }
+            // }
             // items
         }
 

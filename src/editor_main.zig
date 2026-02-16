@@ -15,14 +15,9 @@ const StoryCheckpoint = @import("story.zig").StoryCheckpoint;
 const con = @import("constants.zig");
 const effects = @import("effects.zig");
 const Level = @import("level.zig").Level;
-const entity = @import("entity.zig");
 const audio = @import("audio.zig");
 
 const ThingPool = @import("things.zig").ThingPool;
-// const ThingIterator = @import("things.zig").ThingIterator;
-
-// const Npc = entity.Npc;
-// const Item = entity.Item;
 
 const Inputs = control.Inputs;
 const updateInputs = control.updateInputs;
@@ -124,7 +119,7 @@ const EditorState = struct {
                     // delete npc if close by
                     std.log.debug("trying to delete", .{});
                     var npc_iter = self.things.iter();
-                    while (npc_iter.next_kind(.NPC)) |npc| {
+                    while (npc_iter.next_active_kind(.NPC)) |npc| {
                         if ((@abs(npc.x - self.tile_cursor_x) < 8) and (@abs(npc.y - self.tile_cursor_y)) < 8) {
                             npc.active = false;
                             std.log.debug("deleted", .{});
@@ -337,13 +332,6 @@ pub fn main() !void {
     editor_state.audio_system.init();
     editor_state.load();
     defer allocator.destroy(editor_state);
-
-    // editor_state.things.dbg();
-
-    // const ref = editor_state.things.add(.NPC);
-    // var npc = editor_state.things.get(ref);
-    // npc.x = con.LEVEL_W_HALF;
-    // npc.y = con.LEVEL_H_HALF;
 
     var render_state: RenderState = .{
         .screen = screen,

@@ -2,9 +2,6 @@ const std = @import("std");
 const assert = std.debug.assert;
 const Image = @import("image.zig").Image;
 const con = @import("constants.zig");
-const entity = @import("entity.zig");
-const Npc = entity.Npc;
-const Item = entity.Item;
 const dialogue = @import("dialogue.zig");
 const audio = @import("audio.zig");
 
@@ -41,29 +38,5 @@ pub const Level = struct {
             .fg = fg,
             .music = undefined,
         };
-    }
-
-    // populate entity buffer
-    pub fn load_entities(self: Level, npcs: []Npc) void {
-        _ = self;
-        // iterate over all non empty squares in the entity map.
-        // the entity map contains entity ids in some cells.
-        // npcs
-        npcs[0] = Npc{
-            .active = true,
-            .spritekey = .argaven,
-            .x = 230,
-            .y = 270,
-            .dialogue = dialogue.PARADE_ARGAVEN,
-        };
-
-        npcs[1] = Npc{
-            .active = true,
-            .spritekey = .estraven,
-            .x = 220,
-            .y = 270,
-            .dialogue = dialogue.PARADE_ESTRAVEN,
-        };
-        // items
     }
 };

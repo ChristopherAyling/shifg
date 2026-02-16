@@ -54,11 +54,16 @@ pub const ThingIterator = struct {
         return null;
     }
 
-    pub fn next_kind(self: *ThingIterator, kind: Kind) ?*Thing {
-        while (self.current_slot < self.items.len) {
-            const slot = self.current_slot;
-            self.current_slot += 1;
-            if (self.items[slot].kind == kind) return &self.items[slot];
+    pub fn next_active_near(self: *ThingIterator, x: i32, y: i32, thresh: i32) ?*Thing {
+        if (self.next_active()) |thing| {
+            if (thing.manhat_dist(x, y) < thresh) return thing;
+        }
+        return null;
+    }
+
+    pub fn next_active_kind(self: *ThingIterator, kind: Kind) ?*Thing {
+        if (self.next_active()) |thing| {
+            if (thing.kind == kind) return thing;
         }
         return null;
     }
@@ -86,11 +91,11 @@ pub const ThingRefIterator = struct {
         return null;
     }
 
-    pub fn next_kind(self: *ThingRefIterator, kind: Kind) ?ThingRef {
+    pub fn next_active_kind(self: *ThingRefIterator, kind: Kind) ?ThingRef {
         while (self.current_slot < self.items.len) {
             const slot = self.current_slot;
             self.current_slot += 1;
-            if (self.items[slot].kind == kind) return ThingRef.from_slot(slot);
+            if (self.items[slot].active and self.items[slot].kind == kind) return ThingRef.from_slot(slot);
         }
         return null;
     }
