@@ -70,6 +70,7 @@ const GameState = struct {
 
     pub fn load_level(self: *GameState, name: []const u8) void {
         const new_level = Level.from_folder(LEVELS.get(name).?, name);
+        new_level.load_things(&self.things);
         self.level = new_level;
     }
 

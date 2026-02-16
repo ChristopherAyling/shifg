@@ -53,12 +53,14 @@ const EditorMode = enum {
 };
 
 const EditorState = struct {
+    level: Level,
+    path: []const u8,
+
     mode: EditorMode = .Navigate,
     tile_cursor_x: i32 = con.LEVEL_W_HALF,
     tile_cursor_y: i32 = con.LEVEL_H_HALF,
     camera_x: i32 = 0,
     camera_y: i32 = 0,
-    level: Level,
 
     /// new things system
     things: ThingPool = .{},
@@ -73,25 +75,21 @@ const EditorState = struct {
     submenu_selection_index: usize = 0,
 
     pub fn initFromSavedLevel(path: []const u8) EditorState {
-        return .{
+        const state: EditorState = .{
+            .path = path,
             .level = Level.from_folder(path, "level"),
         };
+        return state;
     }
 
-    fn save(self: EditorState) void {
+    fn save(self: *EditorState) void {
         std.log.debug("saving level ...", .{});
-        const file = std.fs.createFileAbsolute("/Users/chris/gaming/gam1/data.bin", .{ .truncate = true }) catch unreachable;
-        defer file.close();
-        file.writeAll(std.mem.asBytes(&self.things)) catch unreachable;
+        self.level.save_things(&self.things);
         std.log.debug("... level saved", .{});
     }
 
     fn load(self: *EditorState) void {
-        std.log.debug("loading level ...", .{});
-        const file = std.fs.openFileAbsolute("/Users/chris/gaming/gam1/data.bin", .{}) catch return;
-        defer file.close();
-        _ = file.readAll(std.mem.asBytes(&self.things)) catch unreachable;
-        std.log.debug("... level loaded", .{});
+        self.level.load_things(&self.things);
     }
 
     pub fn camera_follow_tile_cursor(self: *EditorState) void {
@@ -115,7 +113,7 @@ const EditorState = struct {
                     self.mode = .Add;
                     self.add_selection_index = 0;
                     self.audio_system.playSound(.close);
-                } else if (inputs.b.pressed) {
+                } else if (!inputs.is_any_direction_active() and inputs.b.pressed) {
                     // delete npc if close by
                     std.log.debug("trying to delete", .{});
                     var npc_iter = self.things.iter();
@@ -328,7 +326,7 @@ pub fn main() !void {
 
     // var editor_state = EditorState.initFromSavedLevel("assets/levels/parade");
     var editor_state: *EditorState = try allocator.create(EditorState);
-    editor_state.* = EditorState.initFromSavedLevel("assets/levels/parade");
+    editor_state.* = EditorState.initFromSavedLevel("/Users/chris/gaming/gam1/assets/levels/parade");
     editor_state.audio_system.init();
     editor_state.load();
     defer allocator.destroy(editor_state);

@@ -43,6 +43,10 @@ const ButtonState = struct {
             self.held = false;
         }
     }
+
+    pub fn is_active(self: ButtonState) bool {
+        return self.pressed or self.held;
+    }
 };
 
 pub const Inputs = struct {
@@ -56,6 +60,10 @@ pub const Inputs = struct {
     right: ButtonState = .{},
 
     pub const Direction = enum { up, down, left, right };
+
+    pub fn is_any_direction_active(self: Inputs) bool {
+        return self.up.is_active() or self.down.is_active() or self.left.is_active() or self.right.is_active();
+    }
 };
 
 pub fn updateInputs(inputs: *Inputs, window: Window) void {

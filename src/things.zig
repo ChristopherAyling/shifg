@@ -10,7 +10,8 @@ pub const Kind = enum {
 pub const Thing = struct {
     active: bool = false,
     kind: Kind = .UNSET,
-    name: []const u8 = "",
+    // name: [64:0]u8 = "",
+    name: [64:0]u8 = .{0} ** 64,
     x: i32 = 0,
     y: i32 = 0,
     spritekey: sprites.SpriteKey = .missing,
@@ -114,6 +115,18 @@ pub const ThingPool = struct {
     // slot 0 = NIL slot.
     things: [1000]Thing = .{Thing{}} ** 1000,
     nextFreeSlot: usize = 1, // TODO use a freelist
+
+    pub fn from_file(self: *ThingPool, path: []const u8) void {
+        const file = std.fs.openFileAbsolute(path, .{}) catch return;
+        defer file.close();
+        _ = file.readAll(std.mem.asBytes(self)) catch unreachable;
+    }
+
+    pub fn to_file(self: *ThingPool, path: []const u8) void {
+        const file = std.fs.createFileAbsolute(path, .{ .truncate = true }) catch unreachable;
+        defer file.close();
+        file.writeAll(std.mem.asBytes(self)) catch unreachable;
+    }
 
     pub fn reset(self: *ThingPool) void {
         var it = self.iter();
