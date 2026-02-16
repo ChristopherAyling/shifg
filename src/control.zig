@@ -10,6 +10,11 @@ const SPACE_KEY = 32;
 const E_KEY = 69;
 const B_KEY = 66;
 
+const H_KEY = undefined;
+const J_KEY = undefined;
+const K_KEY = undefined;
+const L_KEY = undefined;
+
 // controls
 const UP = W_KEY;
 const DOWN = S_KEY;
@@ -17,6 +22,8 @@ const LEFT = A_KEY;
 const RIGHT = D_KEY;
 const A = SPACE_KEY;
 const B = B_KEY;
+const X = undefined;
+const Y = undefined;
 const START = E_KEY;
 
 const ButtonState = struct {
