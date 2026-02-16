@@ -125,14 +125,11 @@ const EditorState = struct {
                     self.add_selection_index = 0;
                     self.audio_system.playSound(.close);
                 } else if (!inputs.is_any_direction_active() and inputs.b.pressed) {
-                    // delete npc if close by
-                    std.log.debug("trying to delete", .{});
-                    var npc_iter = self.things.iter();
-                    while (npc_iter.next_active_kind(.NPC)) |npc| {
-                        if ((@abs(npc.x - self.tile_cursor_x) < 8) and (@abs(npc.y - self.tile_cursor_y)) < 8) {
-                            npc.active = false;
-                            std.log.debug("deleted", .{});
-                            // return;
+                    // delete all things in range
+                    var it = self.things.iter();
+                    while (it.next_active()) |thing| {
+                        if (thing.manhat_dist(self.tile_cursor_x, self.tile_cursor_y) < 8) {
+                            thing.active = false;
                         }
                     }
                 } else if (inputs.b.held and inputs.left.pressed) {
