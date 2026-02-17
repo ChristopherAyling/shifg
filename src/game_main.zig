@@ -44,8 +44,8 @@ const GameState = struct {
     ctx: GameContext,
 
     // player data
-    player_x: i32,
-    player_y: i32,
+    // player_x: i32,
+    // player_y: i32,
     camera_x: i32,
     camera_y: i32,
 
@@ -86,8 +86,9 @@ const GameState = struct {
     }
 
     pub fn camera_follow_player(self: *GameState) void {
-        self.camera_x = self.player_x - @divFloor(con.NATIVE_W, 2) + @divFloor(con.PLAYER_W, 2);
-        self.camera_y = self.player_y - @divFloor(con.NATIVE_H, 2) + @divFloor(con.PLAYER_H, 2);
+        const player = self.things.get_player();
+        self.camera_x = player.x - @divFloor(con.NATIVE_W, 2) + @divFloor(con.PLAYER_W, 2);
+        self.camera_y = player.y - @divFloor(con.NATIVE_H, 2) + @divFloor(con.PLAYER_H, 2);
 
         self.camera_x = @max(self.camera_x, con.NATIVE_W_HALF);
         self.camera_y = @max(self.camera_y, con.NATIVE_H_HALF);
@@ -101,8 +102,6 @@ const GameState = struct {
             .mode = .MainMenu,
             .audio_system = .{},
             .ctx = .{ .story_checkpoint = .game_start },
-            .player_x = con.LEVEL_W_HALF,
-            .player_y = con.LEVEL_H_HALF,
             .camera_x = 0,
             .camera_y = 0,
             .dialogue = null,
@@ -139,6 +138,7 @@ pub fn game_step(game_state: *GameState, inputs: Inputs) void {
 }
 
 pub fn game_step_overworld(game_state: *GameState, inputs: Inputs) void {
+    const player = game_state.things.get_player();
     game_state.audio_system.setMusic(.overworld);
 
     switch (game_state.ctx.story_checkpoint) {
@@ -177,17 +177,17 @@ pub fn game_step_overworld(game_state: *GameState, inputs: Inputs) void {
     // world interaction
     if (inputs.a.pressed) {
         var it = game_state.things.iter();
-        while (it.next_active_near(game_state.player_x, game_state.player_y, 8)) |thing| {
+        while (it.next_active_near(player.x, player.y, 8)) |thing| {
             _ = thing;
             // TODO: implement dialogue system
         }
     }
 
     // movement
-    if (inputs.directions.contains(.up)) game_state.player_y -= 1 * PLAYER_VELOCITY;
-    if (inputs.directions.contains(.down)) game_state.player_y += 1 * PLAYER_VELOCITY;
-    if (inputs.directions.contains(.left)) game_state.player_x -= 1 * PLAYER_VELOCITY;
-    if (inputs.directions.contains(.right)) game_state.player_x += 1 * PLAYER_VELOCITY;
+    if (inputs.directions.contains(.up)) player.y -= 1 * PLAYER_VELOCITY;
+    if (inputs.directions.contains(.down)) player.y += 1 * PLAYER_VELOCITY;
+    if (inputs.directions.contains(.left)) player.x -= 1 * PLAYER_VELOCITY;
+    if (inputs.directions.contains(.right)) player.x += 1 * PLAYER_VELOCITY;
 }
 
 pub fn game_step_inventory(game_state: *GameState, inputs: Inputs) void {
@@ -249,8 +249,6 @@ pub fn render_step_overworld(game_state: *GameState, render_state: *RenderState)
 
         // load entities
         {
-            // player
-            draw.draw_image(&render_state.level, render_state.storage.get(.genly), game_state.player_x, game_state.player_y);
             // every thing
             var it = game_state.things.iter();
             while (it.next_active()) |thing| {

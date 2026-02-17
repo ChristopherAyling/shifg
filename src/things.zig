@@ -7,6 +7,7 @@ pub const Kind = enum {
     ITEM,
     DOOR,
     PLAYER,
+    CAMERA,
 };
 
 pub const Thing = struct {
@@ -115,9 +116,17 @@ pub const ThingRefIterator = struct {
 };
 
 pub const ThingPool = struct {
-    // slot 0 = NIL slot.
     things: [MAX_THINGS]Thing = .{Thing{}} ** MAX_THINGS,
     nextFreeSlot: usize = 1, // TODO use a freelist
+
+    pub fn get_player(self: *ThingPool) *Thing {
+        var it = self.iter();
+        while (it.next_active_kind(.PLAYER)) |player| {
+            return player;
+        }
+        // unreachable;
+        return self.get_nil();
+    }
 
     pub fn from_file(self: *ThingPool, path: []const u8) void {
         const file = std.fs.openFileAbsolute(path, .{}) catch return;

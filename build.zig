@@ -70,4 +70,25 @@ pub fn build(b: *std.Build) void {
         const run_step = b.step("edit", "Run editor");
         run_step.dependOn(&run_cmd.step);
     }
+
+    // thingdump
+    const thingdump: *std.Build.Step.Compile = b.addExecutable(.{
+        .name = "thingdump",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("src/thingdump_main.zig"),
+            .optimize = optimize,
+            .target = target,
+        }),
+    });
+    b.installArtifact(thingdump);
+
+    {
+        const run_cmd = b.addRunArtifact(thingdump);
+        run_cmd.step.dependOn(b.getInstallStep());
+        if (b.args) |args| {
+            run_cmd.addArgs(args);
+        }
+        const run_step = b.step("dump", "Run thingdump");
+        run_step.dependOn(&run_cmd.step);
+    }
 }
