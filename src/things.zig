@@ -60,14 +60,14 @@ pub const ThingIterator = struct {
     }
 
     pub fn next_active_near(self: *ThingIterator, x: i32, y: i32, thresh: i32) ?*Thing {
-        if (self.next_active()) |thing| {
+        while (self.next_active()) |thing| {
             if (thing.manhat_dist(x, y) < thresh) return thing;
         }
         return null;
     }
 
     pub fn next_active_kind(self: *ThingIterator, kind: Kind) ?*Thing {
-        if (self.next_active()) |thing| {
+        while (self.next_active()) |thing| {
             if (thing.kind == kind) return thing;
         }
         return null;
@@ -124,8 +124,8 @@ pub const ThingPool = struct {
         while (it.next_active_kind(.PLAYER)) |player| {
             return player;
         }
-        // unreachable;
-        return self.get_nil();
+        unreachable;
+        // return self.get_nil();
     }
 
     pub fn from_file(self: *ThingPool, path: []const u8) void {

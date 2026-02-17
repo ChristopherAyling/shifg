@@ -132,9 +132,8 @@ pub fn game_step(game_state: *GameState, inputs: Inputs) void {
     if (game_state.mode == .Overworld) {
         // TODO lookup story beat -> level name and load the correct level.
         game_state.ensure_level_loaded("arch");
+        game_state.camera_follow_player();
     }
-
-    game_state.camera_follow_player();
 }
 
 pub fn game_step_overworld(game_state: *GameState, inputs: Inputs) void {
