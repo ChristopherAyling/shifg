@@ -8,19 +8,26 @@ pub const Kind = enum {
     DOOR,
     PLAYER,
     CAMERA,
+    CURSOR,
+};
+
+pub const InteractionMode = enum {
+    NORMAL,
+    SELECT,
 };
 
 pub const Thing = struct {
-    active: bool = false,
-    kind: Kind = .UNSET,
-    // name: [64:0]u8 = "",
+    active: bool = false, // is an active entity
+    kind: Kind = .UNSET, // thing kind
     name: [64:0]u8 = .{0} ** 64,
     x: i32 = 0,
     y: i32 = 0,
-    spritekey: sprites.SpriteKey = .missing,
-    reputation: i32 = 0,
-    visible: bool = true,
-    camera_ref: ThingRef = ThingRef.nil(),
+    spritekey: sprites.SpriteKey = .missing, // what sprite to load to represent it
+    reputation: i32 = 0, // unused
+    visible: bool = true, // if the sprite should be loaded
+    camera_ref: ThingRef = ThingRef.nil(), // associated camera
+    cursor_ref: ThingRef = ThingRef.nil(), // associated cursor
+    interaction_mode: InteractionMode = .NORMAL,
 
     pub fn manhat_dist(self: Thing, x: i32, y: i32) i32 {
         const x_dist: i32 = @intCast(@abs(self.x - x));
@@ -193,15 +200,28 @@ pub const ThingPool = struct {
         thing.x = x;
         thing.y = y;
 
-        thing.camera_ref = self.add_camera(.camera, x, y);
+        thing.camera_ref = self.add_camera(x, y);
+        thing.cursor_ref = self.add_cursor(x, y);
+
+        thing.interaction_mode = .NORMAL;
 
         return ref;
     }
 
-    pub fn add_camera(self: *ThingPool, spritekey: sprites.SpriteKey, x: i32, y: i32) ThingRef {
+    pub fn add_camera(self: *ThingPool, x: i32, y: i32) ThingRef {
         const ref = self.add(.CAMERA);
         const thing = self.get(ref);
-        thing.spritekey = spritekey;
+        thing.spritekey = .camera;
+        thing.x = x;
+        thing.y = y;
+        // thing.visible = false;
+        return ref;
+    }
+
+    pub fn add_cursor(self: *ThingPool, x: i32, y: i32) ThingRef {
+        const ref = self.add(.CURSOR);
+        const thing = self.get(ref);
+        thing.spritekey = .cursor;
         thing.x = x;
         thing.y = y;
         // thing.visible = false;

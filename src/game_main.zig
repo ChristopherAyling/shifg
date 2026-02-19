@@ -88,9 +88,30 @@ const GameState = struct {
     pub fn camera_follow_player(self: *GameState) void {
         const player = self.things.get_player();
         const camera = self.things.get(player.camera_ref);
+        const cursor = self.things.get(player.cursor_ref);
+
+        // cursor follows too
+        cursor.x = player.x;
+        cursor.y = player.y;
 
         camera.x = player.x; // + @divFloor(con.PLAYER_W, 2);
         camera.y = player.y; // + @divFloor(con.PLAYER_H, 2);
+
+        // this is probably wrong, should probably take LEVEL_W etc into account like with the mins.
+        camera.x = @max(camera.x, con.NATIVE_W_HALF);
+        camera.y = @max(camera.y, con.NATIVE_H_HALF);
+
+        camera.x = @min(camera.x, con.LEVEL_W - con.NATIVE_W);
+        camera.y = @min(camera.y, con.LEVEL_H - con.NATIVE_H);
+    }
+
+    pub fn camera_follow_cursor(self: *GameState) void {
+        const player = self.things.get_player();
+        const camera = self.things.get(player.camera_ref);
+        const cursor = self.things.get(player.cursor_ref);
+
+        camera.x = cursor.x; // + @divFloor(con.PLAYER_W, 2);
+        camera.y = cursor.y; // + @divFloor(con.PLAYER_H, 2);
 
         // this is probably wrong, should probably take LEVEL_W etc into account like with the mins.
         camera.x = @max(camera.x, con.NATIVE_W_HALF);
@@ -119,6 +140,7 @@ const RenderState = struct {
 };
 
 const PLAYER_VELOCITY = 1;
+const CURSOR_VELOCITY = 1;
 
 // gaming
 
@@ -133,7 +155,15 @@ pub fn game_step(game_state: *GameState, inputs: Inputs) void {
     if (game_state.mode == .Overworld) {
         // TODO lookup story beat -> level name and load the correct level.
         game_state.ensure_level_loaded("arch");
-        game_state.camera_follow_player();
+        const player = game_state.things.get_player();
+        switch (player.interaction_mode) {
+            .NORMAL => {
+                game_state.camera_follow_player();
+            },
+            .SELECT => {
+                game_state.camera_follow_cursor();
+            },
+        }
     }
 }
 
@@ -183,11 +213,32 @@ pub fn game_step_overworld(game_state: *GameState, inputs: Inputs) void {
         }
     }
 
+    if (inputs.x.pressed) {
+        player.interaction_mode = switch (player.interaction_mode) {
+            .NORMAL => .SELECT,
+            .SELECT => .NORMAL,
+        };
+    }
+
     // movement
-    if (inputs.directions.contains(.up)) player.y -= 1 * PLAYER_VELOCITY;
-    if (inputs.directions.contains(.down)) player.y += 1 * PLAYER_VELOCITY;
-    if (inputs.directions.contains(.left)) player.x -= 1 * PLAYER_VELOCITY;
-    if (inputs.directions.contains(.right)) player.x += 1 * PLAYER_VELOCITY;
+    // TODO maybe move cursor rather than player depending on input_mode
+    var cursor = game_state.things.get(player.cursor_ref);
+    switch (player.interaction_mode) {
+        .NORMAL => {
+            cursor.visible = false;
+            if (inputs.directions.contains(.up)) player.y -= 1 * PLAYER_VELOCITY;
+            if (inputs.directions.contains(.down)) player.y += 1 * PLAYER_VELOCITY;
+            if (inputs.directions.contains(.left)) player.x -= 1 * PLAYER_VELOCITY;
+            if (inputs.directions.contains(.right)) player.x += 1 * PLAYER_VELOCITY;
+        },
+        .SELECT => {
+            cursor.visible = true;
+            if (inputs.directions.contains(.up)) cursor.y -= 1 * CURSOR_VELOCITY;
+            if (inputs.directions.contains(.down)) cursor.y += 1 * CURSOR_VELOCITY;
+            if (inputs.directions.contains(.left)) cursor.x -= 1 * CURSOR_VELOCITY;
+            if (inputs.directions.contains(.right)) cursor.x += 1 * CURSOR_VELOCITY;
+        },
+    }
 }
 
 pub fn game_step_inventory(game_state: *GameState, inputs: Inputs) void {
@@ -250,7 +301,7 @@ pub fn render_step_overworld(game_state: *GameState, render_state: *RenderState)
         {
             var it = game_state.things.iter();
             while (it.next_active()) |thing| {
-                draw.draw_image(&render_state.level, render_state.storage.get(thing.spritekey), thing.x, thing.y);
+                if (thing.visible) draw.draw_image(&render_state.level, render_state.storage.get(thing.spritekey), thing.x, thing.y);
             }
         }
 

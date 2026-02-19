@@ -115,8 +115,8 @@ const EditorState = struct {
     }
 
     pub fn camera_follow_tile_cursor(self: *EditorState) void {
-        self.camera_x = self.tile_cursor_x - @divFloor(con.NATIVE_W, 2) + @divFloor(con.PLAYER_W, 2);
-        self.camera_y = self.tile_cursor_y - @divFloor(con.NATIVE_H, 2) + @divFloor(con.PLAYER_H, 2);
+        self.camera_x = self.tile_cursor_x;
+        self.camera_y = self.tile_cursor_y;
 
         self.camera_x = @max(self.camera_x, con.NATIVE_W_HALF);
         self.camera_y = @max(self.camera_y, con.NATIVE_H_HALF);
@@ -292,11 +292,6 @@ const RenderState = struct {
         draw.draw_image(&self.level, editor_state.level.bg, 0, 0);
         draw.draw_image(&self.level, editor_state.level.fg, 0, 0);
         draw.draw_image(&self.level, self.storage.get(.cursor), editor_state.tile_cursor_x, editor_state.tile_cursor_y);
-        // for (editor_state.npcs) |npc| {
-        //     if (npc.active) {
-        //         draw.draw_image(&self.level, self.storage.get(npc.spritekey), npc.x, npc.y);
-        //     }
-        // }
 
         var iter = editor_state.things.iter();
         while (iter.next_active()) |thing| {
