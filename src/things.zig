@@ -8,7 +8,7 @@ pub const Kind = enum {
     DOOR,
     PLAYER,
     CAMERA,
-    CURSOR,
+    SELECTOR,
 };
 
 pub const InteractionMode = enum {
@@ -26,7 +26,7 @@ pub const Thing = struct {
     reputation: i32 = 0, // unused
     visible: bool = true, // if the sprite should be loaded
     camera_ref: ThingRef = ThingRef.nil(), // associated camera
-    cursor_ref: ThingRef = ThingRef.nil(), // associated cursor
+    selector_ref: ThingRef = ThingRef.nil(), // associated selector
     interaction_mode: InteractionMode = .NORMAL,
 
     pub fn manhat_dist(self: Thing, x: i32, y: i32) i32 {
@@ -201,7 +201,7 @@ pub const ThingPool = struct {
         thing.y = y;
 
         thing.camera_ref = self.add_camera(x, y);
-        thing.cursor_ref = self.add_cursor(x, y);
+        thing.selector_ref = self.add_selector(x, y);
 
         thing.interaction_mode = .NORMAL;
 
@@ -214,17 +214,16 @@ pub const ThingPool = struct {
         thing.spritekey = .camera;
         thing.x = x;
         thing.y = y;
-        // thing.visible = false;
+        thing.visible = false;
         return ref;
     }
 
-    pub fn add_cursor(self: *ThingPool, x: i32, y: i32) ThingRef {
-        const ref = self.add(.CURSOR);
+    pub fn add_selector(self: *ThingPool, x: i32, y: i32) ThingRef {
+        const ref = self.add(.SELECTOR);
         const thing = self.get(ref);
-        thing.spritekey = .cursor;
+        thing.spritekey = .selector;
         thing.x = x;
         thing.y = y;
-        // thing.visible = false;
         return ref;
     }
 

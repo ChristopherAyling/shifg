@@ -5,6 +5,7 @@ pub const SpriteKey = enum {
     missing,
     camera,
     splash,
+    selector,
     // characters
     estraven,
     genly,
@@ -44,6 +45,7 @@ pub const SpriteStorage = struct {
 
         // editor
         self.images[@intFromEnum(SpriteKey.cursor)] = Image.from_file("assets/cursor.png");
+        self.images[@intFromEnum(SpriteKey.selector)] = Image.from_file("assets/selector.png");
 
         // items
         self.images[@intFromEnum(SpriteKey.redflag)] = Image.from_file("assets/redflag.png");

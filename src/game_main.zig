@@ -88,11 +88,11 @@ const GameState = struct {
     pub fn camera_follow_player(self: *GameState) void {
         const player = self.things.get_player();
         const camera = self.things.get(player.camera_ref);
-        const cursor = self.things.get(player.cursor_ref);
+        const selector = self.things.get(player.selector_ref);
 
-        // cursor follows too
-        cursor.x = player.x;
-        cursor.y = player.y;
+        // selector follows too
+        selector.x = player.x;
+        selector.y = player.y;
 
         camera.x = player.x; // + @divFloor(con.PLAYER_W, 2);
         camera.y = player.y; // + @divFloor(con.PLAYER_H, 2);
@@ -105,13 +105,13 @@ const GameState = struct {
         camera.y = @min(camera.y, con.LEVEL_H - con.NATIVE_H);
     }
 
-    pub fn camera_follow_cursor(self: *GameState) void {
+    pub fn camera_follow_selector(self: *GameState) void {
         const player = self.things.get_player();
         const camera = self.things.get(player.camera_ref);
-        const cursor = self.things.get(player.cursor_ref);
+        const selector = self.things.get(player.selector_ref);
 
-        camera.x = cursor.x; // + @divFloor(con.PLAYER_W, 2);
-        camera.y = cursor.y; // + @divFloor(con.PLAYER_H, 2);
+        camera.x = selector.x; // + @divFloor(con.PLAYER_W, 2);
+        camera.y = selector.y; // + @divFloor(con.PLAYER_H, 2);
 
         // this is probably wrong, should probably take LEVEL_W etc into account like with the mins.
         camera.x = @max(camera.x, con.NATIVE_W_HALF);
@@ -140,7 +140,7 @@ const RenderState = struct {
 };
 
 const PLAYER_VELOCITY = 1;
-const CURSOR_VELOCITY = 1;
+const selector_VELOCITY = 1;
 
 // gaming
 
@@ -161,7 +161,7 @@ pub fn game_step(game_state: *GameState, inputs: Inputs) void {
                 game_state.camera_follow_player();
             },
             .SELECT => {
-                game_state.camera_follow_cursor();
+                game_state.camera_follow_selector();
             },
         }
     }
@@ -221,22 +221,22 @@ pub fn game_step_overworld(game_state: *GameState, inputs: Inputs) void {
     }
 
     // movement
-    // TODO maybe move cursor rather than player depending on input_mode
-    var cursor = game_state.things.get(player.cursor_ref);
+    // TODO maybe move selector rather than player depending on input_mode
+    var selector = game_state.things.get(player.selector_ref);
     switch (player.interaction_mode) {
         .NORMAL => {
-            cursor.visible = false;
+            selector.visible = false;
             if (inputs.directions.contains(.up)) player.y -= 1 * PLAYER_VELOCITY;
             if (inputs.directions.contains(.down)) player.y += 1 * PLAYER_VELOCITY;
             if (inputs.directions.contains(.left)) player.x -= 1 * PLAYER_VELOCITY;
             if (inputs.directions.contains(.right)) player.x += 1 * PLAYER_VELOCITY;
         },
         .SELECT => {
-            cursor.visible = true;
-            if (inputs.directions.contains(.up)) cursor.y -= 1 * CURSOR_VELOCITY;
-            if (inputs.directions.contains(.down)) cursor.y += 1 * CURSOR_VELOCITY;
-            if (inputs.directions.contains(.left)) cursor.x -= 1 * CURSOR_VELOCITY;
-            if (inputs.directions.contains(.right)) cursor.x += 1 * CURSOR_VELOCITY;
+            selector.visible = true;
+            if (inputs.directions.contains(.up)) selector.y -= 1 * selector_VELOCITY;
+            if (inputs.directions.contains(.down)) selector.y += 1 * selector_VELOCITY;
+            if (inputs.directions.contains(.left)) selector.x -= 1 * selector_VELOCITY;
+            if (inputs.directions.contains(.right)) selector.x += 1 * selector_VELOCITY;
         },
     }
 }
@@ -306,15 +306,15 @@ pub fn render_step_overworld(game_state: *GameState, render_state: *RenderState)
         }
 
         // debug entity web
-        {
-            var itx = game_state.things.iter();
-            while (itx.next_active()) |thingi| {
-                var itj = game_state.things.iter();
-                while (itj.next_active()) |thingj| {
-                    draw.draw_line(&render_state.level, thingi.x, thingi.y, thingj.x, thingj.y, 0xFF0000);
-                }
-            }
-        }
+        // {
+        //     var itx = game_state.things.iter();
+        //     while (itx.next_active()) |thingi| {
+        //         var itj = game_state.things.iter();
+        //         while (itj.next_active()) |thingj| {
+        //             draw.draw_line(&render_state.level, thingi.x, thingi.y, thingj.x, thingj.y, 0xFF0000);
+        //         }
+        //     }
+        // }
 
         draw.draw_image(&render_state.level, game_state.level.?.fg, 0, 0);
 
