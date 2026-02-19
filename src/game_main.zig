@@ -46,8 +46,8 @@ const GameState = struct {
     // player data
     // player_x: i32,
     // player_y: i32,
-    camera_x: i32,
-    camera_y: i32,
+    // camera_x: i32,
+    // camera_y: i32,
 
     audio_system: audio.AudioSystem,
 
@@ -87,14 +87,15 @@ const GameState = struct {
 
     pub fn camera_follow_player(self: *GameState) void {
         const player = self.things.get_player();
-        self.camera_x = player.x - @divFloor(con.NATIVE_W, 2) + @divFloor(con.PLAYER_W, 2);
-        self.camera_y = player.y - @divFloor(con.NATIVE_H, 2) + @divFloor(con.PLAYER_H, 2);
+        const camera = self.things.get(player.camera_ref);
+        camera.x = player.x - @divFloor(con.NATIVE_W, 2) + @divFloor(con.PLAYER_W, 2);
+        camera.y = player.y - @divFloor(con.NATIVE_H, 2) + @divFloor(con.PLAYER_H, 2);
 
-        self.camera_x = @max(self.camera_x, con.NATIVE_W_HALF);
-        self.camera_y = @max(self.camera_y, con.NATIVE_H_HALF);
+        camera.x = @max(camera.x, con.NATIVE_W_HALF);
+        camera.y = @max(camera.y, con.NATIVE_H_HALF);
 
-        self.camera_x = @min(self.camera_x, con.LEVEL_W - con.NATIVE_W);
-        self.camera_y = @min(self.camera_y, con.LEVEL_H - con.NATIVE_H);
+        camera.x = @min(camera.x, con.LEVEL_W - con.NATIVE_W);
+        camera.y = @min(camera.y, con.LEVEL_H - con.NATIVE_H);
     }
 
     pub fn init() GameState {
@@ -102,8 +103,6 @@ const GameState = struct {
             .mode = .MainMenu,
             .audio_system = .{},
             .ctx = .{ .story_checkpoint = .game_start },
-            .camera_x = 0,
-            .camera_y = 0,
             .dialogue = null,
             .level = null,
         };
@@ -228,8 +227,9 @@ pub fn render_step_inventory(game_state: *const GameState, render_state: *Render
 
 pub fn render_step_overworld(game_state: *GameState, render_state: *RenderState) void {
     // render world
+    const player = game_state.things.get_player();
+    const camera = game_state.things.get(player.camera_ref);
     {
-        // load tiles for needed map
         switch (game_state.ctx.story_checkpoint) {
             .game_start => {
                 // draw.fill(&render_state.level, 0xFF0000);
@@ -246,12 +246,21 @@ pub fn render_step_overworld(game_state: *GameState, render_state: *RenderState)
 
         draw.draw_image(&render_state.level, game_state.level.?.bg, 0, 0);
 
-        // load entities
+        // things
         {
-            // every thing
             var it = game_state.things.iter();
             while (it.next_active()) |thing| {
                 draw.draw_image(&render_state.level, render_state.storage.get(thing.spritekey), thing.x, thing.y);
+            }
+        }
+
+        {
+            var itx = game_state.things.iter();
+            while (itx.next_active()) |thingi| {
+                var itj = game_state.things.iter();
+                while (itj.next_active()) |thingj| {
+                    draw.draw_line(&render_state.level, thingi.x, thingi.y, thingj.x, thingj.y, 0xFF0000);
+                }
             }
         }
 
@@ -260,7 +269,7 @@ pub fn render_step_overworld(game_state: *GameState, render_state: *RenderState)
         // add effects
         effects.snow(&render_state.level, 0);
 
-        draw.view(&render_state.level, &render_state.screen, game_state.camera_x, game_state.camera_y);
+        draw.view(&render_state.level, &render_state.screen, camera.x, camera.y);
     }
 
     // render ui

@@ -69,7 +69,6 @@ pub const DialogueState = struct {
     dialogue: *const DialogueSequence,
 
     pub fn init(seq: *const DialogueSequence) DialogueState {
-        std.log.debug("dialogue len {any}", .{seq.lines.len});
         return .{
             .dialogue_index = 0,
             .dialogue = seq,
@@ -83,7 +82,6 @@ pub const DialogueState = struct {
 
     pub fn advance(self: *DialogueState) void {
         self.dialogue_index += 1;
-        std.log.debug("dialogue index = {any}", .{self.dialogue_index});
     }
 
     pub fn is_complete(self: DialogueState) bool {

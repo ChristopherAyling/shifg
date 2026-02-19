@@ -3,6 +3,7 @@ const Image = @import("image.zig").Image;
 pub const SpriteKey = enum {
     // misc
     missing,
+    camera,
     splash,
     // characters
     estraven,
@@ -31,6 +32,7 @@ pub const SpriteStorage = struct {
     pub fn load(self: *SpriteStorage) void {
         // misc
         self.images[@intFromEnum(SpriteKey.missing)] = Image.from_file("assets/missing.png");
+        self.images[@intFromEnum(SpriteKey.camera)] = Image.from_file("assets/camera.png");
         self.images[@intFromEnum(SpriteKey.splash)] = Image.from_file("assets/splash.png");
 
         // players

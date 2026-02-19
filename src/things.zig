@@ -19,6 +19,8 @@ pub const Thing = struct {
     y: i32 = 0,
     spritekey: sprites.SpriteKey = .missing,
     reputation: i32 = 0,
+    visible: bool = true,
+    camera_ref: ThingRef = ThingRef.nil(),
 
     pub fn manhat_dist(self: Thing, x: i32, y: i32) i32 {
         const x_dist: i32 = @intCast(@abs(self.x - x));
@@ -190,6 +192,19 @@ pub const ThingPool = struct {
         thing.spritekey = spritekey;
         thing.x = x;
         thing.y = y;
+
+        thing.camera_ref = self.add_camera(.camera, x, y);
+
+        return ref;
+    }
+
+    pub fn add_camera(self: *ThingPool, spritekey: sprites.SpriteKey, x: i32, y: i32) ThingRef {
+        const ref = self.add(.CAMERA);
+        const thing = self.get(ref);
+        thing.spritekey = spritekey;
+        thing.x = x;
+        thing.y = y;
+        // thing.visible = false;
         return ref;
     }
 
