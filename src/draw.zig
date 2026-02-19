@@ -132,11 +132,14 @@ pub fn view(source: *ScreenBuffer, dest: *ScreenBuffer, x0: i32, y0: i32) void {
     // set default background
     fill(dest, 0xffffff);
 
+    const half_dest_w: i32 = @divFloor(dest.w, 2);
+    const half_dest_h: i32 = @divFloor(dest.h, 2);
+
     // read from source
     for (0..@intCast(dest.w)) |x| {
         for (0..@intCast(dest.h)) |y| {
-            const source_x: i32 = @as(i32, @intCast(x)) + x0;
-            const source_y: i32 = @as(i32, @intCast(y)) + y0;
+            const source_x: i32 = @as(i32, @intCast(x)) + x0 - half_dest_w;
+            const source_y: i32 = @as(i32, @intCast(y)) + y0 - half_dest_h;
 
             if (source.is_in_bounds(source_x, source_y)) {
                 const color = source.getPixel(source_x, source_y);

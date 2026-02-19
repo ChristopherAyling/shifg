@@ -88,9 +88,11 @@ const GameState = struct {
     pub fn camera_follow_player(self: *GameState) void {
         const player = self.things.get_player();
         const camera = self.things.get(player.camera_ref);
-        camera.x = player.x - @divFloor(con.NATIVE_W, 2) + @divFloor(con.PLAYER_W, 2);
-        camera.y = player.y - @divFloor(con.NATIVE_H, 2) + @divFloor(con.PLAYER_H, 2);
 
+        camera.x = player.x; // + @divFloor(con.PLAYER_W, 2);
+        camera.y = player.y; // + @divFloor(con.PLAYER_H, 2);
+
+        // this is probably wrong, should probably take LEVEL_W etc into account like with the mins.
         camera.x = @max(camera.x, con.NATIVE_W_HALF);
         camera.y = @max(camera.y, con.NATIVE_H_HALF);
 
@@ -232,12 +234,10 @@ pub fn render_step_overworld(game_state: *GameState, render_state: *RenderState)
     {
         switch (game_state.ctx.story_checkpoint) {
             .game_start => {
-                // draw.fill(&render_state.level, 0xFF0000);
                 draw.fill_checkerboard(&render_state.level, 8, 0xFF0000, 0x0);
             },
             .prologue_complete => {
                 draw.fill_checkerboard(&render_state.level, 8, 0x00FF00, 0x0);
-                // draw.draw_image(&render_state.level, render_state.level1_sprite, 0, 0);
             },
             .tutorial_complete => {
                 draw.fill_checkerboard(&render_state.level, 8, 0x0000FF, 0x0);
@@ -254,6 +254,7 @@ pub fn render_step_overworld(game_state: *GameState, render_state: *RenderState)
             }
         }
 
+        // debug entity web
         {
             var itx = game_state.things.iter();
             while (itx.next_active()) |thingi| {

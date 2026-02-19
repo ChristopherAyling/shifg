@@ -5,4 +5,4 @@
 
 - [] turn based mode
 - [] action menu
-- [] cursor mode
+- [] cursor mode (cursor into entiy system)
