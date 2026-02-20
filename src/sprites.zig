@@ -60,5 +60,15 @@ pub const SpriteStorage = struct {
         // items
         self.images[@intFromEnum(SpriteKey.redflag)] = Image.from_file("assets/redflag.png");
         self.images[@intFromEnum(SpriteKey.potion)] = Image.from_file("assets/potion.png");
+
+        // action menu
+        self.images[@intFromEnum(SpriteKey.action_menu_melee)] = Image.from_file("assets/missing.png");
+        self.images[@intFromEnum(SpriteKey.action_menu_ranged)] = Image.from_file("assets/missing.png");
+        self.images[@intFromEnum(SpriteKey.action_menu_magic)] = Image.from_file("assets/missing.png");
+        self.images[@intFromEnum(SpriteKey.action_menu_throw)] = Image.from_file("assets/missing.png");
+        self.images[@intFromEnum(SpriteKey.action_menu_hide)] = Image.from_file("assets/missing.png");
+        self.images[@intFromEnum(SpriteKey.action_menu_dash)] = Image.from_file("assets/missing.png");
+        self.images[@intFromEnum(SpriteKey.action_menu_jump)] = Image.from_file("assets/missing.png");
+        self.images[@intFromEnum(SpriteKey.action_menu_shove)] = Image.from_file("assets/missing.png");
     }
 };

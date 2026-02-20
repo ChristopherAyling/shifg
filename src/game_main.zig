@@ -373,7 +373,16 @@ pub fn render_step_overworld(game_state: *GameState, render_state: *RenderState)
 
         switch (player.interaction_mode) {
             .ACTION_MENU => {
-                ui.draw_radial_menu(&render_state.screen, con.NATIVE_W_HALF, con.NATIVE_H_HALF, player.radial_index, "actions");
+                var action_items = ui.RadialMenuItems{};
+                action_items.add("Melee", .action_menu_melee);
+                action_items.add("Ranged", .action_menu_ranged);
+                action_items.add("Magic", .action_menu_magic);
+                action_items.add("Throw", .action_menu_throw);
+                action_items.add("Hide", .action_menu_hide);
+                action_items.add("Dash", .action_menu_dash);
+                action_items.add("Jump", .action_menu_jump);
+                action_items.add("Shove", .action_menu_shove);
+                ui.draw_radial_menu(&render_state.screen, &render_state.storage, con.NATIVE_W_HALF, con.NATIVE_H_HALF, player.radial_index, "actions", action_items);
             },
             else => {},
         }
