@@ -118,14 +118,20 @@ pub fn draw_radial_menu(screen: *ScreenBuffer, sprite_storage: *sprites.SpriteSt
         }
     }
 
-    // draw title above
+    // draw title above with background
     const title_x = x0 - @as(i32, @intCast(title.len * 2));
-    draw.draw_text(screen, title, title_x, y0 - outer_radius - 10, 0xFFFFFF);
+    const title_y = y0 - outer_radius - 10;
+    const title_w: i32 = @intCast(title.len * 4);
+    draw.draw_rec(screen, title_x - 2, title_y - 2, title_x + title_w + 1, title_y + 6, 0x444444, 0x444444);
+    draw.draw_text(screen, title, title_x, title_y, 0xFFFFFF);
 
-    // draw selected item label below
+    // draw selected item label below with background
     if (items.items[clamped_current]) |selected_item| {
         const label_x = x0 - @as(i32, @intCast(selected_item.label.len * 2));
-        draw.draw_text(screen, selected_item.label, label_x, y0 + outer_radius + 5, 0xFFFFFF);
+        const label_y = y0 + outer_radius + 5;
+        const label_w: i32 = @intCast(selected_item.label.len * 4);
+        draw.draw_rec(screen, label_x - 2, label_y - 2, label_x + label_w + 1, label_y + 6, 0x444444, 0x444444);
+        draw.draw_text(screen, selected_item.label, label_x, label_y, 0xFFFFFF);
     }
 }
 
