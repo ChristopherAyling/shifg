@@ -163,6 +163,9 @@ pub fn game_step(game_state: *GameState, inputs: Inputs) void {
             .SELECT => {
                 game_state.camera_follow_selector();
             },
+            .ACTION_MENU => {
+                game_state.camera_follow_selector();
+            },
         }
     }
 }
@@ -206,10 +209,32 @@ pub fn game_step_overworld(game_state: *GameState, inputs: Inputs) void {
 
     // world interaction
     if (inputs.a.pressed) {
-        var it = game_state.things.iter();
-        while (it.next_active_near(player.x, player.y, 8)) |thing| {
-            _ = thing;
-            // TODO: implement dialogue system
+        switch (player.interaction_mode) {
+            .NORMAL => {
+                var it = game_state.things.iter();
+                while (it.next_active_near(player.x, player.y, 8)) |thing| {
+                    _ = thing;
+                    // TODO: implement dialogue system
+                }
+            },
+            .SELECT => {
+                player.interaction_mode = .ACTION_MENU;
+            },
+            .ACTION_MENU => {
+                // execute action
+            },
+        }
+    }
+
+    if (inputs.b.pressed) {
+        switch (player.interaction_mode) {
+            .NORMAL => {},
+            .SELECT => {
+                player.interaction_mode = .NORMAL;
+            },
+            .ACTION_MENU => {
+                player.interaction_mode = .SELECT;
+            },
         }
     }
 
@@ -217,6 +242,7 @@ pub fn game_step_overworld(game_state: *GameState, inputs: Inputs) void {
         player.interaction_mode = switch (player.interaction_mode) {
             .NORMAL => .SELECT,
             .SELECT => .NORMAL,
+            .ACTION_MENU => .NORMAL,
         };
     }
 
@@ -237,6 +263,19 @@ pub fn game_step_overworld(game_state: *GameState, inputs: Inputs) void {
             if (inputs.directions.contains(.down)) selector.y += 1 * selector_VELOCITY;
             if (inputs.directions.contains(.left)) selector.x -= 1 * selector_VELOCITY;
             if (inputs.directions.contains(.right)) selector.x += 1 * selector_VELOCITY;
+        },
+        .ACTION_MENU => {
+            var radial_index: usize = 0;
+            if (inputs.directions.contains(.up)) radial_index = 0;
+            if (inputs.directions.contains(.right)) radial_index = 2;
+            if (inputs.directions.contains(.down)) radial_index = 4;
+            if (inputs.directions.contains(.left)) radial_index = 6;
+            if (inputs.directions.contains(.up) and inputs.directions.contains(.right)) radial_index = 1;
+            if (inputs.directions.contains(.right) and inputs.directions.contains(.down)) radial_index = 3;
+            if (inputs.directions.contains(.down) and inputs.directions.contains(.left)) radial_index = 5;
+            if (inputs.directions.contains(.left) and inputs.directions.contains(.up)) radial_index = 7;
+            if (inputs.directions.contains(.left) and inputs.directions.contains(.down) and inputs.directions.contains(.right)) radial_index = 3; // special case of holding asd in a row
+            player.radial_index = radial_index;
         },
     }
 }
@@ -330,6 +369,13 @@ pub fn render_step_overworld(game_state: *GameState, render_state: *RenderState)
         if (game_state.dialogue) |current_dialogue| {
             const line = current_dialogue.getLine();
             ui.drawTextBox(&render_state.screen, line.speaker_name, line.text);
+        }
+
+        switch (player.interaction_mode) {
+            .ACTION_MENU => {
+                ui.draw_radial_menu(&render_state.screen, con.NATIVE_W_HALF, con.NATIVE_H_HALF, player.radial_index, "actions");
+            },
+            else => {},
         }
     }
 }

@@ -9,6 +9,77 @@ pub fn fill(screen: *ScreenBuffer, color: u32) void {
     }
 }
 
+pub fn draw_point(screen: *ScreenBuffer, x0: i32, y0: i32, color: u32) void {
+    screen.setPixel(x0, y0, color);
+}
+
+pub const Point = struct {
+    x: i32,
+    y: i32,
+};
+
+pub fn draw_poly(screen: *ScreenBuffer, points: []const Point, color: u32, fill_color: ?u32) void {
+    if (points.len < 2) return;
+
+    // fill using scanline
+    if (fill_color) |fc| {
+        var min_y: i32 = points[0].y;
+        var max_y: i32 = points[0].y;
+        for (points) |p| {
+            if (p.y < min_y) min_y = p.y;
+            if (p.y > max_y) max_y = p.y;
+        }
+
+        var y = min_y;
+        while (y <= max_y) : (y += 1) {
+            var node_x: [64]i32 = undefined;
+            var nodes: usize = 0;
+
+            var j: usize = points.len - 1;
+            for (0..points.len) |i| {
+                const yi = points[i].y;
+                const yj = points[j].y;
+                if ((yi < y and yj >= y) or (yj < y and yi >= y)) {
+                    const xi = points[i].x;
+                    const xj = points[j].x;
+                    if (nodes < node_x.len) {
+                        node_x[nodes] = xi + @divTrunc((y - yi) * (xj - xi), (yj - yi));
+                        nodes += 1;
+                    }
+                }
+                j = i;
+            }
+
+            var sorted = node_x[0..nodes];
+            var pass: usize = 0;
+            while (pass < sorted.len) : (pass += 1) {
+                var k: usize = 0;
+                while (k + 1 < sorted.len - pass) : (k += 1) {
+                    if (sorted[k] > sorted[k + 1]) {
+                        const tmp = sorted[k];
+                        sorted[k] = sorted[k + 1];
+                        sorted[k + 1] = tmp;
+                    }
+                }
+            }
+
+            var n: usize = 0;
+            while (n + 1 < nodes) : (n += 2) {
+                var x = sorted[n];
+                while (x <= sorted[n + 1]) : (x += 1) {
+                    screen.setPixel(x, y, fc);
+                }
+            }
+        }
+    }
+
+    // draw outline
+    for (0..points.len) |i| {
+        const next = (i + 1) % points.len;
+        draw_line(screen, points[i].x, points[i].y, points[next].x, points[next].y, color);
+    }
+}
+
 pub fn draw_image(screen: *ScreenBuffer, img: image.Image, x0: i32, y0: i32) void {
     const start_x = @max(x0, 0);
     const start_y = @max(y0, 0);

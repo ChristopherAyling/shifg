@@ -14,6 +14,7 @@ pub const Kind = enum {
 pub const InteractionMode = enum {
     NORMAL,
     SELECT,
+    ACTION_MENU,
 };
 
 pub const Thing = struct {
@@ -28,6 +29,7 @@ pub const Thing = struct {
     camera_ref: ThingRef = ThingRef.nil(), // associated camera
     selector_ref: ThingRef = ThingRef.nil(), // associated selector
     interaction_mode: InteractionMode = .NORMAL,
+    radial_index: usize = 0,
 
     pub fn manhat_dist(self: Thing, x: i32, y: i32) i32 {
         const x_dist: i32 = @intCast(@abs(self.x - x));
