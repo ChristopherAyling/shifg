@@ -15,6 +15,16 @@ pub const SpriteKey = enum {
     //items
     redflag,
     potion,
+
+    // action menu
+    action_menu_melee,
+    action_menu_ranged,
+    action_menu_magic,
+    action_menu_throw,
+    action_menu_hide,
+    action_menu_dash,
+    action_menu_jump,
+    action_menu_shove,
 };
 
 pub const SpriteStorage = struct {

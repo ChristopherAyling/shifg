@@ -3,6 +3,7 @@ const ScreenBuffer = @import("screen.zig").ScreenBuffer;
 const draw = @import("draw.zig");
 const Image = @import("image.zig").Image;
 const con = @import("constants.zig");
+const sprites = @import("sprites.zig");
 
 const TEXTBOX_X = 5;
 const TEXTBOX_Y = 99;
