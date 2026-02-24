@@ -6,6 +6,7 @@ pub const SpriteKey = enum {
     camera,
     splash,
     selector,
+    selector_active,
     // characters
     estraven,
     genly,
@@ -56,14 +57,15 @@ pub const SpriteStorage = struct {
         // editor
         self.images[@intFromEnum(SpriteKey.cursor)] = Image.from_file("assets/cursor.png");
         self.images[@intFromEnum(SpriteKey.selector)] = Image.from_file("assets/selector.png");
+        self.images[@intFromEnum(SpriteKey.selector_active)] = Image.from_file("assets/selector-active.png");
 
         // items
         self.images[@intFromEnum(SpriteKey.redflag)] = Image.from_file("assets/redflag.png");
         self.images[@intFromEnum(SpriteKey.potion)] = Image.from_file("assets/potion.png");
 
         // action menu
-        self.images[@intFromEnum(SpriteKey.action_menu_melee)] = Image.from_file("assets/missing.png");
-        self.images[@intFromEnum(SpriteKey.action_menu_ranged)] = Image.from_file("assets/missing.png");
+        self.images[@intFromEnum(SpriteKey.action_menu_melee)] = Image.from_file("assets/sword.png");
+        self.images[@intFromEnum(SpriteKey.action_menu_ranged)] = Image.from_file("assets/wand.png");
         self.images[@intFromEnum(SpriteKey.action_menu_magic)] = Image.from_file("assets/missing.png");
         self.images[@intFromEnum(SpriteKey.action_menu_throw)] = Image.from_file("assets/missing.png");
         self.images[@intFromEnum(SpriteKey.action_menu_hide)] = Image.from_file("assets/missing.png");

@@ -1,4 +1,5 @@
 const std = @import("std");
+const assert = @import("std").debug.assert;
 const sprites = @import("sprites.zig");
 
 pub const Kind = enum {
@@ -17,24 +18,81 @@ pub const InteractionMode = enum {
     ACTION_MENU,
 };
 
+pub const ContextMenu = enum {
+    Attack,
+    PickUp,
+    Talk,
+};
+
+pub const QueryOptions = struct {
+    kind: ?Kind = null,
+    active: ?bool = true,
+    visible: ?bool = null,
+    position: ?struct { x: i32, y: i32, thresh: i32 },
+    selectable: ?bool = null,
+
+    pub fn matches(self: QueryOptions, thing: Thing) bool {
+        if (self.kind) |kind| {
+            if (thing.kind != kind) return false;
+        }
+        if (self.active) |active| {
+            if (thing.active != active) return false;
+        }
+        if (self.visible) |visible| {
+            if (thing.visible != visible) return false;
+        }
+        if (self.selectable) |selectable| {
+            if (thing.selectable != selectable) return false;
+        }
+        if (self.position) |position| {
+            if (@as(i32, @intFromFloat(thing.euclid_dist(position.x, position.y))) > position.thresh) return false;
+        }
+        std.log.debug("{any} passes the test!", .{thing.kind});
+        return true;
+    }
+};
+
 pub const Thing = struct {
     active: bool = false, // is an active entity
+    spritekey: sprites.SpriteKey = .missing, // what sprite to load to represent it
+    visible: bool = true, // if the sprite should be loaded
     kind: Kind = .UNSET, // thing kind
     name: [64:0]u8 = .{0} ** 64,
     x: i32 = 0,
     y: i32 = 0,
-    spritekey: sprites.SpriteKey = .missing, // what sprite to load to represent it
-    reputation: i32 = 0, // unused
-    visible: bool = true, // if the sprite should be loaded
+    selectable: bool = false,
+
+    // moving entity specific
+    movement: usize = 0,
+    max_movement: usize = 50,
+
+    // player specific
     camera_ref: ThingRef = ThingRef.nil(), // associated camera
     selector_ref: ThingRef = ThingRef.nil(), // associated selector
     interaction_mode: InteractionMode = .NORMAL,
     radial_index: usize = 0,
 
+    // selector specific
+    selection_target_ref: ThingRef = ThingRef.nil(), // associated selector
+    context_menu: ?ContextMenu = null,
+
     pub fn manhat_dist(self: Thing, x: i32, y: i32) i32 {
         const x_dist: i32 = @intCast(@abs(self.x - x));
         const y_dist: i32 = @intCast(@abs(self.y - y));
         return x_dist + y_dist;
+    }
+
+    pub fn euclid_dist(self: Thing, x: i32, y: i32) f64 {
+        const dx: f64 = @floatFromInt(self.x - x);
+        const dy: f64 = @floatFromInt(self.y - y);
+        return @sqrt(dx * dx + dy * dy);
+    }
+
+    pub fn selector_reset(self: *Thing) void {
+        assert(self.kind == .SELECTOR);
+        self.selection_target_ref = ThingRef.nil();
+        self.context_menu = null;
+        self.spritekey = .selector;
     }
 };
 
@@ -66,6 +124,13 @@ pub const ThingIterator = struct {
             const slot = self.current_slot;
             self.current_slot += 1;
             return &self.items[slot];
+        }
+        return null;
+    }
+
+    pub fn next_match(self: *ThingIterator, q: QueryOptions) ?*Thing {
+        while (self.next()) |thing| {
+            if (q.matches(thing)) return thing;
         }
         return null;
     }
@@ -103,6 +168,13 @@ pub const ThingRefIterator = struct {
             const slot = self.current_slot;
             self.current_slot += 1;
             return ThingRef.from_slot(slot);
+        }
+        return null;
+    }
+
+    pub fn next_match(self: *ThingRefIterator, q: QueryOptions) ?ThingRef {
+        while (self.next()) |ref| {
+            if (q.matches(self.items[ref.slot])) return ref;
         }
         return null;
     }
@@ -192,6 +264,7 @@ pub const ThingPool = struct {
         thing.spritekey = spritekey;
         thing.x = x;
         thing.y = y;
+        thing.selectable = true;
         return ref;
     }
 
@@ -235,6 +308,7 @@ pub const ThingPool = struct {
         thing.spritekey = spritekey;
         thing.x = x;
         thing.y = y;
+        thing.selectable = true;
         return ref;
     }
 

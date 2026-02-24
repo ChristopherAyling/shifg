@@ -27,6 +27,11 @@ const GameMode = enum {
     Overworld,
 };
 
+const GameStyle = enum {
+    Realtime,
+    TurnBased,
+};
+
 const GameContext = struct {
     // keep data types simple and serialisable.
     story_checkpoint: StoryCheckpoint,
@@ -172,6 +177,7 @@ pub fn game_step(game_state: *GameState, inputs: Inputs) void {
 
 pub fn game_step_overworld(game_state: *GameState, inputs: Inputs) void {
     const player = game_state.things.get_player();
+    var selector = game_state.things.get(player.selector_ref);
     game_state.audio_system.setMusic(.overworld);
 
     switch (game_state.ctx.story_checkpoint) {
@@ -246,9 +252,53 @@ pub fn game_step_overworld(game_state: *GameState, inputs: Inputs) void {
         };
     }
 
+    if (player.interaction_mode == .SELECT) {
+        if (selector.context_menu) |cm| {
+            if (inputs.b.pressed or inputs.y.pressed) {
+                selector.selector_reset();
+            } else if (inputs.a.pressed) {
+                // TODO execute selection
+                std.log.debug("executing selection {any} on {any}", .{ @tagName(cm), @tagName(game_state.things.get(selector.selection_target_ref).kind) });
+                selector.selector_reset();
+            }
+        } else {
+            // choose selection
+            {
+                var it = game_state.things.iter_ref();
+                selector.spritekey = .selector;
+                while (it.next_match(.{
+                    .active = true,
+                    .selectable = true,
+                    .position = .{
+                        .x = selector.x,
+                        .y = selector.y,
+                        .thresh = 8,
+                    },
+                })) |ref| {
+                    selector.spritekey = .selector_active;
+                    selector.selection_target_ref = ref;
+                }
+            }
+
+            // handle selection menu
+            if (inputs.y.pressed) {
+                selector.context_menu = switch (game_state.things.get(selector.selection_target_ref).kind) {
+                    .NPC => .Talk,
+                    .ITEM => .PickUp,
+                    else => null,
+                };
+            }
+
+            // handle selector movement
+            selector.visible = true;
+            if (inputs.directions.contains(.up)) selector.y -= 1 * selector_VELOCITY;
+            if (inputs.directions.contains(.down)) selector.y += 1 * selector_VELOCITY;
+            if (inputs.directions.contains(.left)) selector.x -= 1 * selector_VELOCITY;
+            if (inputs.directions.contains(.right)) selector.x += 1 * selector_VELOCITY;
+        }
+    }
+
     // movement
-    // TODO maybe move selector rather than player depending on input_mode
-    var selector = game_state.things.get(player.selector_ref);
     switch (player.interaction_mode) {
         .NORMAL => {
             selector.visible = false;
@@ -257,13 +307,7 @@ pub fn game_step_overworld(game_state: *GameState, inputs: Inputs) void {
             if (inputs.directions.contains(.left)) player.x -= 1 * PLAYER_VELOCITY;
             if (inputs.directions.contains(.right)) player.x += 1 * PLAYER_VELOCITY;
         },
-        .SELECT => {
-            selector.visible = true;
-            if (inputs.directions.contains(.up)) selector.y -= 1 * selector_VELOCITY;
-            if (inputs.directions.contains(.down)) selector.y += 1 * selector_VELOCITY;
-            if (inputs.directions.contains(.left)) selector.x -= 1 * selector_VELOCITY;
-            if (inputs.directions.contains(.right)) selector.x += 1 * selector_VELOCITY;
-        },
+        .SELECT => {},
         .ACTION_MENU => {
             var radial_index: usize = 0;
             if (inputs.directions.contains(.up)) radial_index = 0;
@@ -372,6 +416,25 @@ pub fn render_step_overworld(game_state: *GameState, render_state: *RenderState)
         }
 
         switch (player.interaction_mode) {
+            .SELECT => {
+                const selector = game_state.things.get(player.selector_ref);
+                if (selector.context_menu) |cm| {
+                    var items: ui.ContextMenuItems = .{};
+                    switch (cm) {
+                        .Attack => {
+                            items.add("attack");
+                        },
+                        .Talk => {
+                            items.add("talk");
+                        },
+                        .PickUp => {
+                            items.add("pick up");
+                        },
+                    }
+                    items.add("examine");
+                    ui.draw_context_menu(&render_state.screen, con.NATIVE_W_HALF + con.PLAYER_W, con.NATIVE_H_HALF + con.PLAYER_H, 0, items);
+                }
+            },
             .ACTION_MENU => {
                 var action_items = ui.RadialMenuItems{};
                 action_items.add("Melee", .action_menu_melee);

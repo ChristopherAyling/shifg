@@ -4,5 +4,5 @@
 - [ ] local splitscreen (2p, 3p, 4p)
 
 - [] turn based mode
-- [] action menu
-- [] cursor mode (cursor into entiy system)
+- [x] action menu
+- [x] cursor mode (cursor into entiy system)

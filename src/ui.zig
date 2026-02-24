@@ -22,6 +22,27 @@ pub const RadialMenuItems = struct {
     }
 };
 
+pub const ContextMenuItem = struct {
+    label: []const u8,
+    // sprite: sprites.SpriteKey = .missing,
+};
+
+pub const ContextMenuItems = struct {
+    items: [4]?ContextMenuItem = .{null} ** 4,
+    count: usize = 0,
+
+    pub fn add(self: *ContextMenuItems, label: []const u8) void {
+        if (self.count < 4) {
+            self.items[self.count] = .{ .label = label };
+            self.count += 1;
+        } else {
+            @panic("too many items attempted to be added to ContextMenuItems");
+        }
+    }
+};
+
+const PADDING: i32 = 4;
+
 const TEXTBOX_X = 5;
 const TEXTBOX_Y = 99;
 
@@ -135,16 +156,51 @@ pub fn draw_radial_menu(screen: *ScreenBuffer, sprite_storage: *sprites.SpriteSt
     }
 }
 
-// Direction mapping for WASD input:
-// Index: 0=N(W), 1=NE(W+D), 2=E(D), 3=SE(S+D), 4=S(S), 5=SW(S+A), 6=W(A), 7=NW(W+A)
-pub fn radial_menu_direction(up: bool, down: bool, left: bool, right: bool) ?usize {
-    if (up and !down and !left and !right) return 0; // N
-    if (up and !down and !left and right) return 1; // NE
-    if (!up and !down and !left and right) return 2; // E
-    if (!up and down and !left and right) return 3; // SE
-    if (!up and down and !left and !right) return 4; // S
-    if (!up and down and left and !right) return 5; // SW
-    if (!up and !down and left and !right) return 6; // W
-    if (up and !down and left and !right) return 7; // NW
-    return null;
+pub fn draw_context_menu(screen: *ScreenBuffer, x0: i32, y0: i32, idx: usize, items: ContextMenuItems) void {
+    const N_LABELS: i32 = @intCast(items.count);
+
+    const MENU_WIDTH = blk: {
+        var max: usize = 0;
+        for (items.items) |maybe_item| {
+            if (maybe_item) |item| {
+                if (item.label.len > max) max = item.label.len;
+            }
+        }
+        break :blk max;
+    };
+    const iMENU_WIDTH: i32 = @intCast(MENU_WIDTH);
+
+    draw.draw_rec(
+        screen,
+        x0,
+        y0,
+        x0 + ((con.FONT_W + 1) * iMENU_WIDTH) + (2 * PADDING),
+        y0 + (con.FONT_H + PADDING) * N_LABELS + PADDING,
+        0x00F0F0,
+        0x787276,
+    );
+
+    for (0..items.count) |i| {
+        if (items.items[i]) |item| {
+            const ii: i32 = @intCast(i);
+            // TODO put sprite in menu maybe?
+            draw.draw_text(
+                screen,
+                item.label,
+                x0 + PADDING,
+                y0 + (con.FONT_H + PADDING) * ii + PADDING,
+                0xFFF0F0,
+            );
+        }
+    }
+
+    const iidx: i32 = @intCast(idx);
+    draw.draw_line(
+        screen,
+        x0 + PADDING,
+        y0 + (con.FONT_H + PADDING) * iidx + PADDING + con.FONT_H,
+        x0 + iMENU_WIDTH * (con.FONT_W + 1) + PADDING - 1,
+        y0 + (con.FONT_H + PADDING) * iidx + PADDING + con.FONT_H,
+        0xFFF000,
+    );
 }

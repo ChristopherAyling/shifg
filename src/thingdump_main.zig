@@ -28,14 +28,13 @@ pub fn main() !void {
     for (&things.things) |*thing| {
         if (thing.active) {
             const name_slice = std.mem.sliceTo(&thing.name, 0);
-            std.debug.print("[{d:4}] {s: <8} \"{s}\" x={d} y={d} sprite={s} rep={d}\n", .{
+            std.debug.print("[{d:4}] {s: <8} \"{s}\" x={d} y={d} sprite={s}\n", .{
                 slot,
                 @tagName(thing.kind),
                 name_slice,
                 thing.x,
                 thing.y,
                 @tagName(thing.spritekey),
-                thing.reputation,
             });
         }
         slot += 1;
