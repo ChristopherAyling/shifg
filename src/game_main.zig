@@ -203,6 +203,7 @@ pub fn game_step_overworld(game_state: *GameState, inputs: Inputs) void {
     if (game_state.menu.current()) |current| {
         if (inputs.b.pressed) {
             game_state.menu.pop();
+            return;
         } else {
             switch (current.*) {
                 .context => |*context_menu| {
@@ -237,48 +238,6 @@ pub fn game_step_overworld(game_state: *GameState, inputs: Inputs) void {
         return;
     }
 
-    // world interaction
-    // if (inputs.a.pressed) {
-    //     switch (player.interaction_mode) {
-    //         .NORMAL => {
-    //             var it = game_state.things.iter();
-    //             while (it.next_active_near(player.x, player.y, 8)) |thing| {
-    //                 _ = thing;
-    //                 // TODO: implement dialogue system
-    //             }
-    //         },
-    //         .SELECT => {
-    //             player.interaction_mode = .ACTION_MENU;
-    //         },
-    //         .ACTION_MENU => {
-    //             // execute action
-    //         },
-    //     }
-    // }
-
-    // if (inputs.b.pressed) {
-    //     switch (player.interaction_mode) {
-    //         .NORMAL => {},
-    //         .SELECT => {
-    //             player.interaction_mode = .NORMAL;
-    //         },
-    //         .ACTION_MENU => {
-    //             player.interaction_mode = .SELECT;
-    //         },
-    //     }
-    // }
-
-    // if (inputs.x.pressed) {
-    //     player.interaction_mode = switch (player.interaction_mode) {
-    //         .NORMAL => .SELECT,
-    //         .SELECT => .NORMAL,
-    //         .ACTION_MENU => .NORMAL,
-    //     };
-    // }
-
-    //
-
-    // NEW
     switch (player.interaction_mode) {
         .NORMAL => {
             if (inputs.a.pressed) {
@@ -303,7 +262,7 @@ pub fn game_step_overworld(game_state: *GameState, inputs: Inputs) void {
             if (inputs.directions.contains(.right)) player.x += 1 * PLAYER_VELOCITY;
         },
         .SELECT => {
-            if (inputs.b.pressed) {
+            if (inputs.b.pressed or inputs.x.pressed) {
                 player.interaction_mode = .NORMAL;
                 return;
             }
@@ -320,9 +279,9 @@ pub fn game_step_overworld(game_state: *GameState, inputs: Inputs) void {
             }
 
             // make sure context menu is set
-            if (inputs.y.pressed) {
-                // player.set_context_menu_for(game_state.things.get(selector.selection_target_ref).*);
-                // player.se
+            if (!selector.selection_target_ref.is_nil() and inputs.y.pressed) {
+                game_state.menu.push(.{ .context = .{} });
+                return;
             }
 
             if (inputs.a.pressed) { // radial action menu to apply on selector location
