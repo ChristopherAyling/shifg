@@ -15,7 +15,6 @@ pub const Kind = enum {
 pub const InteractionMode = enum {
     NORMAL,
     SELECT,
-    ACTION_MENU, // this isn't actually an interaction mode. Should just be a menu thing. Need to think more about menu state mgmt.
 };
 
 pub const ContextMenu = enum {
@@ -59,7 +58,6 @@ pub const QueryOptions = struct {
         if (self.position) |position| {
             if (@as(i32, @intFromFloat(thing.euclid_dist(position.x, position.y))) > position.thresh) return false;
         }
-        std.log.debug("{any} passes the test!", .{thing.kind});
         return true;
     }
 };
@@ -82,11 +80,9 @@ pub const Thing = struct {
     camera_ref: ThingRef = ThingRef.nil(), // associated camera
     selector_ref: ThingRef = ThingRef.nil(), // associated selector
     interaction_mode: InteractionMode = .NORMAL,
-    radial_index: usize = 0,
 
     // selector specific
     selection_target_ref: ThingRef = ThingRef.nil(), // associated selector
-    context_menu: ?ContextMenu = null, // todo move to player specific
 
     pub fn make_context_menu(self: Thing) ?ContextMenu {
         return switch (self.kind) {
@@ -94,11 +90,6 @@ pub const Thing = struct {
             .ITEM => .PickUp,
             else => null,
         };
-    }
-
-    pub fn set_context_menu_for(self: *Thing, target: Thing) void {
-        assert(self.kind == .PLAYER);
-        self.context_menu = target.make_context_menu();
     }
 
     pub fn manhat_dist(self: Thing, x: i32, y: i32) i32 {

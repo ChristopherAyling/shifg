@@ -26,6 +26,12 @@ pub const MenuState = struct {
     }
 };
 
-pub const ContextMenuState = struct {};
-pub const InventoryState = struct {};
-pub const ActionMenuState = struct {};
+pub const ContextMenuState = struct {
+    index: usize = 0,
+};
+pub const InventoryState = struct {
+    index: usize = 0,
+};
+pub const ActionMenuState = struct {
+    index: usize = 0,
+};

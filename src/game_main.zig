@@ -20,11 +20,9 @@ const menus = @import("menus.zig");
 
 const Inputs = control.Inputs;
 const updateInputs = control.updateInputs;
-// pub const Command = control.Command;
 
 const GameMode = enum {
     MainMenu,
-    // Inventory,
     Overworld,
 };
 
@@ -49,12 +47,6 @@ const GameState = struct {
     menu: menus.MenuState,
 
     ctx: GameContext,
-
-    // player data
-    // player_x: i32,
-    // player_y: i32,
-    // camera_x: i32,
-    // camera_y: i32,
 
     audio_system: audio.AudioSystem,
 
@@ -171,9 +163,6 @@ pub fn game_step(game_state: *GameState, inputs: Inputs) void {
             .SELECT => {
                 game_state.camera_follow_selector();
             },
-            .ACTION_MENU => {
-                game_state.camera_follow_selector();
-            },
         }
     }
 }
@@ -210,11 +199,43 @@ pub fn game_step_overworld(game_state: *GameState, inputs: Inputs) void {
         return;
     }
 
-    // opening a menu is second highest priority
-    // if (inputs.start.pressed) {
-    //     game_state.mode = .Inventory;
-    //     return;
-    // }
+    // input in menu is next highest priority
+    if (game_state.menu.current()) |current| {
+        if (inputs.b.pressed) {
+            game_state.menu.pop();
+        } else {
+            switch (current.*) {
+                .context => |*context_menu| {
+                    // TODO handle a
+                    if (inputs.up.pressed) context_menu.index -|= 1;
+                    if (inputs.down.pressed) context_menu.index +|= 1;
+                },
+                .action => |*action_menu| {
+                    // TODO handle a
+                    var radial_index: usize = 0;
+                    if (inputs.directions.contains(.up)) radial_index = 0;
+                    if (inputs.directions.contains(.right)) radial_index = 2;
+                    if (inputs.directions.contains(.down)) radial_index = 4;
+                    if (inputs.directions.contains(.left)) radial_index = 6;
+                    if (inputs.directions.contains(.up) and inputs.directions.contains(.right)) radial_index = 1;
+                    if (inputs.directions.contains(.right) and inputs.directions.contains(.down)) radial_index = 3;
+                    if (inputs.directions.contains(.down) and inputs.directions.contains(.left)) radial_index = 5;
+                    if (inputs.directions.contains(.left) and inputs.directions.contains(.up)) radial_index = 7;
+                    if (inputs.directions.contains(.left) and inputs.directions.contains(.down) and inputs.directions.contains(.right)) radial_index = 3; // special case of holding asd in a row
+                    action_menu.index = radial_index;
+                },
+                else => {},
+            }
+            return; // don't do anything else while menu is open
+        }
+    }
+
+    // opening a menu is next next highest priority
+    if (inputs.start.pressed) {
+        // game_state.mode = .Inventory;
+        game_state.menu.push(.{ .inventory = .{ .index = 0 } });
+        return;
+    }
 
     // world interaction
     // if (inputs.a.pressed) {
@@ -256,14 +277,6 @@ pub fn game_step_overworld(game_state: *GameState, inputs: Inputs) void {
     // }
 
     //
-    if (selector.context_menu) |cm| {
-        _ = cm;
-        if (inputs.b.pressed) {
-            player.context_menu = null;
-        }
-        // TODO move contect menu selection up/down
-        return;
-    }
 
     // NEW
     switch (player.interaction_mode) {
@@ -272,7 +285,9 @@ pub fn game_step_overworld(game_state: *GameState, inputs: Inputs) void {
                 {
                     var it = game_state.things.iter();
                     while (it.next_match(.selectable_near(player.x, player.y))) |thing| {
-                        player.set_context_menu_for(thing.*);
+                        // player.set_context_menu_for(thing.*);
+                        _ = thing;
+                        game_state.menu.push(.{ .context = .{ .index = 0 } });
                     }
                 }
             }
@@ -287,61 +302,39 @@ pub fn game_step_overworld(game_state: *GameState, inputs: Inputs) void {
             if (inputs.directions.contains(.left)) player.x -= 1 * PLAYER_VELOCITY;
             if (inputs.directions.contains(.right)) player.x += 1 * PLAYER_VELOCITY;
         },
-        .ACTION_MENU => {
-            // selector can stay visible if already using it.
-            if (inputs.x.pressed or inputs.b.pressed) {
+        .SELECT => {
+            if (inputs.b.pressed) {
                 player.interaction_mode = .NORMAL;
                 return;
             }
-            // select withing the radial
-            var radial_index: usize = 0;
-            if (inputs.directions.contains(.up)) radial_index = 0;
-            if (inputs.directions.contains(.right)) radial_index = 2;
-            if (inputs.directions.contains(.down)) radial_index = 4;
-            if (inputs.directions.contains(.left)) radial_index = 6;
-            if (inputs.directions.contains(.up) and inputs.directions.contains(.right)) radial_index = 1;
-            if (inputs.directions.contains(.right) and inputs.directions.contains(.down)) radial_index = 3;
-            if (inputs.directions.contains(.down) and inputs.directions.contains(.left)) radial_index = 5;
-            if (inputs.directions.contains(.left) and inputs.directions.contains(.up)) radial_index = 7;
-            if (inputs.directions.contains(.left) and inputs.directions.contains(.down) and inputs.directions.contains(.right)) radial_index = 3; // special case of holding asd in a row
-            player.radial_index = radial_index;
-        },
-        .SELECT => {
             selector.visible = true;
-            if (player.context_menu) |cm| {
-                if (inputs.b.pressed or inputs.y.pressed) {
-                    // player.slector_reset();
-                } else if (inputs.a.pressed) {
-                    // TODO execute selection
-                    std.log.debug("executing selection {any} on {any}", .{ @tagName(cm), @tagName(game_state.things.get(selector.selection_target_ref).kind) });
-                    // selector.selector_reset();
-                }
-            } else {
-                // choose selection
-                {
-                    var it = game_state.things.iter_ref();
-                    selector.spritekey = .selector;
-                    while (it.next_match(.selectable_near(selector.x, selector.y))) |ref| {
-                        selector.spritekey = .selector_active;
-                        selector.selection_target_ref = ref;
-                    }
-                }
 
-                // make sure context menu is set
-                if (inputs.y.pressed) {
-                    player.set_context_menu_for(game_state.things.get(selector.selection_target_ref).*);
+            // choose selection
+            {
+                var it = game_state.things.iter_ref();
+                selector.spritekey = .selector;
+                while (it.next_match(.selectable_near(selector.x, selector.y))) |ref| {
+                    selector.spritekey = .selector_active;
+                    selector.selection_target_ref = ref;
                 }
-
-                if (inputs.a.pressed) { // radial action menu to apply on selector location
-                    player.interaction_mode = .ACTION_MENU;
-                }
-
-                // handle selector movement
-                if (inputs.directions.contains(.up)) selector.y -= 1 * selector_VELOCITY;
-                if (inputs.directions.contains(.down)) selector.y += 1 * selector_VELOCITY;
-                if (inputs.directions.contains(.left)) selector.x -= 1 * selector_VELOCITY;
-                if (inputs.directions.contains(.right)) selector.x += 1 * selector_VELOCITY;
             }
+
+            // make sure context menu is set
+            if (inputs.y.pressed) {
+                // player.set_context_menu_for(game_state.things.get(selector.selection_target_ref).*);
+                // player.se
+            }
+
+            if (inputs.a.pressed) { // radial action menu to apply on selector location
+                // player.interaction_mode = .ACTION_MENU;
+                game_state.menu.push(.{ .action = .{ .index = 0 } });
+            }
+
+            // handle selector movement
+            if (inputs.directions.contains(.up)) selector.y -= 1 * selector_VELOCITY;
+            if (inputs.directions.contains(.down)) selector.y += 1 * selector_VELOCITY;
+            if (inputs.directions.contains(.left)) selector.x -= 1 * selector_VELOCITY;
+            if (inputs.directions.contains(.right)) selector.x += 1 * selector_VELOCITY;
         },
     }
 }
@@ -386,19 +379,8 @@ pub fn render_step_overworld(game_state: *GameState, render_state: *RenderState)
     // render world
     const player = game_state.things.get_player();
     const camera = game_state.things.get(player.camera_ref);
+    draw.fill_checkerboard(&render_state.level, 8, 0xFF0000, 0x0);
     {
-        switch (game_state.ctx.story_checkpoint) {
-            .game_start => {
-                draw.fill_checkerboard(&render_state.level, 8, 0xFF0000, 0x0);
-            },
-            .prologue_complete => {
-                draw.fill_checkerboard(&render_state.level, 8, 0x00FF00, 0x0);
-            },
-            .tutorial_complete => {
-                draw.fill_checkerboard(&render_state.level, 8, 0x0000FF, 0x0);
-            },
-        }
-
         draw.draw_image(&render_state.level, game_state.level.?.bg, 0, 0);
 
         // things
@@ -425,49 +407,44 @@ pub fn render_step_overworld(game_state: *GameState, render_state: *RenderState)
         // add effects
         effects.snow(&render_state.level, 0);
 
+        // render level into screen
         draw.view(&render_state.level, &render_state.screen, camera.x, camera.y);
     }
 
     // render ui
     {
+        // render menus
+        for (0..game_state.menu.depth) |depth| {
+            const menu = game_state.menu.stack[depth];
+            switch (menu) {
+                .inventory => {
+                    ui.drawTextBox(&render_state.screen, "game", "inventory");
+                },
+                .context => |context_menu| {
+                    var items: ui.ContextMenuItems = .{};
+                    items.add("ctx example 1");
+                    items.add("other ctx example");
+                    ui.draw_context_menu(&render_state.screen, con.NATIVE_W_HALF + con.PLAYER_W, con.NATIVE_H_HALF + con.PLAYER_H, context_menu.index, items);
+                },
+                .action => |action_menu| {
+                    var action_items = ui.RadialMenuItems{};
+                    action_items.add("Melee", .action_menu_melee);
+                    action_items.add("Ranged", .action_menu_ranged);
+                    action_items.add("Magic", .action_menu_magic);
+                    action_items.add("Throw", .action_menu_throw);
+                    action_items.add("Hide", .action_menu_hide);
+                    action_items.add("Dash", .action_menu_dash);
+                    action_items.add("Jump", .action_menu_jump);
+                    action_items.add("Shove", .action_menu_shove);
+                    ui.draw_radial_menu(&render_state.screen, &render_state.storage, con.NATIVE_W_HALF, con.NATIVE_H_HALF, action_menu.index, "actions", action_items);
+                },
+            }
+        }
+
         // overlay dialogue
         if (game_state.dialogue) |current_dialogue| {
             const line = current_dialogue.getLine();
             ui.drawTextBox(&render_state.screen, line.speaker_name, line.text);
-        }
-
-        switch (player.interaction_mode) {
-            .SELECT => {
-                if (player.context_menu) |cm| {
-                    var items: ui.ContextMenuItems = .{};
-                    switch (cm) {
-                        .Attack => {
-                            items.add("attack");
-                        },
-                        .Talk => {
-                            items.add("talk");
-                        },
-                        .PickUp => {
-                            items.add("pick up");
-                        },
-                    }
-                    items.add("examine");
-                    ui.draw_context_menu(&render_state.screen, con.NATIVE_W_HALF + con.PLAYER_W, con.NATIVE_H_HALF + con.PLAYER_H, 0, items);
-                }
-            },
-            .ACTION_MENU => {
-                var action_items = ui.RadialMenuItems{};
-                action_items.add("Melee", .action_menu_melee);
-                action_items.add("Ranged", .action_menu_ranged);
-                action_items.add("Magic", .action_menu_magic);
-                action_items.add("Throw", .action_menu_throw);
-                action_items.add("Hide", .action_menu_hide);
-                action_items.add("Dash", .action_menu_dash);
-                action_items.add("Jump", .action_menu_jump);
-                action_items.add("Shove", .action_menu_shove);
-                ui.draw_radial_menu(&render_state.screen, &render_state.storage, con.NATIVE_W_HALF, con.NATIVE_H_HALF, player.radial_index, "actions", action_items);
-            },
-            else => {},
         }
     }
 }
