@@ -1,19 +1,10 @@
 # Game
 
+Some kind of game. Mostly because I like working on the engine side of it. It's like a 2d baldurs gate. Gameboy resolution.
+
 ```bash
+# play game
 zig build run
+# open editor
+zig build edit
 ```
-
-RPG/DnD/Baldurs gate kind of game.
-
-Tile based like pokemon.
-
-Story based. Maybe based on left hand of darkness? Icy, hearths, politics/shifgrethor mechanic?
-
-## 30/1/26
-
-Ok I want to make something quicker.
-
-Dungeon crawler type thing. Enemies you must defeat in word duels. Some you must intimidate. some you must please. some you must get some information from to finish the level.
-
-alternatively, what if each one gave some kind of cryptic crossword clue?
