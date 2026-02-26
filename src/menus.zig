@@ -34,6 +34,7 @@ pub const ExaminationMenuState = struct {
 };
 
 pub const ContextMenuState = struct {
+    context_target_ref: ThingRef,
     index: usize = 0,
     priority: enum { attack, pick_up, talk, move_to },
 

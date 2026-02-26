@@ -216,12 +216,22 @@ pub fn game_step_overworld(game_state: *GameState, inputs: Inputs) void {
                         switch (context_menu.index) {
                             0 => {
                                 switch (context_menu.priority) {
-                                    else => {},
+                                    .pick_up => {
+                                        assert(!context_menu.context_target_ref.is_nil());
+                                        game_state.things.get(context_menu.context_target_ref).visible = false;
+                                    },
+                                    .talk => {},
+                                    .attack => {},
+                                    .move_to => {
+                                        // todo actually walk rather than teleport
+                                        player.x = selector.x;
+                                        player.y = selector.y;
+                                    },
                                 }
                             },
                             1 => {
                                 game_state.menu.push(.{ .examine = .{
-                                    .examination_target_ref = player.selection_target_ref,
+                                    .examination_target_ref = context_menu.context_target_ref,
                                 } });
                             },
                             else => {},
@@ -245,7 +255,12 @@ pub fn game_step_overworld(game_state: *GameState, inputs: Inputs) void {
                     if (inputs.directions.contains(.left) and inputs.directions.contains(.down) and inputs.directions.contains(.right)) radial_index = 3; // special case of holding asd in a row
                     action_menu.set(radial_index);
                 },
-                else => {},
+                .examine => {
+                    // nothing happens here yet.
+                },
+                .inventory => {
+                    // todo inventory system.
+                },
             }
             return; // don't do anything else while menu is open
         }
@@ -262,9 +277,11 @@ pub fn game_step_overworld(game_state: *GameState, inputs: Inputs) void {
         .NORMAL => {
             if (inputs.a.pressed) {
                 {
-                    var it = game_state.things.iter();
-                    while (it.next_match(.selectable_near(player.x, player.y))) |thing| {
+                    var it = game_state.things.iter_ref();
+                    while (it.next_match(.selectable_near(player.x, player.y))) |ref| {
+                        const thing = game_state.things.get(ref);
                         game_state.menu.push(.{ .context = .{
+                            .context_target_ref = ref,
                             .index = 0,
                             .priority = switch (thing.kind) {
                                 .NPC => .talk,
@@ -309,6 +326,7 @@ pub fn game_step_overworld(game_state: *GameState, inputs: Inputs) void {
                 const selection = game_state.things.get(selector.selection_target_ref);
                 game_state.menu.push(.{
                     .context = .{
+                        .context_target_ref = selector.selection_target_ref,
                         .index = 0,
                         .priority = switch (selection.kind) {
                             .NPC => .talk,
@@ -441,9 +459,13 @@ pub fn render_step_overworld(game_state: *GameState, render_state: *RenderState)
                 },
                 .examine => |examine_menu| {
                     const examination_target = game_state.things.get(examine_menu.examination_target_ref);
-                    var buf: [128]u8 = undefined;
-                    const text = std.fmt.bufPrint(&buf, "you examine {s}.", .{examination_target.name}) catch unreachable;
-                    ui.drawTextBox(&render_state.screen, "examination", text);
+                    if (examination_target.kind == .UNSET) {
+                        ui.drawTextBox(&render_state.screen, "examination", "there appears to be nothing here");
+                    } else {
+                        var buf: [128]u8 = undefined;
+                        const text = std.fmt.bufPrint(&buf, "you examine {s}.", .{examination_target.name}) catch unreachable;
+                        ui.drawTextBox(&render_state.screen, "examination", text);
+                    }
                 },
             }
         }
