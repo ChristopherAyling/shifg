@@ -478,51 +478,43 @@ pub fn render_step_overworld(game_state: *GameState, render_state: *RenderState)
     }
 }
 
-fn blit(screen: ScreenBuffer, window: *Window) void {
-    assert(screen.w == window.w);
-    assert(screen.h == window.h);
-    for (0..screen.data.len) |i| {
-        window.f.buf[i] = screen.data[i];
-    }
-}
+// pub fn main() !void {
+//     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+//     const allocator = gpa.allocator();
+//     defer {
+//         _ = gpa.deinit();
+//     }
 
-pub fn main() !void {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    const allocator = gpa.allocator();
-    defer {
-        _ = gpa.deinit();
-    }
+//     const level: ScreenBuffer = try ScreenBuffer.init(allocator, con.LEVEL_W, con.LEVEL_H);
+//     var screen: ScreenBuffer = try ScreenBuffer.init(allocator, con.NATIVE_W, con.NATIVE_H);
+//     var screen_upscaled: ScreenBuffer = try ScreenBuffer.init(allocator, con.UPSCALED_W, con.UPSCALED_H);
 
-    const level: ScreenBuffer = try ScreenBuffer.init(allocator, con.LEVEL_W, con.LEVEL_H);
-    var screen: ScreenBuffer = try ScreenBuffer.init(allocator, con.NATIVE_W, con.NATIVE_H);
-    var screen_upscaled: ScreenBuffer = try ScreenBuffer.init(allocator, con.UPSCALED_W, con.UPSCALED_H);
+//     var window = try Window.init(allocator, con.UPSCALED_W, con.UPSCALED_H, "shif");
+//     defer window.deinit();
 
-    var window = try Window.init(allocator, con.UPSCALED_W, con.UPSCALED_H, "shif");
-    defer window.deinit();
+//     var storage = sprites.SpriteStorage.init();
+//     storage.load();
 
-    var storage = sprites.SpriteStorage.init();
-    storage.load();
+//     window.before_loop();
 
-    window.before_loop();
+//     const game_state: *GameState = try allocator.create(GameState);
+//     game_state.* = GameState.init();
+//     game_state.audio_system.init();
+//     defer allocator.destroy(game_state);
+//     var render_state: RenderState = .{
+//         .screen = screen,
+//         .screen_upscaled = screen_upscaled,
+//         .level = level,
+//         .storage = storage,
+//     };
 
-    const game_state: *GameState = try allocator.create(GameState);
-    game_state.* = GameState.init();
-    game_state.audio_system.init();
-    defer allocator.destroy(game_state);
-    var render_state: RenderState = .{
-        .screen = screen,
-        .screen_upscaled = screen_upscaled,
-        .level = level,
-        .storage = storage,
-    };
+//     var inputs = Inputs{};
+//     while (window.loop()) {
+//         updateInputs(&inputs, window);
+//         game_step(game_state, inputs); // TODO pass a dt
+//         render_step(game_state, &render_state);
 
-    var inputs = Inputs{};
-    while (window.loop()) {
-        updateInputs(&inputs, window);
-        game_step(game_state, inputs); // TODO pass a dt
-        render_step(game_state, &render_state);
-
-        screen.upscale(&screen_upscaled, con.SCALE);
-        blit(render_state.screen_upscaled, &window);
-    }
-}
+//         screen.upscale(&screen_upscaled, con.SCALE);
+//         blit(render_state.screen_upscaled, &window);
+//     }
+// }
