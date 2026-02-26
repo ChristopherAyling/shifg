@@ -82,18 +82,18 @@ const platform_fns = struct {
 
 // dummy
 
-pub fn dummyGameStep(memory: *api.GameMemory, _: Inputs, platform: api.PlatformAPI) void {
-    if (!memory.is_initialized) {
-        std.log.info("game initialized", .{});
-        memory.is_initialized = true;
-    }
-    _ = platform;
-}
+// pub fn dummyGameStep(memory: *api.GameMemory, _: Inputs, platform: api.PlatformAPI) void {
+//     if (!memory.is_initialized) {
+//         std.log.info("game initialized", .{});
+//         memory.is_initialized = true;
+//     }
+//     _ = platform;
+// }
 
-pub fn dummyRenderStep(_: *api.GameMemory, ctx: *api.RenderContext) void {
-    // ctx.screen.clear();
-    ctx.screen.setPixel(20, 20, 0xFFAA9A);
-}
+// pub fn dummyRenderStep(_: *api.GameMemory, ctx: *api.RenderContext) void {
+//     // ctx.screen.clear();
+//     ctx.screen.setPixel(20, 20, 0xFFAA9A);
+// }
 
 // the real deal
 
@@ -105,10 +105,12 @@ pub fn main() !void {
     }
 
     var screen: ScreenBuffer = try ScreenBuffer.init(allocator, con.NATIVE_W, con.NATIVE_H);
+    defer screen.deinit(allocator);
     var screen_upscaled: ScreenBuffer = try ScreenBuffer.init(allocator, con.UPSCALED_W, con.UPSCALED_H);
+    defer screen_upscaled.deinit(allocator);
 
     var window = try Window.init(allocator, con.UPSCALED_W, con.UPSCALED_H, "game");
-    defer window.deinit();
+    defer window.deinit(allocator);
 
     var storage = sprites.SpriteStorage.init();
     storage.load();
@@ -140,9 +142,20 @@ pub fn main() !void {
     };
 
     // TODO intial dll load
+    var lib = try std.DynLib.open("zig-out/lib/libgame.dylib");
+    defer lib.close();
 
-    const game_step: api.GameStepFn = dummyGameStep;
-    const render_step: api.RenderStepFn = dummyRenderStep;
+    const game_step = lib.lookup(api.GameStepFn, "game_step") orelse {
+        std.debug.print("failed to find game_step\n", .{});
+        return;
+    };
+    const render_step = lib.lookup(api.RenderStepFn, "render_step") orelse {
+        std.debug.print("failed to find render_step\n", .{});
+        return;
+    };
+
+    // const game_step: api.GameStepFn = dummyGameStep;
+    // const render_step: api.RenderStepFn = dummyRenderStep;
 
     // initialise game memory
     var game_state: api.GameState = .{};

@@ -478,6 +478,21 @@ pub fn render_step_overworld(game_state: *GameState, render_state: *RenderState)
     }
 }
 
+const api = @import("game_api.zig");
+
+export fn dummyGameStep(memory: *api.GameMemory, _: Inputs, platform: api.PlatformAPI) void {
+    if (!memory.is_initialized) {
+        std.log.info("game initialized", .{});
+        memory.is_initialized = true;
+    }
+    _ = platform;
+}
+
+export fn dummyRenderStep(_: *api.GameMemory, ctx: *api.RenderContext) void {
+    // ctx.screen.clear();
+    ctx.screen.setPixel(20, 20, 0xFFAA9A);
+}
+
 // pub fn main() !void {
 //     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
 //     const allocator = gpa.allocator();

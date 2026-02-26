@@ -28,6 +28,18 @@ pub fn build(b: *std.Build) void {
         .install_subdir = "assets",
     });
 
+    // b.addLibrary(.{ .linkage = .dynamic })
+    const game_lib = b.addLibrary(.{
+        .linkage = .dynamic,
+        .name = "game",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("src/game.zig"),
+            .target = target,
+            .optimize = optimize,
+        }),
+    });
+    b.installArtifact(game_lib);
+
     // game
     const game: *std.Build.Step.Compile = b.addExecutable(.{
         .name = "platform",

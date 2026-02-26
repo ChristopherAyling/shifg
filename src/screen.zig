@@ -25,6 +25,10 @@ pub const ScreenBuffer = struct {
         };
     }
 
+    pub fn deinit(self: *ScreenBuffer, allocator: Allocator) void {
+        allocator.free(self.data);
+    }
+
     pub fn is_in_bounds(self: *ScreenBuffer, x: i32, y: i32) bool {
         return (x >= 0 and y >= 0 and x < self.w and y < self.h);
     }

@@ -22,8 +22,10 @@ pub const Window = struct {
         return Window{ .f = f, .w = w, .h = h };
     }
 
-    pub fn deinit(self: *Window) void {
+    pub fn deinit(self: *Window, allocator: Allocator) void {
+        _ = allocator;
         c.fenster_close(&self.f);
+        // allocator.free(self.f.buf); maybe??? allocator complains
     }
 
     pub fn sleep(self: *Window, duration: i64) void {
