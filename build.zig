@@ -28,7 +28,6 @@ pub fn build(b: *std.Build) void {
         .install_subdir = "assets",
     });
 
-    // b.addLibrary(.{ .linkage = .dynamic })
     const game_lib = b.addLibrary(.{
         .linkage = .dynamic,
         .name = "game",
@@ -38,6 +37,7 @@ pub fn build(b: *std.Build) void {
             .optimize = optimize,
         }),
     });
+    configureExecutable(b, target, game_lib);
     b.installArtifact(game_lib);
 
     // game

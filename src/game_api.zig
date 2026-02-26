@@ -3,7 +3,7 @@ const ScreenBuffer = @import("screen.zig").ScreenBuffer;
 const SpriteStorage = @import("sprites.zig").SpriteStorage;
 // const GameState = @import("game.zig").GameState;
 const audio = @import("audio.zig");
-pub const GameState = @import("game_state.zig");
+pub const GameState = @import("game_state.zig").GameState;
 
 // Memory block passed from platform to DLL
 pub const GameMemory = struct {
@@ -21,8 +21,8 @@ pub const PlatformAPI = struct {
 // Rendering resources owned by platform, passed to DLL
 pub const RenderContext = struct {
     screen: *ScreenBuffer,
-    // level: *ScreenBuffer,
-    // storage: *SpriteStorage,
+    level: *ScreenBuffer,
+    storage: *SpriteStorage,
 };
 
 // Function pointer types for dlsym (use pointers for C-ABI compatibility)

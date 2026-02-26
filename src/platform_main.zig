@@ -80,21 +80,6 @@ const platform_fns = struct {
     }
 };
 
-// dummy
-
-// pub fn dummyGameStep(memory: *api.GameMemory, _: Inputs, platform: api.PlatformAPI) void {
-//     if (!memory.is_initialized) {
-//         std.log.info("game initialized", .{});
-//         memory.is_initialized = true;
-//     }
-//     _ = platform;
-// }
-
-// pub fn dummyRenderStep(_: *api.GameMemory, ctx: *api.RenderContext) void {
-//     // ctx.screen.clear();
-//     ctx.screen.setPixel(20, 20, 0xFFAA9A);
-// }
-
 // the real deal
 
 pub fn main() !void {
@@ -108,6 +93,8 @@ pub fn main() !void {
     defer screen.deinit(allocator);
     var screen_upscaled: ScreenBuffer = try ScreenBuffer.init(allocator, con.UPSCALED_W, con.UPSCALED_H);
     defer screen_upscaled.deinit(allocator);
+    var level: ScreenBuffer = try ScreenBuffer.init(allocator, con.LEVEL_W, con.LEVEL_H);
+    defer level.deinit(allocator);
 
     var window = try Window.init(allocator, con.UPSCALED_W, con.UPSCALED_H, "game");
     defer window.deinit(allocator);
@@ -139,9 +126,11 @@ pub fn main() !void {
 
     var render_context: api.RenderContext = .{
         .screen = &screen,
+        .level = &level,
+        .storage = &storage,
     };
 
-    // TODO intial dll load
+    // intial dll load
     var lib = try std.DynLib.open("zig-out/lib/libgame.dylib");
     defer lib.close();
 

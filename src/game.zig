@@ -19,122 +19,74 @@ const ThingPool = @import("things.zig").ThingPool;
 const menus = @import("menus.zig");
 
 const Inputs = control.Inputs;
-const updateInputs = control.updateInputs;
-
-const GameMode = enum {
-    MainMenu,
-    Overworld,
-};
-
-const GameStyle = enum {
-    Realtime,
-    TurnBased,
-};
-
-const GameContext = struct {
-    // keep data types simple and serialisable.
-    story_checkpoint: StoryCheckpoint,
-};
 
 const LEVELS = std.StaticStringMap([]const u8).initComptime(.{
     .{ "one", "/Users/chris/gaming/gam1/assets/levels/tutorial" },
     .{ "arch", "/Users/chris/gaming/gam1/assets/levels/parade" },
 });
 
-const GameState = struct {
-    // mode
-    mode: GameMode,
-    menu: menus.MenuState,
+pub fn setDialogue(self: *api.GameState, dlog: *const DialogueSequence) void {
+    self.dialogue = DialogueState.init(dlog);
+}
 
-    ctx: GameContext,
+pub fn clearDialogue(self: *api.GameState) void {
+    self.dialogue = null;
+}
 
-    audio_system: audio.AudioSystem,
+pub fn load_level(self: *api.GameState, name: []const u8) void {
+    const new_level = Level.from_folder(LEVELS.get(name).?, name);
+    new_level.load_things(&self.things);
+    self.level = new_level;
+}
 
-    // entities
-    things: ThingPool = .{},
-
-    // stuff
-    dialogue: ?DialogueState,
-    level: ?Level,
-
-    pub fn setDialogue(self: *GameState, dlog: *const DialogueSequence) void {
-        std.log.debug("setting dialogue", .{});
-        self.dialogue = DialogueState.init(dlog);
-    }
-
-    pub fn clearDialogue(self: *GameState) void {
-        std.log.debug("clearing dialogue", .{});
-        self.dialogue = null;
-    }
-
-    pub fn load_level(self: *GameState, name: []const u8) void {
-        const new_level = Level.from_folder(LEVELS.get(name).?, name);
-        new_level.load_things(&self.things);
-        self.level = new_level;
-    }
-
-    pub fn ensure_level_loaded(self: *GameState, name: []const u8) void {
-        if (self.level) |current_level| {
-            if (!std.mem.eql(u8, current_level.name, name)) {
-                self.load_level(name);
-            }
-        } else {
-            // self.level = Level.from_folder(LEVELS.get(name).?, name);
-            self.load_level(name);
+pub fn ensure_level_loaded(game_state: *api.GameState, name: []const u8) void {
+    if (game_state.level) |current_level| {
+        if (!std.mem.eql(u8, current_level.name, name)) {
+            load_level(game_state, name);
         }
+    } else {
+        load_level(game_state, name);
     }
+}
 
-    pub fn camera_follow_player(self: *GameState) void {
-        const player = self.things.get_player();
-        const camera = self.things.get(player.camera_ref);
-        const selector = self.things.get(player.selector_ref);
+pub fn camera_follow_player(self: *api.GameState) void {
+    const player = self.things.get_player();
+    const camera = self.things.get(player.camera_ref);
+    const selector = self.things.get(player.selector_ref);
 
-        // selector follows too
-        selector.x = player.x;
-        selector.y = player.y;
+    // selector follows too
+    selector.x = player.x;
+    selector.y = player.y;
 
-        camera.x = player.x; // + @divFloor(con.PLAYER_W, 2);
-        camera.y = player.y; // + @divFloor(con.PLAYER_H, 2);
+    camera.x = player.x; // + @divFloor(con.PLAYER_W, 2);
+    camera.y = player.y; // + @divFloor(con.PLAYER_H, 2);
 
-        // this is probably wrong, should probably take LEVEL_W etc into account like with the mins.
-        camera.x = @max(camera.x, con.NATIVE_W_HALF);
-        camera.y = @max(camera.y, con.NATIVE_H_HALF);
+    // this is probably wrong, should probably take LEVEL_W etc into account like with the mins.
+    camera.x = @max(camera.x, con.NATIVE_W_HALF);
+    camera.y = @max(camera.y, con.NATIVE_H_HALF);
 
-        camera.x = @min(camera.x, con.LEVEL_W - con.NATIVE_W);
-        camera.y = @min(camera.y, con.LEVEL_H - con.NATIVE_H);
-    }
+    camera.x = @min(camera.x, con.LEVEL_W - con.NATIVE_W);
+    camera.y = @min(camera.y, con.LEVEL_H - con.NATIVE_H);
+}
 
-    pub fn camera_follow_selector(self: *GameState) void {
-        const player = self.things.get_player();
-        const camera = self.things.get(player.camera_ref);
-        const selector = self.things.get(player.selector_ref);
+pub fn camera_follow_selector(self: *api.GameState) void {
+    const player = self.things.get_player();
+    const camera = self.things.get(player.camera_ref);
+    const selector = self.things.get(player.selector_ref);
 
-        camera.x = selector.x; // + @divFloor(con.PLAYER_W, 2);
-        camera.y = selector.y; // + @divFloor(con.PLAYER_H, 2);
+    camera.x = selector.x; // + @divFloor(con.PLAYER_W, 2);
+    camera.y = selector.y; // + @divFloor(con.PLAYER_H, 2);
 
-        // this is probably wrong, should probably take LEVEL_W etc into account like with the mins.
-        camera.x = @max(camera.x, con.NATIVE_W_HALF);
-        camera.y = @max(camera.y, con.NATIVE_H_HALF);
+    // this is probably wrong, should probably take LEVEL_W etc into account like with the mins.
+    camera.x = @max(camera.x, con.NATIVE_W_HALF);
+    camera.y = @max(camera.y, con.NATIVE_H_HALF);
 
-        camera.x = @min(camera.x, con.LEVEL_W - con.NATIVE_W);
-        camera.y = @min(camera.y, con.LEVEL_H - con.NATIVE_H);
-    }
-
-    pub fn init() GameState {
-        return .{
-            .mode = .MainMenu,
-            .audio_system = .{},
-            .ctx = .{ .story_checkpoint = .game_start },
-            .dialogue = null,
-            .level = null,
-            .menu = .{},
-        };
-    }
-};
+    camera.x = @min(camera.x, con.LEVEL_W - con.NATIVE_W);
+    camera.y = @min(camera.y, con.LEVEL_H - con.NATIVE_H);
+}
 
 const RenderState = struct {
     screen: ScreenBuffer,
-    screen_upscaled: ScreenBuffer,
     level: ScreenBuffer,
     storage: sprites.SpriteStorage,
 };
@@ -144,56 +96,50 @@ const selector_VELOCITY = 1;
 
 // gaming
 
-pub fn game_step(game_state: *GameState, inputs: Inputs) void {
-    // player movement
+fn game_step(memory: *api.GameMemory, inputs: *const Inputs, platform_api: *const api.PlatformAPI) callconv(.c) void {
+    var game_state = memory.state;
     switch (game_state.mode) {
-        GameMode.MainMenu => game_step_main_menu(game_state, inputs),
-        GameMode.Overworld => game_step_overworld(game_state, inputs),
-        // GameMode.Inventory => game_step_inventory(game_state, inputs),
+        .MainMenu => game_step_main_menu(game_state, inputs.*, platform_api.*),
+        .Overworld => game_step_overworld(game_state, inputs.*, platform_api.*),
     }
 
     if (game_state.mode == .Overworld) {
         // TODO lookup story beat -> level name and load the correct level.
-        game_state.ensure_level_loaded("arch");
+        ensure_level_loaded(game_state, "arch");
         const player = game_state.things.get_player();
         switch (player.interaction_mode) {
             .NORMAL => {
-                game_state.camera_follow_player();
+                camera_follow_player(game_state);
             },
             .SELECT => {
-                game_state.camera_follow_selector();
+                camera_follow_selector(game_state);
             },
         }
     }
 }
 
-pub fn game_step_overworld(game_state: *GameState, inputs: Inputs) void {
+pub fn game_step_overworld(game_state: *api.GameState, inputs: Inputs, platform_api: api.PlatformAPI) void {
     const player = game_state.things.get_player();
     var selector = game_state.things.get(player.selector_ref);
-    game_state.audio_system.setMusic(.overworld);
+    platform_api.setMusic(.overworld);
 
-    switch (game_state.ctx.story_checkpoint) {
-        .game_start => {
-            if (game_state.dialogue == null) {
-                std.log.debug("reinit dia", .{});
-                game_state.setDialogue(&dialogues.PROLOGUE);
-            }
-        },
-        .prologue_complete => {},
-        .tutorial_complete => {},
-    }
+    // switch (game_state.ctx.story_checkpoint) {
+    //     .game_start => {
+    //         if (game_state.dialogue == null) {
+    //             std.log.debug("reinit dia", .{});
+    //             game_state.setDialogue(&dialogues.PROLOGUE);
+    //         }
+    //     },
+    //     .prologue_complete => {},
+    //     .tutorial_complete => {},
+    // }
 
     // dialogue overrules everything
     if (game_state.dialogue) |*current_dialogue| {
         if (inputs.a.pressed) {
             current_dialogue.advance();
-            // how to trigger story events from dialogue being completeded.
-            // not all dialogue completions will update story events e.g. reading a sign.
             if (current_dialogue.is_complete()) {
-                if (current_dialogue.dialogue.jump_to_story_checkpoint) |next_check_point| {
-                    game_state.ctx.story_checkpoint = next_check_point;
-                }
-                game_state.clearDialogue();
+                clearDialogue(game_state);
             }
         }
         return;
@@ -353,43 +299,40 @@ pub fn game_step_overworld(game_state: *GameState, inputs: Inputs) void {
     }
 }
 
-pub fn game_step_inventory(game_state: *GameState, inputs: Inputs) void {
-    if (inputs.b.pressed) {
-        game_state.mode = .Overworld;
-    }
-}
-
-pub fn game_step_main_menu(game_state: *GameState, inputs: Inputs) void {
+pub fn game_step_main_menu(game_state: *api.GameState, inputs: Inputs, platform_api: api.PlatformAPI) void {
     if (inputs.a.pressed) {
         game_state.mode = .Overworld;
-        game_state.audio_system.playSound(.click);
+        platform_api.playSound(.click);
     }
 }
 
 // rendering
 
-pub fn render_step(game_state: *GameState, render_state: *RenderState) void {
+fn render_step(memory: *api.GameMemory, ctx: *api.RenderContext) callconv(.c) void {
+    const game_state = memory.state;
+    var render_state: RenderState = .{ .level = ctx.level.*, .screen = ctx.screen.*, .storage = ctx.storage.* };
+    // pub fn render_step(game_state: *api.GameState, render_state: *RenderState) void {
     // clear screen
     draw.fill(&render_state.screen, 0x0);
-    draw.fill(&render_state.screen_upscaled, 0x0);
+    // draw.fill(&render_state.screen_upscaled, 0x0);
     // render frame
     switch (game_state.mode) {
-        GameMode.MainMenu => render_step_main_menu(game_state, render_state),
-        GameMode.Overworld => render_step_overworld(game_state, render_state),
+        .MainMenu => render_step_main_menu(game_state, &render_state),
+        .Overworld => render_step_overworld(game_state, &render_state),
     }
 }
 
-pub fn render_step_main_menu(game_state: *const GameState, render_state: *RenderState) void {
+pub fn render_step_main_menu(game_state: *const api.GameState, render_state: *RenderState) void {
     _ = game_state;
     ui.drawSplashText(&render_state.screen, render_state.storage.get(.splash));
 }
 
-pub fn render_step_inventory(game_state: *const GameState, render_state: *RenderState) void {
+pub fn render_step_inventory(game_state: *const api.GameState, render_state: *RenderState) void {
     _ = game_state;
     ui.drawTextBox(&render_state.screen, "", "inventory");
 }
 
-pub fn render_step_overworld(game_state: *GameState, render_state: *RenderState) void {
+pub fn render_step_overworld(game_state: *api.GameState, render_state: *RenderState) void {
     // render world
     const player = game_state.things.get_player();
     const selector = game_state.things.get(player.selector_ref);
@@ -493,8 +436,8 @@ fn dummyRenderStep(_: *api.GameMemory, ctx: *api.RenderContext) callconv(.c) voi
 }
 
 comptime {
-    @export(&dummyGameStep, .{ .name = "game_step" });
-    @export(&dummyRenderStep, .{ .name = "render_step" });
+    @export(&game_step, .{ .name = "game_step" });
+    @export(&render_step, .{ .name = "render_step" });
 }
 
 // pub fn main() !void {
