@@ -8,6 +8,61 @@ const sprites = @import("sprites.zig");
 const Inputs = @import("control.zig").Inputs;
 const audio = @import("audio.zig");
 
+const GameLib = struct {
+    lib: std.DynLib,
+    game_step: api.GameStepFn,
+    render_step: api.RenderStepFn,
+    temp_path: [128:0]u8,
+    temp_path_len: usize,
+
+    const source_path = "/Users/chris/gaming/gam1/zig-out/lib/libgame.dylib";
+
+    fn load() !GameLib {
+        // Copy dylib to temp path to avoid macOS dlopen caching
+        var temp_path: [128:0]u8 = undefined;
+        const timestamp = std.time.timestamp();
+        const temp_path_len = (std.fmt.bufPrint(&temp_path, "/tmp/libgame_{}.dylib", .{timestamp}) catch unreachable).len;
+        temp_path[temp_path_len] = 0;
+
+        std.fs.copyFileAbsolute(source_path, temp_path[0..temp_path_len], .{}) catch |err| {
+            std.debug.print("failed to copy dylib: {}\n", .{err});
+            return err;
+        };
+
+        var lib = try std.DynLib.open(temp_path[0..temp_path_len :0]);
+        const game_step = lib.lookup(api.GameStepFn, "game_step") orelse {
+            std.debug.print("failed to find game_step\n", .{});
+            return error.SymbolNotFound;
+        };
+        const render_step = lib.lookup(api.RenderStepFn, "render_step") orelse {
+            std.debug.print("failed to find render_step\n", .{});
+            return error.SymbolNotFound;
+        };
+        return .{
+            .lib = lib,
+            .game_step = game_step,
+            .render_step = render_step,
+            .temp_path = temp_path,
+            .temp_path_len = temp_path_len,
+        };
+    }
+
+    fn unload(self: *GameLib) void {
+        self.lib.close();
+        // Delete temp file
+        std.fs.deleteFileAbsolute(self.temp_path[0..self.temp_path_len]) catch {};
+    }
+
+    fn reload(self: *GameLib) void {
+        self.unload();
+        self.* = load() catch |err| {
+            std.debug.print("hot reload failed: {}\n", .{err});
+            return;
+        };
+        std.debug.print("hot reloaded\n", .{});
+    }
+};
+
 // inputs
 pub fn updateInputs(inputs: *Inputs, window: Window) void {
     const W_KEY = 87;
@@ -111,19 +166,8 @@ pub fn main() !void {
         .storage = &storage,
     };
 
-    // dll load
-    var lib = try std.DynLib.open("zig-out/lib/libgame.dylib");
-    defer lib.close();
-
-    const game_step = lib.lookup(api.GameStepFn, "game_step") orelse {
-        std.debug.print("failed to find game_step\n", .{});
-        return;
-    };
-    const render_step = lib.lookup(api.RenderStepFn, "render_step") orelse {
-        std.debug.print("failed to find render_step\n", .{});
-        return;
-    };
-    // end dll load
+    var game_lib = try GameLib.load();
+    defer game_lib.unload();
 
     // initialise game memory
     var game_state: api.GameState = .{};
@@ -134,11 +178,13 @@ pub fn main() !void {
 
     var inputs = Inputs{};
     while (window.loop()) {
-        // TODO maybe reload
+        if (window.key(82)) { // R key
+            game_lib.reload();
+        }
         updateInputs(&inputs, window);
 
-        game_step(&game_memory, &inputs, &platform); // TODO pass a dt
-        render_step(&game_memory, &render_context);
+        game_lib.game_step(&game_memory, &inputs, &platform);
+        game_lib.render_step(&game_memory, &render_context);
 
         screen.upscale(&screen_upscaled, con.SCALE);
         blit(screen_upscaled, &window);
