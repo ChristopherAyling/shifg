@@ -1,11 +1,10 @@
 const std = @import("std");
 const assert = std.debug.assert;
+const api = @import("game_api.zig");
 const draw = @import("draw.zig");
 const ui = @import("ui.zig");
 const Image = @import("image.zig").Image;
 const ScreenBuffer = @import("screen.zig").ScreenBuffer;
-const DialogueState = @import("dialogue.zig").DialogueState;
-const DialogueSequence = @import("dialogue.zig").DialogueSequence;
 const dialogues = @import("dialogue.zig");
 const control = @import("control.zig");
 const sprites = @import("sprites.zig");
@@ -23,18 +22,13 @@ const LEVELS = std.StaticStringMap([]const u8).initComptime(.{
     .{ "arch", "/Users/chris/gaming/gam1/assets/levels/parade" },
 });
 
-pub fn setDialogue(self: *api.GameState, dlog: *const DialogueSequence) void {
-    self.dialogue = DialogueState.init(dlog);
-}
-
-pub fn clearDialogue(self: *api.GameState) void {
-    self.dialogue = null;
-}
-
 pub fn load_level(self: *api.GameState, name: []const u8) void {
     const new_level = Level.from_folder(LEVELS.get(name).?, name);
     new_level.load_things(&self.things);
     self.level = new_level;
+    if (std.mem.eql(u8, name, "arch")) {
+        self.menu.push(.{ .dialogue = .{ .index = 0, .sequence = dialogues.PROLOGUE } });
+    }
 }
 
 pub fn ensure_level_loaded(game_state: *api.GameState, name: []const u8) void {
@@ -121,35 +115,21 @@ pub fn game_step_overworld(game_state: *api.GameState, inputs: Inputs, platform_
     var selector = game_state.things.get(player.selector_ref);
     platform_api.setMusic(.overworld);
 
-    // switch (game_state.ctx.story_checkpoint) {
-    //     .game_start => {
-    //         if (game_state.dialogue == null) {
-    //             std.log.debug("reinit dia", .{});
-    //             game_state.setDialogue(&dialogues.PROLOGUE);
-    //         }
-    //     },
-    //     .prologue_complete => {},
-    //     .tutorial_complete => {},
-    // }
-
-    // dialogue overrules everything
-    if (game_state.dialogue) |*current_dialogue| {
-        if (inputs.a.pressed) {
-            current_dialogue.advance();
-            if (current_dialogue.is_complete()) {
-                clearDialogue(game_state);
-            }
-        }
-        return;
-    }
-
     // input in menu is next highest priority
     if (game_state.menu.current()) |current| {
-        if (inputs.b.pressed) {
+        if (inputs.b.pressed) { // todo disable this if is a dialogue. you can't b out of a dialogue! i think
             game_state.menu.pop();
             return;
         } else {
             switch (current.*) {
+                .dialogue => |*dialogue_menu| {
+                    if (inputs.a.pressed) {
+                        dialogue_menu.advance();
+                    }
+                    if (dialogue_menu.is_complete()) {
+                        game_state.menu.pop();
+                    }
+                },
                 .context => |*context_menu| {
                     if (inputs.y.pressed) {
                         game_state.menu.pop();
@@ -164,7 +144,12 @@ pub fn game_step_overworld(game_state: *api.GameState, inputs: Inputs, platform_
                                         assert(!context_menu.context_target_ref.is_nil());
                                         game_state.things.get(context_menu.context_target_ref).visible = false;
                                     },
-                                    .talk => {},
+                                    .talk => {
+                                        game_state.menu.push(.{ .dialogue = .{
+                                            .index = 0,
+                                            .sequence = dialogues.MISSING,
+                                        } });
+                                    },
                                     .attack => {},
                                     .move_to => {
                                         // todo actually walk rather than teleport
@@ -373,6 +358,10 @@ pub fn render_step_overworld(game_state: *api.GameState, render_state: *RenderSt
         for (0..game_state.menu.depth) |depth| {
             const menu = game_state.menu.stack[depth];
             switch (menu) {
+                .dialogue => |dialogue_menu| {
+                    const line = dialogue_menu.get_line();
+                    ui.drawTextBox(&render_state.screen, line.speaker_name, line.text);
+                },
                 .inventory => {
                     ui.drawTextBox(&render_state.screen, "game", "inventory");
                 },
@@ -415,62 +404,7 @@ pub fn render_step_overworld(game_state: *api.GameState, render_state: *RenderSt
     }
 }
 
-const api = @import("game_api.zig");
-
-fn dummyGameStep(memory: *api.GameMemory, _: *const Inputs, _: *const api.PlatformAPI) callconv(.c) void {
-    if (!memory.is_initialized) {
-        std.log.info("game initialized", .{});
-        memory.is_initialized = true;
-    }
-}
-
-fn dummyRenderStep(_: *api.GameMemory, ctx: *api.RenderContext) callconv(.c) void {
-    // ctx.screen.clear();
-    ctx.screen.setPixel(20, 20, 0xFFAA9A);
-}
-
 comptime {
     @export(&game_step, .{ .name = "game_step" });
     @export(&render_step, .{ .name = "render_step" });
 }
-
-// pub fn main() !void {
-//     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-//     const allocator = gpa.allocator();
-//     defer {
-//         _ = gpa.deinit();
-//     }
-
-//     const level: ScreenBuffer = try ScreenBuffer.init(allocator, con.LEVEL_W, con.LEVEL_H);
-//     var screen: ScreenBuffer = try ScreenBuffer.init(allocator, con.NATIVE_W, con.NATIVE_H);
-//     var screen_upscaled: ScreenBuffer = try ScreenBuffer.init(allocator, con.UPSCALED_W, con.UPSCALED_H);
-
-//     var window = try Window.init(allocator, con.UPSCALED_W, con.UPSCALED_H, "shif");
-//     defer window.deinit();
-
-//     var storage = sprites.SpriteStorage.init();
-//     storage.load();
-
-//     window.before_loop();
-
-//     const game_state: *GameState = try allocator.create(GameState);
-//     game_state.* = GameState.init();
-//     game_state.audio_system.init();
-//     defer allocator.destroy(game_state);
-//     var render_state: RenderState = .{
-//         .screen = screen,
-//         .screen_upscaled = screen_upscaled,
-//         .level = level,
-//         .storage = storage,
-//     };
-
-//     var inputs = Inputs{};
-//     while (window.loop()) {
-//         updateInputs(&inputs, window);
-//         game_step(game_state, inputs); // TODO pass a dt
-//         render_step(game_state, &render_state);
-
-//         screen.upscale(&screen_upscaled, con.SCALE);
-//         blit(render_state.screen_upscaled, &window);
-//     }
-// }
