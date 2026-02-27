@@ -1,21 +1,8 @@
 const std = @import("std");
 
-fn configureGameExecutable(b: *std.Build, target: std.Build.ResolvedTarget, exe: *std.Build.Step.Compile) void {
+fn configureGameLibrary(b: *std.Build, target: std.Build.ResolvedTarget, exe: *std.Build.Step.Compile) void {
+    _ = target;
     exe.addIncludePath(b.path("src"));
-    exe.addCSourceFile(.{ .file = b.path("src/fenster.c"), .flags = &[_][]const u8{} });
-    exe.addCSourceFile(.{ .file = b.path("src/miniaudio.c"), .flags = &[_][]const u8{} });
-
-    switch (target.result.os.tag) {
-        .macos => exe.linkFramework("Cocoa"),
-        .windows => exe.linkSystemLibrary("gdi32"),
-        .linux => exe.linkSystemLibrary("X11"),
-        else => {},
-    }
-    exe.linkLibC();
-
-    exe.linkFramework("AudioToolbox");
-    exe.linkFramework("CoreAudio");
-    exe.linkFramework("CoreFoundation");
 }
 
 fn configurePlatformExecutable(b: *std.Build, target: std.Build.ResolvedTarget, exe: *std.Build.Step.Compile) void {
@@ -55,7 +42,7 @@ pub fn build(b: *std.Build) void {
             .optimize = optimize,
         }),
     });
-    configurePlatformExecutable(b, target, game_lib);
+    configureGameLibrary(b, target, game_lib);
     b.installArtifact(game_lib);
 
     // game
@@ -67,7 +54,7 @@ pub fn build(b: *std.Build) void {
             .target = target,
         }),
     });
-    configureGameExecutable(b, target, platform);
+    configurePlatformExecutable(b, target, platform);
     b.installArtifact(platform);
 
     // const editor: *std.Build.Step.Compile = b.addExecutable(.{

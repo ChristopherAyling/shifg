@@ -3,7 +3,6 @@ const assert = std.debug.assert;
 const Image = @import("image.zig").Image;
 const con = @import("constants.zig");
 const dialogue = @import("dialogue.zig");
-const audio = @import("audio.zig");
 const ThingPool = @import("things.zig").ThingPool;
 
 fn fileExistsAbsolute(path: []const u8) bool {
@@ -16,8 +15,6 @@ pub const Level = struct {
     path: []const u8,
     bg: Image,
     fg: Image,
-    music: audio.MusicTrack,
-    // TODO effects
 
     pub fn from_folder(path: []const u8, name: []const u8) Level {
         var buf: [256]u8 = undefined;
@@ -33,7 +30,7 @@ pub const Level = struct {
             .path = path,
             .bg = bg,
             .fg = fg,
-            .music = undefined,
+            // .music = undefined,
         };
     }
 
