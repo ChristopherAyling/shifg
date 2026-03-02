@@ -108,4 +108,22 @@ pub fn build(b: *std.Build) void {
         const run_step = b.step("dump", "Run thingdump");
         run_step.dependOn(&run_cmd.step);
     }
+
+    // WASM build
+    {
+        const wasm_target = b.resolveTargetQuery(.{
+            .cpu_arch = .wasm32,
+            .os_tag = .wasi,
+        });
+        const wasm_game_lib = b.addExecutable(.{
+            .name = "game",
+            .root_module = b.createModule(.{
+                .root_source_file = b.path("src/wasm_main.zig"),
+                .target = wasm_target,
+                .optimize = optimize,
+            }),
+        });
+        wasm_game_lib.root_module.export_symbol_names = &.{ "yo", "frame" };
+        b.installArtifact(wasm_game_lib);
+    }
 }
