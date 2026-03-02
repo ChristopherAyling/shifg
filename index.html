@@ -1,4 +1,15 @@
+<!DOCTYPE html>
+<html>
+<body>
+    <!-- <canvas id="game-canvas" style="image-rendering: pixelated; width: 768px; height: 672px;"></canvas> -->
+    <canvas id="game-canvas"></canvas>
+</body>
+
 <script type="module">
+
+const canvas = document.getElementById("game-canvas");
+const ctx = canvas.getContext('2d');
+
 import { WASI, File, OpenFile, ConsoleStdout } from
   "https://esm.sh/@bjorn3/browser_wasi_shim";
 
@@ -15,5 +26,37 @@ const instance = await WebAssembly.instantiate(wasm, {
 });
 
 wasi.initialize(instance);
+const exports = instance.exports;
+
 instance.exports.yo();
+instance.exports.game_init();
+const w = instance.exports.get_screen_w();
+const h = instance.exports.get_screen_h();
+console.log({w, h})
+
+canvas.width = w;
+canvas.height = h;
+
+const imageData = ctx.createImageData(w, h);
+
+const fbPtr = exports.get_framebuffer_ptr();
+const fbLen = exports.get_framebuffer_len();
+
+// View the framebuffer as u32 array
+const fb32 = new Uint32Array(exports.memory.buffer, fbPtr, fbLen);
+const pixels = imageData.data; // Uint8ClampedArray [R,G,B,A, R,G,B,A, ...]
+
+for (let i = 0; i < fbLen; i++) {
+    const c = fb32[i];
+    const j = i * 4;
+    pixels[j]     = (c >>> 24) //& 0x00; // R
+    pixels[j + 1] = (c >>> 16) //& 0x00; // G
+    pixels[j + 2] = (c >>> 8)  //& 0x00; // B
+    pixels[j + 3] =  c         //& 0x00; // A
+}
+
+ctx.putImageData(imageData, 0, 0);
+
+
 </script>
+</html>

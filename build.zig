@@ -118,12 +118,24 @@ pub fn build(b: *std.Build) void {
         const wasm_game_lib = b.addExecutable(.{
             .name = "game",
             .root_module = b.createModule(.{
-                .root_source_file = b.path("src/wasm_main.zig"),
+                .root_source_file = b.path("src/platform_wasm.zig"),
                 .target = wasm_target,
                 .optimize = optimize,
             }),
         });
-        wasm_game_lib.root_module.export_symbol_names = &.{ "yo", "frame" };
+        wasm_game_lib.entry = .disabled;
+        wasm_game_lib.root_module.export_symbol_names = &.{
+            // dbg
+            "yo",
+            // game control
+            "game_frame",
+            "game_init",
+            // memory transfer
+            "get_framebuffer_ptr",
+            "get_framebuffer_len",
+            "get_screen_w",
+            "get_screen_h",
+        };
         b.installArtifact(wasm_game_lib);
     }
 }
