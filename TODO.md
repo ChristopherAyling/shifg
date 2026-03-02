@@ -8,3 +8,4 @@
 - [ ] level hot reloading
 - [ ] sprite hot reloading
 - [ ] static release binary
+- [ ] vendor wasi shim
