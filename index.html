@@ -49,10 +49,10 @@ const pixels = imageData.data; // Uint8ClampedArray [R,G,B,A, R,G,B,A, ...]
 for (let i = 0; i < fbLen; i++) {
     const c = fb32[i];
     const j = i * 4;
-    pixels[j]     = (c >>> 24) //& 0x00; // R
-    pixels[j + 1] = (c >>> 16) //& 0x00; // G
-    pixels[j + 2] = (c >>> 8)  //& 0x00; // B
-    pixels[j + 3] =  c         //& 0x00; // A
+    pixels[j]     = (c >>> 16) & 0xFF; // R
+    pixels[j + 1] = (c >>> 8)  & 0xFF; // G
+    pixels[j + 2] =  c         & 0xFF; // B
+    pixels[j + 3] = 255;               // A (always opaque)
 }
 
 ctx.putImageData(imageData, 0, 0);

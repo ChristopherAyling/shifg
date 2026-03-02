@@ -52,7 +52,7 @@ export fn game_init() void {
     wasm_state.level = ScreenBuffer.init(allocator, con.LEVEL_W, con.LEVEL_H) catch unreachable;
     std.log.debug("init end", .{});
 
-    draw.fill_checkerboard(&wasm_state.screen, 10, 0xFF0000, 0x0000FF);
+    draw.fill_checkerboard(&wasm_state.screen, 10, 0xFF0000, 0xAAAAAA);
 }
 
 export fn game_frame() void {
