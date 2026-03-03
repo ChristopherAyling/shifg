@@ -47,9 +47,9 @@ pub fn build(b: *std.Build) void {
 
     // game
     const platform: *std.Build.Step.Compile = b.addExecutable(.{
-        .name = "platform",
+        .name = "platform_native",
         .root_module = b.createModule(.{
-            .root_source_file = b.path("src/platform_main.zig"),
+            .root_source_file = b.path("src/platform_native.zig"),
             .optimize = optimize,
             .target = target,
         }),
@@ -57,16 +57,16 @@ pub fn build(b: *std.Build) void {
     configurePlatformExecutable(b, target, platform);
     b.installArtifact(platform);
 
-    // const editor: *std.Build.Step.Compile = b.addExecutable(.{
-    //     .name = "editor",
-    //     .root_module = b.createModule(.{
-    //         .root_source_file = b.path("src/editor_main.zig"),
-    //         .optimize = optimize,
-    //         .target = target,
-    //     }),
-    // });
-    // configureExecutable(b, target, editor);
-    // b.installArtifact(editor);
+    const editor: *std.Build.Step.Compile = b.addExecutable(.{
+        .name = "editor_native",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("src/editor_native.zig"),
+            .optimize = optimize,
+            .target = target,
+        }),
+    });
+    configurePlatformExecutable(b, target, editor);
+    b.installArtifact(editor);
 
     {
         const run_cmd = b.addRunArtifact(platform);
@@ -78,15 +78,15 @@ pub fn build(b: *std.Build) void {
         run_step.dependOn(&run_cmd.step);
     }
 
-    // {
-    //     const run_cmd = b.addRunArtifact(editor);
-    //     run_cmd.step.dependOn(b.getInstallStep());
-    //     if (b.args) |args| {
-    //         run_cmd.addArgs(args);
-    //     }
-    //     const run_step = b.step("edit", "Run editor");
-    //     run_step.dependOn(&run_cmd.step);
-    // }
+    {
+        const run_cmd = b.addRunArtifact(editor);
+        run_cmd.step.dependOn(b.getInstallStep());
+        if (b.args) |args| {
+            run_cmd.addArgs(args);
+        }
+        const run_step = b.step("edit", "Run editor");
+        run_step.dependOn(&run_cmd.step);
+    }
 
     // thingdump
     const thingdump: *std.Build.Step.Compile = b.addExecutable(.{
@@ -107,5 +107,48 @@ pub fn build(b: *std.Build) void {
         }
         const run_step = b.step("dump", "Run thingdump");
         run_step.dependOn(&run_cmd.step);
+    }
+
+    // WASM build
+    {
+        const wasm_target = b.resolveTargetQuery(.{
+            .cpu_arch = .wasm32,
+            .os_tag = .wasi,
+        });
+
+        // Embedded assets module (at project root so it can access assets/)
+        const embedded_assets_module = b.createModule(.{
+            .root_source_file = b.path("embedded_assets.zig"),
+            .target = wasm_target,
+            .optimize = optimize,
+        });
+
+        const wasm_game_lib = b.addExecutable(.{
+            .name = "game",
+            .root_module = b.createModule(.{
+                .root_source_file = b.path("src/platform_wasm.zig"),
+                .target = wasm_target,
+                .optimize = optimize,
+                .imports = &.{
+                    .{ .name = "embedded_assets", .module = embedded_assets_module },
+                },
+            }),
+        });
+        wasm_game_lib.addIncludePath(b.path("src"));
+        wasm_game_lib.linkLibC();
+        wasm_game_lib.root_module.export_symbol_names = &.{
+            // dbg
+            "yo",
+            // game control
+            "game_frame",
+            "game_init",
+            // memory transfer
+            "get_framebuffer_ptr",
+            "get_framebuffer_len",
+            "get_screen_w",
+            "get_screen_h",
+            "set_input_state",
+        };
+        b.installArtifact(wasm_game_lib);
     }
 }

@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body {
+            width: 100%;
+            height: 100%;
+            background: #111;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #game-canvas {
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+            max-width: 95vw;
+            max-height: 95vh;
+            width: auto;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    <!-- <h1>game</h1> -->
+    <canvas id="game-canvas"></canvas>
+</body>
+
+<script type="module">
+
+const canvas = document.getElementById("game-canvas");
+const ctx = canvas.getContext('2d');
+
+import { WASI, File, OpenFile, ConsoleStdout } from
+  "./vendor/browser_wasi_shim.js";
+
+const fds = [
+  new OpenFile(new File([])),
+  ConsoleStdout.lineBuffered(msg => console.log(msg)),
+  ConsoleStdout.lineBuffered(msg => console.warn(msg)),
+];
+const wasi = new WASI([], [], fds);
+
+const wasm = await WebAssembly.compileStreaming(fetch("./zig-out/bin/game.wasm"));
+const instance = await WebAssembly.instantiate(wasm, {
+  wasi_snapshot_preview1: wasi.wasiImport,
+});
+
+wasi.initialize(instance);
+const exports = instance.exports;
+
+instance.exports.yo();
+instance.exports.game_init();
+
+const game_frame = exports.game_frame;
+const set_input_state = exports.set_input_state;
+
+// Input handling - same keys as platform_main.zig
+const keys = {};
+document.addEventListener('keydown', e => { keys[e.code] = true; e.preventDefault(); });
+document.addEventListener('keyup', e => { keys[e.code] = false; });
+
+function getInputBits() {
+    let bits = 0;
+    if (keys['KeyW'])     bits |= 1;    // up
+    if (keys['KeyS'])     bits |= 2;    // down
+    if (keys['KeyA'])     bits |= 4;    // left
+    if (keys['KeyD'])     bits |= 8;    // right
+    if (keys['KeyH'])     bits |= 16;   // a
+    if (keys['KeyJ'])     bits |= 32;   // b
+    if (keys['KeyK'])     bits |= 64;   // x
+    if (keys['KeyL'])     bits |= 128;  // y
+    if (keys['KeyE'])     bits |= 256;  // start
+    return bits;
+}
+
+const w = exports.get_screen_w();
+const h = exports.get_screen_h();
+console.log({w, h})
+
+canvas.width = w;
+canvas.height = h;
+
+function resizeCanvas() {
+    const maxW = window.innerWidth * 0.95;
+    const maxH = window.innerHeight * 0.95;
+    const scale = Math.floor(Math.min(maxW / w, maxH / h));
+    canvas.style.width = (w * scale) + 'px';
+    canvas.style.height = (h * scale) + 'px';
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+const imageData = ctx.createImageData(w, h);
+
+const frame_to_canvas = () => {
+  const fbPtr = exports.get_framebuffer_ptr();
+  const fbLen = exports.get_framebuffer_len();
+
+  // View the framebuffer as u32 array
+  const fb32 = new Uint32Array(exports.memory.buffer, fbPtr, fbLen);
+  const pixels = imageData.data; // Uint8ClampedArray [R,G,B,A, R,G,B,A, ...]
+
+  for (let i = 0; i < fbLen; i++) {
+      const c = fb32[i];
+      const j = i * 4;
+      pixels[j]     = (c >>> 16) & 0xFF; // R
+      pixels[j + 1] = (c >>> 8)  & 0xFF; // G
+      pixels[j + 2] =  c         & 0xFF; // B
+      pixels[j + 3] = 255;               // A (always opaque)
+  }
+
+  ctx.putImageData(imageData, 0, 0);
+}
+
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+
+const TARGET_FPS = 60;
+const FRAME_TIME = 1000 / TARGET_FPS;
+let lastFrameTime = performance.now();
+
+while (true) {
+  const now = performance.now();
+  const elapsed = now - lastFrameTime;
+
+  if (elapsed >= FRAME_TIME) {
+    lastFrameTime = now - (elapsed % FRAME_TIME);
+    set_input_state(getInputBits());
+    game_frame();
+    frame_to_canvas();
+  }
+
+  await sleep(1);
+}
+
+// frame_to_canvas()
+</script>
+</html>

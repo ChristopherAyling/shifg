@@ -17,27 +17,22 @@ const menus = @import("menus.zig");
 
 const Inputs = control.Inputs;
 
-const LEVELS = std.StaticStringMap([]const u8).initComptime(.{
-    .{ "one", "/Users/chris/gaming/gam1/assets/levels/tutorial" },
-    .{ "arch", "/Users/chris/gaming/gam1/assets/levels/parade" },
-});
-
-pub fn load_level(self: *api.GameState, name: []const u8) void {
-    const new_level = Level.from_folder(LEVELS.get(name).?, name);
-    new_level.load_things(&self.things);
+pub fn load_level(self: *api.GameState, name: []const u8, platform_api: *const api.PlatformAPI) void {
+    const new_level = platform_api.load_level(name);
+    platform_api.load_level_things(name, &self.things);
     self.level = new_level;
     if (std.mem.eql(u8, name, "arch")) {
         self.menu.push(.{ .dialogue = .{ .index = 0, .sequence = dialogues.PROLOGUE } });
     }
 }
 
-pub fn ensure_level_loaded(game_state: *api.GameState, name: []const u8) void {
+pub fn ensure_level_loaded(game_state: *api.GameState, name: []const u8, platform_api: *const api.PlatformAPI) void {
     if (game_state.level) |current_level| {
         if (!std.mem.eql(u8, current_level.name, name)) {
-            load_level(game_state, name);
+            load_level(game_state, name, platform_api);
         }
     } else {
-        load_level(game_state, name);
+        load_level(game_state, name, platform_api);
     }
 }
 
@@ -88,7 +83,7 @@ const selector_VELOCITY = 1;
 
 // gaming
 
-fn game_step(memory: *api.GameMemory, inputs: *const Inputs, platform_api: *const api.PlatformAPI) callconv(.c) void {
+pub fn game_step(memory: *api.GameMemory, inputs: *const Inputs, platform_api: *const api.PlatformAPI) callconv(.c) void {
     var game_state = memory.state;
     switch (game_state.mode) {
         .MainMenu => game_step_main_menu(game_state, inputs.*, platform_api.*),
@@ -97,7 +92,7 @@ fn game_step(memory: *api.GameMemory, inputs: *const Inputs, platform_api: *cons
 
     if (game_state.mode == .Overworld) {
         // TODO lookup story beat -> level name and load the correct level.
-        ensure_level_loaded(game_state, "arch");
+        ensure_level_loaded(game_state, "arch", platform_api);
         const player = game_state.things.get_player();
         switch (player.interaction_mode) {
             .NORMAL => {
@@ -110,7 +105,7 @@ fn game_step(memory: *api.GameMemory, inputs: *const Inputs, platform_api: *cons
     }
 }
 
-pub fn game_step_overworld(game_state: *api.GameState, inputs: Inputs, platform_api: api.PlatformAPI) void {
+fn game_step_overworld(game_state: *api.GameState, inputs: Inputs, platform_api: api.PlatformAPI) void {
     const player = game_state.things.get_player();
     var selector = game_state.things.get(player.selector_ref);
     platform_api.setMusic(.overworld);
@@ -282,7 +277,7 @@ pub fn game_step_overworld(game_state: *api.GameState, inputs: Inputs, platform_
     }
 }
 
-pub fn game_step_main_menu(game_state: *api.GameState, inputs: Inputs, platform_api: api.PlatformAPI) void {
+fn game_step_main_menu(game_state: *api.GameState, inputs: Inputs, platform_api: api.PlatformAPI) void {
     if (inputs.a.pressed) {
         game_state.mode = .Overworld;
         platform_api.playSound(.click);
@@ -291,7 +286,7 @@ pub fn game_step_main_menu(game_state: *api.GameState, inputs: Inputs, platform_
 
 // rendering
 
-fn render_step(memory: *api.GameMemory, ctx: *api.RenderContext) callconv(.c) void {
+pub fn render_step(memory: *api.GameMemory, ctx: *api.RenderContext) callconv(.c) void {
     const game_state = memory.state;
     var render_state: RenderState = .{ .level = ctx.level.*, .screen = ctx.screen.*, .storage = ctx.storage.* };
     draw.fill(&render_state.screen, 0x0);
@@ -301,22 +296,21 @@ fn render_step(memory: *api.GameMemory, ctx: *api.RenderContext) callconv(.c) vo
     }
 }
 
-pub fn render_step_main_menu(game_state: *const api.GameState, render_state: *RenderState) void {
+fn render_step_main_menu(game_state: *const api.GameState, render_state: *RenderState) void {
     _ = game_state;
     ui.drawSplashText(&render_state.screen, render_state.storage.get(.splash));
 }
 
-pub fn render_step_inventory(game_state: *const api.GameState, render_state: *RenderState) void {
+fn render_step_inventory(game_state: *const api.GameState, render_state: *RenderState) void {
     _ = game_state;
     ui.drawTextBox(&render_state.screen, "", "inventory");
 }
 
-pub fn render_step_overworld(game_state: *api.GameState, render_state: *RenderState) void {
+fn render_step_overworld(game_state: *api.GameState, render_state: *RenderState) void {
     // render world
     const player = game_state.things.get_player();
     const selector = game_state.things.get(player.selector_ref);
     const camera = game_state.things.get(player.camera_ref);
-    draw.fill_checkerboard(&render_state.level, 8, 0xFF0000, 0x0);
     {
         draw.draw_image(&render_state.level, game_state.level.?.bg, 0, 0);
 

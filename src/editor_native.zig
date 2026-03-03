@@ -16,11 +16,12 @@ const con = @import("constants.zig");
 const effects = @import("effects.zig");
 const Level = @import("level.zig").Level;
 const audio = @import("audio.zig");
+const io_native = @import("io_native.zig");
 
 const ThingPool = @import("things.zig").ThingPool;
 
 const Inputs = control.Inputs;
-const updateInputs = control.updateInputs;
+const updateInputs = @import("fenster_update_inputs.zig").updateInputs;
 
 const TILE_CURSOR_VELOCITY = 1;
 
@@ -77,8 +78,6 @@ const EditorState = struct {
     /// new things system
     things: ThingPool = .{},
 
-    audio_system: audio.AudioSystem = undefined,
-
     // adding
     add_selection_index: usize = 0,
 
@@ -90,18 +89,20 @@ const EditorState = struct {
     pub fn initFromSavedLevel(path: []const u8) EditorState {
         const state: EditorState = .{
             .path = path,
-            .level = Level.from_folder(path, "level"),
+            // .level = Level.from_folder(path, "level"),
+            .level = io_native.load_level("arch"),
         };
         return state;
     }
 
     pub fn deinit(self: *EditorState) void {
-        self.audio_system.deinit();
+        _ = self;
     }
 
     fn save(self: *EditorState) void {
         std.log.debug("saving level ...", .{});
-        self.level.save_things(&self.things);
+        // self.level.save_things(&self.things);
+        io_native.save_level_things("arch", &self.things);
         std.log.debug("... level saved", .{});
     }
 
@@ -111,7 +112,8 @@ const EditorState = struct {
     }
 
     fn load(self: *EditorState) void {
-        self.level.load_things(&self.things);
+        // self.level.load_things(&self.things);
+        io_native.load_level_things(self.level.name, &self.things);
     }
 
     pub fn camera_follow_tile_cursor(self: *EditorState) void {
@@ -130,11 +132,11 @@ const EditorState = struct {
             .Navigate => {
                 if (inputs.start.pressed) {
                     self.mode = .Menu;
-                    self.audio_system.playSound(.close);
+                    // self.audio_system.playSound(.close);
                 } else if (inputs.a.pressed) {
                     self.mode = .Add;
                     self.add_selection_index = 0;
-                    self.audio_system.playSound(.close);
+                    // self.audio_system.playSound(.close);
                 } else if (!inputs.is_any_direction_active() and inputs.b.pressed) {
                     // delete all things in range
                     var it = self.things.iter();
@@ -173,9 +175,9 @@ const EditorState = struct {
                 self.submenu_len = 3;
                 if (inputs.b.pressed) {
                     self.mode = .Navigate;
-                    self.audio_system.playSound(.close);
+                    // self.audio_system.playSound(.close);
                 } else if (inputs.a.pressed) {
-                    self.audio_system.playSound(.click);
+                    // self.audio_system.playSound(.click);
                     switch (self.submenu_selection_index) {
                         0 => {
                             _ = self.things.add_npc(NPC_SPRITE_KEYS[self.add_selection_index], self.tile_cursor_x, self.tile_cursor_y);
@@ -202,10 +204,10 @@ const EditorState = struct {
             .Menu => {
                 if (inputs.start.pressed or inputs.b.pressed) {
                     self.mode = .Navigate;
-                    self.audio_system.playSound(.close);
+                    // self.audio_system.playSound(.close);
                 } else if (inputs.a.pressed) {
                     // TODO
-                    self.audio_system.playSound(.click);
+                    // self.audio_system.playSound(.click);
                     switch (self.menu_selection_index) {
                         0 => {
                             // save
@@ -243,24 +245,24 @@ const EditorState = struct {
                 if (inputs.start.pressed or inputs.b.pressed) {
                     self.mode = .Menu;
                     self.menu_selection_index = 3;
-                    self.audio_system.playSound(.close);
+                    // self.audio_system.playSound(.close);
                     // set music back to chosen
-                    self.audio_system.setMusic(self.level.music);
+                    // self.audio_system.setMusic(self.level.music);
                 } else if (inputs.a.pressed) {
-                    self.level.music = @enumFromInt(self.submenu_selection_index);
+                    // self.level.music = @enumFromInt(self.submenu_selection_index);
                     self.mode = .Navigate;
                 } else {
                     if (inputs.up.pressed) self.submenu_selection_index -|= 1;
                     if (inputs.down.pressed) self.submenu_selection_index = @min(MENU_MUSIC_LABELS.len - 1, self.submenu_selection_index + 1);
                 }
                 // TODO start playing the song that is being hovered
-                self.audio_system.setMusic(@enumFromInt(self.submenu_selection_index));
+                // self.audio_system.setMusic(@enumFromInt(self.submenu_selection_index));
             },
             .MenuEffects => {
                 if (inputs.start.pressed or inputs.b.pressed) {
                     self.mode = .Menu;
                     self.menu_selection_index = 4;
-                    self.audio_system.playSound(.close);
+                    // self.audio_system.playSound(.close);
                 } else if (inputs.a.pressed) {
                     // TODO set level.effectkey
                     self.mode = .Navigate;
@@ -364,16 +366,16 @@ pub fn main() !void {
     const screen_upscaled: ScreenBuffer = try ScreenBuffer.init(allocator, con.UPSCALED_W, con.UPSCALED_H);
 
     var window = try Window.init(allocator, con.UPSCALED_W, con.UPSCALED_H, "shif - editor");
-    defer window.deinit();
+    defer window.deinit(allocator);
     window.before_loop();
 
     var storage = sprites.SpriteStorage.init();
-    storage.load();
+    io_native.load_sprites(&storage);
 
     // var editor_state = EditorState.initFromSavedLevel("assets/levels/parade");
     var editor_state: *EditorState = try allocator.create(EditorState);
     editor_state.* = EditorState.initFromSavedLevel("/Users/chris/gaming/gam1/assets/levels/parade");
-    editor_state.audio_system.init();
+    // editor_state.audio_system.init();
     editor_state.load();
     defer editor_state.deinit();
     defer allocator.destroy(editor_state);

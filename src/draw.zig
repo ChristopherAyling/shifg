@@ -86,23 +86,30 @@ pub fn draw_image(screen: *ScreenBuffer, img: image.Image, x0: i32, y0: i32) voi
     const end_x = @min(x0 + img.w, screen.w);
     const end_y = @min(y0 + img.h, screen.h);
 
+    if (start_x >= end_x or start_y >= end_y) return;
+
+    const img_start_x: usize = @intCast(start_x - x0);
+    const row_width: usize = @intCast(end_x - start_x);
+    const img_w: usize = @intCast(img.w);
+    const screen_w: usize = @intCast(screen.w);
+
     var y = start_y;
     while (y < end_y) : (y += 1) {
-        var x = start_x;
-        while (x < end_x) : (x += 1) {
-            const img_x: usize = @intCast(x - x0);
-            const img_y: usize = @intCast(y - y0);
-            const idx = img_y * @as(usize, @intCast(img.w)) + img_x;
-            const pixel = img.data[idx];
+        const img_y: usize = @intCast(y - y0);
+        const img_row_start = img_y * img_w + img_start_x;
+        const screen_row_start: usize = @intCast(y * screen.w + start_x);
+
+        const src_row = img.data[img_row_start..][0..row_width];
+        const dst_row = screen.data[screen_row_start..][0..row_width];
+
+        for (0..row_width) |i| {
+            const pixel = src_row[i];
             if (pixel != 0x0) {
-                screen.setPixel(x, y, pixel);
+                dst_row[i] = pixel;
             }
-            // const fg = img.data[idx];
-            // const bg = screen.getPixel(x, y);
-            // const blended = @import("screen.zig").alphaBlend(fg, bg);
-            // screen.setPixel(x, y, blended);
         }
     }
+    _ = screen_w;
 }
 
 pub fn draw_rec(screen: *ScreenBuffer, x0: i32, y0: i32, x1: i32, y1: i32, color: u32, fill_color: ?u32) void {

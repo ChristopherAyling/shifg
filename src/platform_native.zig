@@ -7,6 +7,8 @@ const Window = @import("window.zig").Window;
 const sprites = @import("sprites.zig");
 const Inputs = @import("control.zig").Inputs;
 const audio = @import("audio.zig");
+const io_native = @import("io_native.zig");
+const updateInputs = @import("fenster_update_inputs.zig").updateInputs;
 
 const GameLib = struct {
     lib: std.DynLib,
@@ -63,49 +65,6 @@ const GameLib = struct {
     }
 };
 
-// inputs
-pub fn updateInputs(inputs: *Inputs, window: Window) void {
-    const W_KEY = 87;
-    const S_KEY = 83;
-    const A_KEY = 65;
-    const D_KEY = 68;
-    const E_KEY = 69;
-
-    const H_KEY = 72;
-    const J_KEY = 74;
-    const K_KEY = 75;
-    const L_KEY = 76;
-
-    // controls
-    const UP = W_KEY;
-    const DOWN = S_KEY;
-    const LEFT = A_KEY;
-    const RIGHT = D_KEY;
-    const A = H_KEY;
-    const B = J_KEY;
-    const X = K_KEY;
-    const Y = L_KEY;
-    const START = E_KEY;
-
-    // handle directions
-    inputs.directions = .{};
-    if (window.key(UP)) inputs.directions.insert(.up);
-    if (window.key(DOWN)) inputs.directions.insert(.down);
-    if (window.key(LEFT)) inputs.directions.insert(.left);
-    if (window.key(RIGHT)) inputs.directions.insert(.right);
-
-    // handle button presses
-    inputs.a.update(window.key(A));
-    inputs.b.update(window.key(B));
-    inputs.x.update(window.key(X));
-    inputs.y.update(window.key(Y));
-    inputs.start.update(window.key(START));
-    inputs.up.update(window.key(UP));
-    inputs.down.update(window.key(DOWN));
-    inputs.left.update(window.key(LEFT));
-    inputs.right.update(window.key(RIGHT));
-}
-
 // visual
 fn blit(screen: ScreenBuffer, window: *Window) void {
     assert(screen.w == window.w);
@@ -117,7 +76,7 @@ fn blit(screen: ScreenBuffer, window: *Window) void {
 
 // audio
 
-var audio_system: audio.AudioSystem = .{};
+var audio_system: io_native.AudioSystem = .{};
 const platform_fns = struct {
     fn playSound(track: audio.SfxTrack) void {
         audio_system.playSound(track);
@@ -149,7 +108,7 @@ pub fn main() !void {
     defer window.deinit(allocator);
 
     var storage = sprites.SpriteStorage.init();
-    storage.load();
+    io_native.load_sprites(&storage);
 
     window.before_loop();
 
@@ -159,6 +118,8 @@ pub fn main() !void {
         .playSound = platform_fns.playSound,
         .setMusic = platform_fns.setMusic,
         .stopMusic = platform_fns.stopMusic,
+        .load_level = io_native.load_level,
+        .load_level_things = io_native.load_level_things,
     };
     var render_context: api.RenderContext = .{
         .screen = &screen,
@@ -177,16 +138,29 @@ pub fn main() !void {
     };
 
     var inputs = Inputs{};
+    const TARGET_FPS = 60;
+    const FRAME_TIME_NS: i64 = @divFloor(std.time.ns_per_s, TARGET_FPS);
+    var last_frame_time = std.time.nanoTimestamp();
+
     while (window.loop()) {
-        if (window.key(82)) { // R key
-            game_lib.reload();
+        const now = std.time.nanoTimestamp();
+        const elapsed = now - last_frame_time;
+
+        if (elapsed >= FRAME_TIME_NS) {
+            last_frame_time = now - @mod(elapsed, FRAME_TIME_NS);
+
+            if (window.key(82)) { // R key
+                game_lib.reload();
+            }
+            updateInputs(&inputs, window);
+
+            game_lib.game_step(&game_memory, &inputs, &platform);
+            game_lib.render_step(&game_memory, &render_context);
+
+            screen.upscale(&screen_upscaled, con.SCALE);
+            blit(screen_upscaled, &window);
+        } else {
+            std.Thread.sleep(1_000_000); // sleep 1ms to avoid busy-waiting
         }
-        updateInputs(&inputs, window);
-
-        game_lib.game_step(&game_memory, &inputs, &platform);
-        game_lib.render_step(&game_memory, &render_context);
-
-        screen.upscale(&screen_upscaled, con.SCALE);
-        blit(screen_upscaled, &window);
     }
 }

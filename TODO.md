@@ -8,3 +8,6 @@
 - [ ] level hot reloading
 - [ ] sprite hot reloading
 - [ ] static release binary
+
+- [x] increase wasm framerate
+- [x] vendor wasi shim js
