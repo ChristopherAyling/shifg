@@ -138,16 +138,29 @@ pub fn main() !void {
     };
 
     var inputs = Inputs{};
+    const TARGET_FPS = 60;
+    const FRAME_TIME_NS: i64 = @divFloor(std.time.ns_per_s, TARGET_FPS);
+    var last_frame_time = std.time.nanoTimestamp();
+
     while (window.loop()) {
-        if (window.key(82)) { // R key
-            game_lib.reload();
+        const now = std.time.nanoTimestamp();
+        const elapsed = now - last_frame_time;
+
+        if (elapsed >= FRAME_TIME_NS) {
+            last_frame_time = now - @mod(elapsed, FRAME_TIME_NS);
+
+            if (window.key(82)) { // R key
+                game_lib.reload();
+            }
+            updateInputs(&inputs, window);
+
+            game_lib.game_step(&game_memory, &inputs, &platform);
+            game_lib.render_step(&game_memory, &render_context);
+
+            screen.upscale(&screen_upscaled, con.SCALE);
+            blit(screen_upscaled, &window);
+        } else {
+            std.Thread.sleep(1_000_000); // sleep 1ms to avoid busy-waiting
         }
-        updateInputs(&inputs, window);
-
-        game_lib.game_step(&game_memory, &inputs, &platform);
-        game_lib.render_step(&game_memory, &render_context);
-
-        screen.upscale(&screen_upscaled, con.SCALE);
-        blit(screen_upscaled, &window);
     }
 }
