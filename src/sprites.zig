@@ -40,37 +40,4 @@ pub const SpriteStorage = struct {
     pub fn get(self: *SpriteStorage, key: SpriteKey) Image {
         return self.images[@intFromEnum(key)];
     }
-
-    pub fn load(self: *SpriteStorage) void {
-        // misc
-        self.images[@intFromEnum(SpriteKey.missing)] = Image.from_file("assets/missing.png");
-        self.images[@intFromEnum(SpriteKey.camera)] = Image.from_file("assets/camera.png");
-        self.images[@intFromEnum(SpriteKey.splash)] = Image.from_file("assets/splash.png");
-
-        // players
-        self.images[@intFromEnum(SpriteKey.genly)] = Image.from_file("assets/genly.png");
-
-        // npcs
-        self.images[@intFromEnum(SpriteKey.estraven)] = Image.from_file("assets/estraven.png");
-        self.images[@intFromEnum(SpriteKey.argaven)] = Image.from_file("assets/argaven.png");
-
-        // editor
-        self.images[@intFromEnum(SpriteKey.cursor)] = Image.from_file("assets/cursor.png");
-        self.images[@intFromEnum(SpriteKey.selector)] = Image.from_file("assets/selector.png");
-        self.images[@intFromEnum(SpriteKey.selector_active)] = Image.from_file("assets/selector-active.png");
-
-        // items
-        self.images[@intFromEnum(SpriteKey.redflag)] = Image.from_file("assets/redflag.png");
-        self.images[@intFromEnum(SpriteKey.potion)] = Image.from_file("assets/potion.png");
-
-        // action menu
-        self.images[@intFromEnum(SpriteKey.action_menu_melee)] = Image.from_file("assets/sword.png");
-        self.images[@intFromEnum(SpriteKey.action_menu_ranged)] = Image.from_file("assets/wand.png");
-        self.images[@intFromEnum(SpriteKey.action_menu_magic)] = Image.from_file("assets/missing.png");
-        self.images[@intFromEnum(SpriteKey.action_menu_throw)] = Image.from_file("assets/missing.png");
-        self.images[@intFromEnum(SpriteKey.action_menu_hide)] = Image.from_file("assets/missing.png");
-        self.images[@intFromEnum(SpriteKey.action_menu_dash)] = Image.from_file("assets/missing.png");
-        self.images[@intFromEnum(SpriteKey.action_menu_jump)] = Image.from_file("assets/missing.png");
-        self.images[@intFromEnum(SpriteKey.action_menu_shove)] = Image.from_file("assets/missing.png");
-    }
 };

@@ -4,6 +4,7 @@ const Image = @import("image.zig").Image;
 const con = @import("constants.zig");
 const dialogue = @import("dialogue.zig");
 const ThingPool = @import("things.zig").ThingPool;
+const io_native = @import("io_native.zig");
 
 fn fileExistsAbsolute(path: []const u8) bool {
     std.fs.accessAbsolute(path, .{}) catch return false;
@@ -15,24 +16,6 @@ pub const Level = struct {
     path: []const u8,
     bg: Image,
     fg: Image,
-
-    pub fn from_folder(path: []const u8, name: []const u8) Level {
-        var buf: [256]u8 = undefined;
-
-        const bg_path = std.fmt.bufPrintZ(&buf, "{s}/bg.png", .{path}) catch unreachable;
-        const bg = Image.from_file(bg_path);
-
-        const fg_path = std.fmt.bufPrintZ(&buf, "{s}/fg.png", .{path}) catch unreachable;
-        const fg = Image.from_file(fg_path);
-
-        return .{
-            .name = name,
-            .path = path,
-            .bg = bg,
-            .fg = fg,
-            // .music = undefined,
-        };
-    }
 
     pub fn load_things(self: Level, things: *ThingPool) void {
         var buf: [256]u8 = undefined;

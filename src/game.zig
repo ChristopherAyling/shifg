@@ -17,13 +17,9 @@ const menus = @import("menus.zig");
 
 const Inputs = control.Inputs;
 
-const LEVELS = std.StaticStringMap([]const u8).initComptime(.{
-    .{ "one", "/Users/chris/gaming/gam1/assets/levels/tutorial" },
-    .{ "arch", "/Users/chris/gaming/gam1/assets/levels/parade" },
-});
-
-pub fn load_level(self: *api.GameState, name: []const u8) void {
-    const new_level = Level.from_folder(LEVELS.get(name).?, name);
+pub fn load_level(self: *api.GameState, name: []const u8, platform_api: *const api.PlatformAPI) void {
+    // const new_level = Level.from_folder(LEVELS.get(name).?, name);
+    const new_level = platform_api.load_level(name);
     new_level.load_things(&self.things);
     self.level = new_level;
     if (std.mem.eql(u8, name, "arch")) {
@@ -31,13 +27,13 @@ pub fn load_level(self: *api.GameState, name: []const u8) void {
     }
 }
 
-pub fn ensure_level_loaded(game_state: *api.GameState, name: []const u8) void {
+pub fn ensure_level_loaded(game_state: *api.GameState, name: []const u8, platform_api: *const api.PlatformAPI) void {
     if (game_state.level) |current_level| {
         if (!std.mem.eql(u8, current_level.name, name)) {
-            load_level(game_state, name);
+            load_level(game_state, name, platform_api);
         }
     } else {
-        load_level(game_state, name);
+        load_level(game_state, name, platform_api);
     }
 }
 
@@ -97,7 +93,7 @@ pub fn game_step(memory: *api.GameMemory, inputs: *const Inputs, platform_api: *
 
     if (game_state.mode == .Overworld) {
         // TODO lookup story beat -> level name and load the correct level.
-        ensure_level_loaded(game_state, "arch");
+        ensure_level_loaded(game_state, "arch", platform_api);
         const player = game_state.things.get_player();
         switch (player.interaction_mode) {
             .NORMAL => {

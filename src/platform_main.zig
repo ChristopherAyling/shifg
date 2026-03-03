@@ -7,6 +7,7 @@ const Window = @import("window.zig").Window;
 const sprites = @import("sprites.zig");
 const Inputs = @import("control.zig").Inputs;
 const audio = @import("audio.zig");
+const io_native = @import("io_native.zig");
 
 const GameLib = struct {
     lib: std.DynLib,
@@ -149,7 +150,7 @@ pub fn main() !void {
     defer window.deinit(allocator);
 
     var storage = sprites.SpriteStorage.init();
-    storage.load();
+    io_native.load_sprites(&storage);
 
     window.before_loop();
 
@@ -159,6 +160,7 @@ pub fn main() !void {
         .playSound = platform_fns.playSound,
         .setMusic = platform_fns.setMusic,
         .stopMusic = platform_fns.stopMusic,
+        .load_level = io_native.load_level,
     };
     var render_context: api.RenderContext = .{
         .screen = &screen,
