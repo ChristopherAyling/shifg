@@ -43,7 +43,7 @@ const fds = [
 ];
 const wasi = new WASI([], [], fds);
 
-const wasm = await WebAssembly.compileStreaming(fetch("./zig-out/bin/game.wasm"));
+const wasm = await WebAssembly.compileStreaming(fetch("./game.wasm"));
 const instance = await WebAssembly.instantiate(wasm, {
   wasi_snapshot_preview1: wasi.wasiImport,
 });

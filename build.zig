@@ -109,7 +109,7 @@ pub fn build(b: *std.Build) void {
         run_step.dependOn(&run_cmd.step);
     }
 
-    // WASM build
+    // WASM build - outputs to zig-out/web/ for static hosting
     {
         const wasm_target = b.resolveTargetQuery(.{
             .cpu_arch = .wasm32,
@@ -149,6 +149,26 @@ pub fn build(b: *std.Build) void {
             "get_screen_h",
             "set_input_state",
         };
-        b.installArtifact(wasm_game_lib);
+
+        // Install wasm to web/ subfolder
+        const install_wasm = b.addInstallArtifact(wasm_game_lib, .{
+            .dest_dir = .{ .override = .{ .custom = "web" } },
+        });
+
+        // Copy index.html to web/
+        const install_html = b.addInstallFile(b.path("src/web/index.html"), "web/index.html");
+
+        // Copy vendor/ to web/vendor/
+        const install_vendor = b.addInstallDirectory(.{
+            .source_dir = b.path("src/web/vendor/"),
+            .install_dir = .prefix,
+            .install_subdir = "web/vendor",
+        });
+
+        // Create a "web" step that builds everything for static hosting
+        const web_step = b.step("web", "Build web version for static hosting");
+        web_step.dependOn(&install_wasm.step);
+        web_step.dependOn(&install_html.step);
+        web_step.dependOn(&install_vendor.step);
     }
 }
