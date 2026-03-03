@@ -161,6 +161,7 @@ pub fn main() !void {
         .setMusic = platform_fns.setMusic,
         .stopMusic = platform_fns.stopMusic,
         .load_level = io_native.load_level,
+        .load_level_things = io_native.load_level_things,
     };
     var render_context: api.RenderContext = .{
         .screen = &screen,

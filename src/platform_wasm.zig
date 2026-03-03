@@ -43,6 +43,7 @@ export fn game_init() void {
         .setMusic = undefined,
         .stopMusic = undefined,
         .load_level = io_embedded.load_level,
+        .load_level_things = io_embedded.load_level,
     };
 
     wasm_state.render_context = .{

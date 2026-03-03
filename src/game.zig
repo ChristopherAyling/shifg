@@ -18,9 +18,8 @@ const menus = @import("menus.zig");
 const Inputs = control.Inputs;
 
 pub fn load_level(self: *api.GameState, name: []const u8, platform_api: *const api.PlatformAPI) void {
-    // const new_level = Level.from_folder(LEVELS.get(name).?, name);
     const new_level = platform_api.load_level(name);
-    new_level.load_things(&self.things);
+    platform_api.load_level_things(name, &self.things);
     self.level = new_level;
     if (std.mem.eql(u8, name, "arch")) {
         self.menu.push(.{ .dialogue = .{ .index = 0, .sequence = dialogues.PROLOGUE } });

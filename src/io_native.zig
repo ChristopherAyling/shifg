@@ -4,6 +4,7 @@ const Level = @import("level.zig").Level;
 const sprites = @import("sprites.zig");
 const SpriteKey = sprites.SpriteKey;
 const SpriteStorage = sprites.SpriteStorage;
+const ThingPool = @import("things.zig").ThingPool;
 
 // images
 
@@ -90,7 +91,6 @@ fn level_from_folder(path: []const u8, name: []const u8) Level {
 
     return .{
         .name = name,
-        .path = path,
         .bg = bg,
         .fg = fg,
         // .music = undefined,
@@ -104,6 +104,18 @@ const LEVELS = std.StaticStringMap([]const u8).initComptime(.{
 
 pub fn load_level(name: []const u8) Level {
     return level_from_folder(LEVELS.get(name).?, name);
+}
+
+pub fn load_level_things(name: []const u8, things: *ThingPool) void {
+    var buf: [256]u8 = undefined;
+    const things_path = std.fmt.bufPrintZ(&buf, "{s}/things.bin", .{LEVELS.get(name).?}) catch unreachable;
+    things.from_file(things_path);
+}
+
+pub fn save_level_things(name: []const u8, things: *ThingPool) void {
+    var buf: [256]u8 = undefined;
+    const things_path = std.fmt.bufPrintZ(&buf, "{s}/things.bin", .{LEVELS.get(name).?}) catch unreachable;
+    things.to_file(things_path);
 }
 
 // audio
