@@ -103,11 +103,7 @@ pub fn load_level(name: []const u8) Level {
 pub fn load_level_things(name: []const u8, things: *ThingPool) void {
     if (std.mem.eql(u8, name, "arch")) {
         const bytes = std.mem.asBytes(things);
-        // things.bin was serialized on 64-bit (usize=8), WASM is 32-bit (usize=4)
-        // Only load if sizes match, otherwise leave empty
-        if (bytes.len == assets.level_parade_things.len) {
-            @memcpy(bytes, assets.level_parade_things);
-        }
+        @memcpy(bytes, assets.level_parade_things);
     }
     // tutorial has no things.bin, so we leave the pool empty
 }

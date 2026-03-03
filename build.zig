@@ -57,16 +57,16 @@ pub fn build(b: *std.Build) void {
     configurePlatformExecutable(b, target, platform);
     b.installArtifact(platform);
 
-    // const editor: *std.Build.Step.Compile = b.addExecutable(.{
-    //     .name = "editor",
-    //     .root_module = b.createModule(.{
-    //         .root_source_file = b.path("src/editor_main.zig"),
-    //         .optimize = optimize,
-    //         .target = target,
-    //     }),
-    // });
-    // configureExecutable(b, target, editor);
-    // b.installArtifact(editor);
+    const editor: *std.Build.Step.Compile = b.addExecutable(.{
+        .name = "editor",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("src/editor_main.zig"),
+            .optimize = optimize,
+            .target = target,
+        }),
+    });
+    configurePlatformExecutable(b, target, editor);
+    b.installArtifact(editor);
 
     {
         const run_cmd = b.addRunArtifact(platform);
@@ -78,15 +78,15 @@ pub fn build(b: *std.Build) void {
         run_step.dependOn(&run_cmd.step);
     }
 
-    // {
-    //     const run_cmd = b.addRunArtifact(editor);
-    //     run_cmd.step.dependOn(b.getInstallStep());
-    //     if (b.args) |args| {
-    //         run_cmd.addArgs(args);
-    //     }
-    //     const run_step = b.step("edit", "Run editor");
-    //     run_step.dependOn(&run_cmd.step);
-    // }
+    {
+        const run_cmd = b.addRunArtifact(editor);
+        run_cmd.step.dependOn(b.getInstallStep());
+        if (b.args) |args| {
+            run_cmd.addArgs(args);
+        }
+        const run_step = b.step("edit", "Run editor");
+        run_step.dependOn(&run_cmd.step);
+    }
 
     // thingdump
     const thingdump: *std.Build.Step.Compile = b.addExecutable(.{

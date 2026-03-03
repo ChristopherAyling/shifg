@@ -67,8 +67,8 @@ pub const Thing = struct {
     selectable: bool = false,
 
     // moving entity specific
-    movement: usize = 0,
-    max_movement: usize = 50,
+    movement: u32 = 0,
+    max_movement: u32 = 50,
 
     // player specific
     camera_ref: ThingRef = ThingRef.nil(), // associated camera
@@ -97,10 +97,10 @@ const MAX_THINGS = 1000;
 const NIL_SLOT = 0;
 
 pub const ThingRef = struct {
-    slot: usize,
-    gen: usize,
+    slot: u32,
+    gen: u32,
 
-    pub fn init(slot: usize, gen: usize) ThingRef {
+    pub fn init(slot: u32, gen: u32) ThingRef {
         return .{ .slot = slot, .gen = gen };
     }
 
@@ -115,7 +115,7 @@ pub const ThingRef = struct {
 
 pub const ThingIterator = struct {
     pool: *ThingPool,
-    current_slot: usize = 1,
+    current_slot: u32 = 1,
 
     pub fn next(self: *ThingIterator) ?*Thing {
         while (self.current_slot < self.pool.len) {
@@ -162,7 +162,7 @@ pub const ThingIterator = struct {
 
 pub const ThingRefIterator = struct {
     pool: *ThingPool,
-    current_slot: usize = 1,
+    current_slot: u32 = 1,
 
     pub fn next(self: *ThingRefIterator) ?ThingRef {
         while (self.current_slot < self.pool.len) {
@@ -200,9 +200,9 @@ pub const ThingRefIterator = struct {
 
 pub const ThingPool = struct {
     things: [MAX_THINGS]Thing = .{Thing{}} ** MAX_THINGS,
-    gens: [MAX_THINGS]usize = .{0} ** MAX_THINGS,
-    nextFreeSlot: usize = 1, // TODO use a freelist
-    len: usize = MAX_THINGS,
+    gens: [MAX_THINGS]u32 = .{0} ** MAX_THINGS,
+    nextFreeSlot: u32 = 1, // TODO use a freelist
+    len: u32 = MAX_THINGS,
 
     pub fn get_player(self: *ThingPool) *Thing {
         var it = self.iter();

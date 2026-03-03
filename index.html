@@ -73,7 +73,6 @@ function getInputBits() {
     if (keys['KeyK'])     bits |= 64;   // x
     if (keys['KeyL'])     bits |= 128;  // y
     if (keys['KeyE'])     bits |= 256;  // start
-    console.log(bits)
     return bits;
 }
 
@@ -125,7 +124,7 @@ while (true) {
   set_input_state(getInputBits());
   game_frame();
   frame_to_canvas();
-  await sleep(10);
+  await sleep(1);
 }
 
 // frame_to_canvas()
