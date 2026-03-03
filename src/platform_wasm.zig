@@ -40,7 +40,6 @@ fn noop_stopMusic() void {}
 
 // JS calls this with a bitmask of currently-held keys each frame
 export fn set_input_state(bits: u32) void {
-    // Bit layout matches platform_main.zig key mappings:
     // bit 0: up (W)
     // bit 1: down (S)
     // bit 2: left (A)

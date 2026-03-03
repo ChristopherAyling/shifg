@@ -47,9 +47,9 @@ pub fn build(b: *std.Build) void {
 
     // game
     const platform: *std.Build.Step.Compile = b.addExecutable(.{
-        .name = "platform",
+        .name = "platform_native",
         .root_module = b.createModule(.{
-            .root_source_file = b.path("src/platform_main.zig"),
+            .root_source_file = b.path("src/platform_native.zig"),
             .optimize = optimize,
             .target = target,
         }),
@@ -58,9 +58,9 @@ pub fn build(b: *std.Build) void {
     b.installArtifact(platform);
 
     const editor: *std.Build.Step.Compile = b.addExecutable(.{
-        .name = "editor",
+        .name = "editor_native",
         .root_module = b.createModule(.{
-            .root_source_file = b.path("src/editor_main.zig"),
+            .root_source_file = b.path("src/editor_native.zig"),
             .optimize = optimize,
             .target = target,
         }),
