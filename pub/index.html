@@ -21,11 +21,26 @@
             width: auto;
             height: auto;
         }
+        #controls {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            font-family: monospace;
+            font-size: 12px;
+            color: #888;
+            text-align: right;
+            line-height: 1.4;
+        }
+        #controls span { color: #fff; }
     </style>
 </head>
 <body>
-    <!-- <h1>game</h1> -->
     <canvas id="game-canvas"></canvas>
+    <div id="controls">
+        <span>W A S D</span> move<br>
+        <span>H J K L</span> a b x y<br>
+        <span>E</span> start
+    </div>
 </body>
 
 <script type="module">
