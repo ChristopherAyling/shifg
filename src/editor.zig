@@ -65,11 +65,12 @@ pub fn editor_step(memory: *api.GameMemory, inputs: *const Inputs, platform_api:
     if (inputs.a.pressed) {
         var npcs = menus.NamedItemList.init("npc");
         npcs.add("aaaa");
+        npcs.item_list.items[0].icon = .argaven;
         npcs.add("bbb");
         npcs.add("ccccccccc");
         npcs.add("ccccccccc");
         npcs.add("ccccccccc");
-        npcs.add("ccccccccc");
+        npcs.add("cc");
 
         var items = menus.NamedItemList.init("items");
         items.add("potato");

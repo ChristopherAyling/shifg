@@ -152,7 +152,7 @@ pub const ItemList = struct {
 
     pub fn longest_label(self: ItemList) usize {
         var longest: usize = 0;
-        for (0..self.count - 1) |i| {
+        for (0..self.count) |i| {
             if (self.items[i].label) |label| longest = @max(label.len, longest);
         }
         return longest;

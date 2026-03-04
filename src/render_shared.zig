@@ -30,7 +30,7 @@ pub fn render_things(level: *ScreenBuffer, storage: *sprites.SpriteStorage, thin
     // }
 }
 
-pub fn draw_named_item_list_collection(screen: *ScreenBuffer, x0: i32, y0: i32, m: menus.NamedItemListCollection, category: usize, index: usize) void {
+pub fn draw_named_item_list_collection(screen: *ScreenBuffer, storage: *sprites.SpriteStorage, x0: i32, y0: i32, m: menus.NamedItemListCollection, category: usize, index: usize) void {
     _ = index;
     const named_item_list = m.get(category);
     const title = named_item_list.name.get();
@@ -41,14 +41,16 @@ pub fn draw_named_item_list_collection(screen: *ScreenBuffer, x0: i32, y0: i32, 
         return;
     }
 
-    const padding: i32 = 4;
+    const padding: i32 = 3;
     const longest_label: i32 = @intCast(item_list.longest_label());
-    const title_width: i32 = padding + @as(i32, @intCast(title.len * con.FONT_W + 1)) + padding;
-    const title_height: i32 = con.FONT_H + 1;
-    const content_width: i32 = padding + con.PLAYER_W + @as(i32, @intCast(longest_label * con.FONT_W + 1)) + padding;
-    const content_height: i32 = @as(i32, @intCast(item_list.count)) * @max(con.FONT_H, con.PLAYER_H) + 1;
+    const title_height = padding + con.FONT_H + 2;
+    const title_width: i32 = padding + @as(i32, @intCast(title.len * (con.FONT_W + 1))) + padding;
+    // const title_height: i32 = con.FONT_H + 1;
+    const content_width: i32 = padding + con.PLAYER_W + @as(i32, @intCast(longest_label * (con.FONT_W + 1))) + padding;
+    const row_height: i32 = @max(con.FONT_H, con.PLAYER_H) + 1;
+    const content_height: i32 = @as(i32, @intCast(item_list.count)) * row_height;
     const rec_width: i32 = @max(title_width, content_width);
-    const rec_height: i32 = padding + title_height + content_height + padding;
+    const rec_height: i32 = title_height + content_height + padding;
 
     draw.draw_rec(
         screen,
@@ -59,6 +61,35 @@ pub fn draw_named_item_list_collection(screen: *ScreenBuffer, x0: i32, y0: i32, 
         0x00F0F0,
         0x787276,
     );
+
+    // title
+    draw.draw_text(screen, title, x0 + padding, y0 + padding, 0xFFFFFF);
+
+    // contents
+    for (0..item_list.count) |i| {
+        const ii: i32 = @intCast(i);
+        const item = item_list.items[i];
+        // if (item.icon) |_| {
+        // draw.draw_image(screen, , x0: i32, y0: i32)
+        draw.draw_image(
+            screen,
+            storage.get(.missing),
+            x0 + padding,
+            y0 + title_height + row_height * ii,
+        );
+        // }
+        if (item.label) |label| {
+            draw.draw_text(
+                screen,
+                label.get(),
+                x0 + padding + con.PLAYER_W + 2,
+                y0 + 1 + title_height + row_height * ii,
+                0xFFF0F0,
+            );
+        }
+    }
+
+    // selection
 }
 
 pub fn render_menu(screen: *ScreenBuffer, storage: *sprites.SpriteStorage, things: *ThingPool, menu_state: *menus.MenuState) void {
@@ -105,7 +136,7 @@ pub fn render_menu(screen: *ScreenBuffer, storage: *sprites.SpriteStorage, thing
                 // _ = editor_place_menu;
                 // ui.drawTextBox(screen, "editor", "choose something to place....");
                 // eui.draw_text_menu(screen, 0, 0, editor_place_menu.index, editor_place_menu.)
-                draw_named_item_list_collection(screen, 5, 5, editor_place_menu.categories, editor_place_menu.category, editor_place_menu.index);
+                draw_named_item_list_collection(screen, storage, 5, 5, editor_place_menu.categories, editor_place_menu.category, editor_place_menu.index);
             },
         }
     }
