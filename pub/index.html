@@ -137,9 +137,88 @@ const fds = [
 ];
 const wasi = new WASI([], [], fds);
 
+// Audio system
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+const sfxBuffers = {};  // sfx_id -> AudioBuffer
+const musicBuffers = {}; // track_id -> AudioBuffer
+let currentMusic = null;
+let currentMusicId = null;
+
+// SfxTrack enum: 0=click, 1=close
+const sfxPaths = ['audio/sfx/click.wav', 'audio/sfx/close.wav'];
+// MusicTrack enum: 0=splash, 1=overworld
+const musicPaths = ['audio/music/missing.wav', 'audio/music/overworld.wav'];
+
+async function loadAudio(path) {
+    try {
+        const response = await fetch(path);
+        const arrayBuffer = await response.arrayBuffer();
+        return await audioCtx.decodeAudioData(arrayBuffer);
+    } catch (e) {
+        console.warn('Failed to load audio:', path, e);
+        return null;
+    }
+}
+
+// Preload all audio
+for (let i = 0; i < sfxPaths.length; i++) {
+    loadAudio(sfxPaths[i]).then(buf => { sfxBuffers[i] = buf; });
+}
+for (let i = 0; i < musicPaths.length; i++) {
+    loadAudio(musicPaths[i]).then(buf => { musicBuffers[i] = buf; });
+}
+
+function js_playSound(sfx_id) {
+    const buffer = sfxBuffers[sfx_id];
+    if (!buffer) return;
+    const source = audioCtx.createBufferSource();
+    source.buffer = buffer;
+    source.connect(audioCtx.destination);
+    source.start();
+}
+
+function js_setMusic(track_id) {
+    if (track_id === currentMusicId) return;
+    js_stopMusic();
+    currentMusicId = track_id;
+    const buffer = musicBuffers[track_id];
+    if (!buffer) return;
+    currentMusic = audioCtx.createBufferSource();
+    currentMusic.buffer = buffer;
+    currentMusic.loop = true;
+    const gainNode = audioCtx.createGain();
+    gainNode.gain.value = 0.4;
+    currentMusic.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+    currentMusic.start();
+}
+
+function js_stopMusic() {
+    if (currentMusic) {
+        currentMusic.stop();
+        currentMusic = null;
+        currentMusicId = null;
+    }
+}
+
+// Resume audio context on user interaction (required by browsers)
+function resumeAudio() {
+    if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+}
+document.addEventListener('click', resumeAudio);
+document.addEventListener('keydown', resumeAudio);
+document.addEventListener('touchstart', resumeAudio);
+
 const wasm = await WebAssembly.compileStreaming(fetch("./game.wasm"));
 const instance = await WebAssembly.instantiate(wasm, {
   wasi_snapshot_preview1: wasi.wasiImport,
+  env: {
+    js_playSound,
+    js_setMusic,
+    js_stopMusic,
+  },
 });
 
 wasi.initialize(instance);

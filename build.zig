@@ -149,11 +149,19 @@ fn add_wasm(b: *std.Build, optimize: std.builtin.OptimizeMode) void {
         .install_subdir = "web/vendor",
     });
 
+    // Copy audio/ to web/audio/
+    const install_audio = b.addInstallDirectory(.{
+        .source_dir = b.path("assets/audio/"),
+        .install_dir = .prefix,
+        .install_subdir = "web/audio",
+    });
+
     // Create a "web" step that builds everything for static hosting
     const web_step = b.step("web", "Build web version for static hosting");
     web_step.dependOn(&install_wasm.step);
     web_step.dependOn(&install_html.step);
     web_step.dependOn(&install_vendor.step);
+    web_step.dependOn(&install_audio.step);
 
     // GitHub Pages publish step - outputs to pub/ for static hosting
     const pub_step = b.step("pub", "Build for GitHub Pages (outputs to pub/)");
@@ -175,6 +183,14 @@ fn add_wasm(b: *std.Build, optimize: std.builtin.OptimizeMode) void {
         .install_subdir = "../pub/vendor",
     });
     pub_step.dependOn(&pub_vendor.step);
+
+    // Copy audio/ to pub/audio/
+    const pub_audio = b.addInstallDirectory(.{
+        .source_dir = b.path("assets/audio/"),
+        .install_dir = .prefix,
+        .install_subdir = "../pub/audio",
+    });
+    pub_step.dependOn(&pub_audio.step);
 }
 
 pub fn build(b: *std.Build) void {

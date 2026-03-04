@@ -28,15 +28,22 @@ const WasmState = struct {
 var wasm_state: WasmState = undefined;
 var inputs: Inputs = .{};
 
-fn noop_playSound(sfx: audio.SfxTrack) void {
-    _ = sfx;
+// Audio imports - JS provides these functions
+extern "env" fn js_playSound(sfx_id: u32) void;
+extern "env" fn js_setMusic(track_id: u32) void;
+extern "env" fn js_stopMusic() void;
+
+fn wasmPlaySound(sfx: audio.SfxTrack) void {
+    js_playSound(@intFromEnum(sfx));
 }
 
-fn noop_setMusic(track: audio.MusicTrack) void {
-    _ = track;
+fn wasmSetMusic(track: audio.MusicTrack) void {
+    js_setMusic(@intFromEnum(track));
 }
 
-fn noop_stopMusic() void {}
+fn wasmStopMusic() void {
+    js_stopMusic();
+}
 
 // JS calls this with a bitmask of currently-held keys each frame
 export fn set_input_state(bits: u32) void {
@@ -75,9 +82,9 @@ export fn game_init() void {
     io_embedded.load_sprites(&wasm_state.storage);
 
     wasm_state.platform = .{
-        .playSound = noop_playSound,
-        .setMusic = noop_setMusic,
-        .stopMusic = noop_stopMusic,
+        .playSound = wasmPlaySound,
+        .setMusic = wasmSetMusic,
+        .stopMusic = wasmStopMusic,
         .load_level = io_embedded.load_level,
         .load_level_things = io_embedded.load_level_things,
     };
