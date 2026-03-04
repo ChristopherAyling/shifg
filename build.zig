@@ -59,24 +59,36 @@ fn add_game_native(b: *std.Build, target: std.Build.ResolvedTarget, optimize: st
 }
 
 fn add_editor_native(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode) void {
-    const editor: *std.Build.Step.Compile = b.addExecutable(.{
-        .name = "editor_native",
+    const game_lib = b.addLibrary(.{
+        .linkage = .dynamic,
+        .name = "editor",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("src/editor.zig"),
+            .target = target,
+            .optimize = optimize,
+        }),
+    });
+    configureGameLibrary(b, target, game_lib);
+    b.installArtifact(game_lib);
+
+    const platform: *std.Build.Step.Compile = b.addExecutable(.{
+        .name = "editor_platform_native",
         .root_module = b.createModule(.{
             .root_source_file = b.path("src/editor_platform_native.zig"),
             .optimize = optimize,
             .target = target,
         }),
     });
-    configurePlatformExecutable(b, target, editor);
-    b.installArtifact(editor);
+    configurePlatformExecutable(b, target, platform);
+    b.installArtifact(platform);
 
     {
-        const run_cmd = b.addRunArtifact(editor);
+        const run_cmd = b.addRunArtifact(platform);
         run_cmd.step.dependOn(b.getInstallStep());
         if (b.args) |args| {
             run_cmd.addArgs(args);
         }
-        const run_step = b.step("edit", "Run editor");
+        const run_step = b.step("edit", "edit levels");
         run_step.dependOn(&run_cmd.step);
     }
 }

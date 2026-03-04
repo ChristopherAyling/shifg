@@ -14,6 +14,7 @@ const effects = @import("effects.zig");
 const Level = @import("level.zig").Level;
 const ThingPool = @import("things.zig").ThingPool;
 const menus = @import("menus.zig");
+const render_shared = @import("render_shared.zig");
 
 const Inputs = control.Inputs;
 
@@ -185,6 +186,8 @@ fn game_step_overworld(game_state: *api.GameState, inputs: Inputs, platform_api:
                 .inventory => {
                     // todo inventory system.
                 },
+                // editor only
+                .editor_place => {},
             }
             return; // don't do anything else while menu is open
         }
@@ -318,24 +321,7 @@ fn render_step_overworld(game_state: *api.GameState, render_state: *RenderState)
             draw.draw_line(&render_state.level, player.x + con.PLAYER_W_HALF, player.y + con.PLAYER_H_HALF, selector.x + con.PLAYER_W_HALF, selector.y + con.PLAYER_H_HALF, 0xAAAAAA);
         }
 
-        // things
-        {
-            var it = game_state.things.iter();
-            while (it.next_active()) |thing| {
-                if (thing.visible) draw.draw_image(&render_state.level, render_state.storage.get(thing.spritekey), thing.x, thing.y);
-            }
-        }
-
-        // debug entity web
-        // {
-        //     var itx = game_state.things.iter();
-        //     while (itx.next_active()) |thingi| {
-        //         var itj = game_state.things.iter();
-        //         while (itj.next_active()) |thingj| {
-        //             draw.draw_line(&render_state.level, thingi.x, thingi.y, thingj.x, thingj.y, 0xFF0000);
-        //         }
-        //     }
-        // }
+        render_shared.render_things(&render_state.level, &render_state.storage, &game_state.things);
 
         draw.draw_image(&render_state.level, game_state.level.?.fg, 0, 0);
 
@@ -347,55 +333,7 @@ fn render_step_overworld(game_state: *api.GameState, render_state: *RenderState)
     }
 
     // render ui
-    {
-        // render menus
-        for (0..game_state.menu.depth) |depth| {
-            const menu = game_state.menu.stack[depth];
-            switch (menu) {
-                .dialogue => |dialogue_menu| {
-                    const line = dialogue_menu.get_line();
-                    ui.drawTextBox(&render_state.screen, line.speaker_name, line.text);
-                },
-                .inventory => {
-                    ui.drawTextBox(&render_state.screen, "game", "inventory");
-                },
-                .context => |context_menu| {
-                    var items: ui.ContextMenuItems = .{};
-                    items.add(@tagName(context_menu.priority));
-                    items.add("examine");
-                    ui.draw_context_menu(&render_state.screen, con.NATIVE_W_HALF + con.PLAYER_W, con.NATIVE_H_HALF + con.PLAYER_H, context_menu.index, items);
-                },
-                .action => |action_menu| {
-                    var action_items = ui.RadialMenuItems{};
-                    action_items.add("Melee", .action_menu_melee);
-                    action_items.add("Ranged", .action_menu_ranged);
-                    action_items.add("Magic", .action_menu_magic);
-                    action_items.add("Throw", .action_menu_throw);
-                    action_items.add("Hide", .action_menu_hide);
-                    action_items.add("Dash", .action_menu_dash);
-                    action_items.add("Jump", .action_menu_jump);
-                    action_items.add("Shove", .action_menu_shove);
-                    ui.draw_radial_menu(&render_state.screen, &render_state.storage, con.NATIVE_W_HALF, con.NATIVE_H_HALF, action_menu.index, "actions", action_items);
-                },
-                .examine => |examine_menu| {
-                    const examination_target = game_state.things.get(examine_menu.examination_target_ref);
-                    if (examination_target.kind == .UNSET) {
-                        ui.drawTextBox(&render_state.screen, "examination", "there appears to be nothing here");
-                    } else {
-                        var buf: [128]u8 = undefined;
-                        const text = std.fmt.bufPrint(&buf, "you examine {s}.", .{examination_target.name}) catch unreachable;
-                        ui.drawTextBox(&render_state.screen, "examination", text);
-                    }
-                },
-            }
-        }
-
-        // overlay dialogue
-        if (game_state.dialogue) |current_dialogue| {
-            const line = current_dialogue.getLine();
-            ui.drawTextBox(&render_state.screen, line.speaker_name, line.text);
-        }
-    }
+    render_shared.render_menu(&render_state.screen, &render_state.storage, &game_state.things, &game_state.menu);
 }
 
 comptime {

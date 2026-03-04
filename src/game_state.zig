@@ -3,7 +3,6 @@
 const MenuState = @import("menus.zig").MenuState;
 const ThingPool = @import("things.zig").ThingPool;
 const Level = @import("level.zig").Level;
-const DialogueState = @import("dialogue.zig").DialogueState;
 
 const GameMode = enum {
     MainMenu,
@@ -14,6 +13,5 @@ pub const GameState = struct {
     mode: GameMode = .MainMenu,
     menu: MenuState = .{},
     things: ThingPool = .{},
-    dialogue: ?DialogueState = null,
     level: ?Level = null,
 };
