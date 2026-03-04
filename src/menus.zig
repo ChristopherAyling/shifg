@@ -16,6 +16,7 @@ pub const Screen = union(enum) {
 
     // editor only
     editor_place: EditorPlaceMenuState,
+    editor_level_select: EditorLevelSelectMenuState,
 };
 
 const MAX_MENU_DEPTH = 3;
@@ -235,26 +236,51 @@ pub const EditorPlaceMenuState = struct {
     }
 
     pub fn next_category(self: *EditorPlaceMenuState) void {
-        std.log.debug("next cat", .{});
         self.category +|= 1;
         self.legalise_category();
         self.legalise_index();
     }
 
     pub fn prev_category(self: *EditorPlaceMenuState) void {
-        std.log.debug("prev cat", .{});
         self.category -|= 1;
         self.legalise_index();
     }
 
     pub fn inc(self: *EditorPlaceMenuState) void {
-        std.log.debug("inc", .{});
         self.index +|= 1;
         self.legalise_index();
     }
 
     pub fn dec(self: *EditorPlaceMenuState) void {
-        std.log.debug("dec", .{});
+        self.index -|= 1;
+    }
+};
+
+pub const EditorLevelSelectMenuState = struct {
+    index: usize = 0,
+    levels: NamedItemList,
+
+    pub fn init(levels: NamedItemList) EditorLevelSelectMenuState {
+        return .{
+            .index = 0,
+            .levels = levels,
+        };
+    }
+
+    pub fn max_index(self: EditorLevelSelectMenuState) usize {
+        return self.levels.max_index();
+    }
+
+    fn legalise_index(self: *EditorLevelSelectMenuState) void {
+        self.index = @min(self.index, self.max_index());
+    }
+
+    pub fn inc(self: *EditorLevelSelectMenuState) void {
+        self.index +|= 1;
+        self.legalise_index();
+    }
+
+    pub fn dec(self: *EditorLevelSelectMenuState) void {
         self.index -|= 1;
     }
 };

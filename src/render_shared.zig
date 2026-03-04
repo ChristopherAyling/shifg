@@ -30,8 +30,7 @@ pub fn render_things(level: *ScreenBuffer, storage: *sprites.SpriteStorage, thin
     // }
 }
 
-pub fn draw_named_item_list_collection(screen: *ScreenBuffer, storage: *sprites.SpriteStorage, x0: i32, y0: i32, m: menus.NamedItemListCollection, category: usize, index: usize) void {
-    const named_item_list = m.get(category);
+pub fn draw_named_item_list(screen: *ScreenBuffer, storage: *sprites.SpriteStorage, x0: i32, y0: i32, named_item_list: menus.NamedItemList, index: usize) void {
     const title = named_item_list.name.get();
     const item_list = named_item_list.item_list;
 
@@ -44,7 +43,6 @@ pub fn draw_named_item_list_collection(screen: *ScreenBuffer, storage: *sprites.
     const longest_label: i32 = @intCast(item_list.longest_label());
     const title_height = padding + con.FONT_H + 2;
     const title_width: i32 = padding + @as(i32, @intCast(title.len * (con.FONT_W + 1))) + padding;
-    // const title_height: i32 = con.FONT_H + 1;
     const content_width: i32 = padding + con.PLAYER_W + @as(i32, @intCast(longest_label * (con.FONT_W + 1))) + padding;
     const row_height: i32 = @max(con.FONT_H, con.PLAYER_H) + 1;
     const content_height: i32 = @as(i32, @intCast(item_list.count)) * row_height;
@@ -111,6 +109,10 @@ pub fn draw_named_item_list_collection(screen: *ScreenBuffer, storage: *sprites.
     }
 }
 
+pub fn draw_named_item_list_collection(screen: *ScreenBuffer, storage: *sprites.SpriteStorage, x0: i32, y0: i32, m: menus.NamedItemListCollection, category: usize, index: usize) void {
+    draw_named_item_list(screen, storage, x0, y0, m.get(category), index);
+}
+
 pub fn render_menu(screen: *ScreenBuffer, storage: *sprites.SpriteStorage, things: *ThingPool, menu_state: *menus.MenuState) void {
     for (0..menu_state.depth) |depth| {
         const menu = menu_state.stack[depth];
@@ -151,10 +153,10 @@ pub fn render_menu(screen: *ScreenBuffer, storage: *sprites.SpriteStorage, thing
                 }
             },
             // editor only
+            .editor_level_select => |editor_level_select| {
+                draw_named_item_list(screen, storage, 5, 5, editor_level_select.levels, editor_level_select.index);
+            },
             .editor_place => |editor_place_menu| {
-                // _ = editor_place_menu;
-                // ui.drawTextBox(screen, "editor", "choose something to place....");
-                // eui.draw_text_menu(screen, 0, 0, editor_place_menu.index, editor_place_menu.)
                 draw_named_item_list_collection(screen, storage, 5, 5, editor_place_menu.categories, editor_place_menu.category, editor_place_menu.index);
             },
         }
