@@ -1,13 +1,11 @@
 - [ ] SDL platform
-- [ ] revive editor (we have epic new menu system)
 - [ ] remove radial hardcoding
 - [ ] radial icons
 - [ ] examination ui
 - [ ] walking to selector (rather than teleporting)
 - [ ] per character dialogues
-- [ ] level hot reloading
+- [ ] level hot reloading (done in editor)
 - [ ] sprite hot reloading
 - [ ] static release binary
 
-- [x] increase wasm framerate
-- [x] vendor wasi shim js
+- [ ] ios safari sound isn't working
