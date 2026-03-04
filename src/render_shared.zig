@@ -31,7 +31,6 @@ pub fn render_things(level: *ScreenBuffer, storage: *sprites.SpriteStorage, thin
 }
 
 pub fn draw_named_item_list_collection(screen: *ScreenBuffer, storage: *sprites.SpriteStorage, x0: i32, y0: i32, m: menus.NamedItemListCollection, category: usize, index: usize) void {
-    _ = index;
     const named_item_list = m.get(category);
     const title = named_item_list.name.get();
     const item_list = named_item_list.item_list;
@@ -69,15 +68,14 @@ pub fn draw_named_item_list_collection(screen: *ScreenBuffer, storage: *sprites.
     for (0..item_list.count) |i| {
         const ii: i32 = @intCast(i);
         const item = item_list.items[i];
-        // if (item.icon) |_| {
-        // draw.draw_image(screen, , x0: i32, y0: i32)
-        draw.draw_image(
-            screen,
-            storage.get(.missing),
-            x0 + padding,
-            y0 + title_height + row_height * ii,
-        );
-        // }
+        if (item.icon) |icon| {
+            draw.draw_image(
+                screen,
+                storage.get(icon),
+                x0 + padding,
+                y0 + title_height + row_height * ii,
+            );
+        }
         if (item.label) |label| {
             draw.draw_text(
                 screen,
@@ -90,6 +88,16 @@ pub fn draw_named_item_list_collection(screen: *ScreenBuffer, storage: *sprites.
     }
 
     // selection
+    const iidx: i32 = @intCast(index);
+    const w: i32 = @intCast(item_list.get(index).label.?.len);
+    draw.draw_line(
+        screen,
+        x0 + padding + con.PLAYER_W + 2,
+        y0 + 1 + title_height + row_height * iidx + con.FONT_H,
+        x0 + padding + con.PLAYER_W + 2 + (w * (con.FONT_W + 1)),
+        y0 + 1 + title_height + row_height * iidx + con.FONT_H,
+        0xFFF000,
+    );
 }
 
 pub fn render_menu(screen: *ScreenBuffer, storage: *sprites.SpriteStorage, things: *ThingPool, menu_state: *menus.MenuState) void {

@@ -136,9 +136,9 @@ pub const ItemList = struct {
         return .{};
     }
 
-    pub fn add(self: *ItemList, label: []const u8) void {
+    pub fn add(self: *ItemList, label: []const u8, icon: ?SpriteKey) void {
         assert(self.count < MAX_ITEM_LIST_LEN);
-        self.items[self.count] = .{ .label = Label.init(label), .icon = null };
+        self.items[self.count] = .{ .label = Label.init(label), .icon = icon };
         self.count += 1;
     }
 
@@ -170,8 +170,8 @@ pub const NamedItemList = struct {
         };
     }
 
-    pub fn add(self: *NamedItemList, label: []const u8) void {
-        self.item_list.add(label);
+    pub fn add(self: *NamedItemList, label: []const u8, icon: ?SpriteKey) void {
+        self.item_list.add(label, icon);
     }
 
     pub fn max_index(self: NamedItemList) usize {
