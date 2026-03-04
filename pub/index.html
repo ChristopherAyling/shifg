@@ -69,14 +69,11 @@
         }
         #dpad {
             display: grid;
-            grid-template-columns: 50px 50px 50px;
-            grid-template-rows: 50px 50px 50px;
-            gap: 4px;
+            grid-template-columns: 40px 40px 40px;
+            grid-template-rows: 40px 40px 40px;
+            gap: 3px;
         }
-        #dpad .touch-btn:nth-child(1) { grid-column: 2; grid-row: 1; }
-        #dpad .touch-btn:nth-child(2) { grid-column: 1; grid-row: 2; }
-        #dpad .touch-btn:nth-child(3) { grid-column: 3; grid-row: 2; }
-        #dpad .touch-btn:nth-child(4) { grid-column: 2; grid-row: 3; }
+        #dpad .touch-btn { width: 40px; height: 40px; font-size: 14px; }
         #center-btns {
             display: flex;
             flex-direction: column;
@@ -105,19 +102,24 @@
     </div>
     <div id="touch-controls">
         <div id="dpad">
-            <button class="touch-btn" data-key="KeyW">&#9650;</button>
-            <button class="touch-btn" data-key="KeyA">&#9664;</button>
-            <button class="touch-btn" data-key="KeyD">&#9654;</button>
-            <button class="touch-btn" data-key="KeyS">&#9660;</button>
+            <button class="touch-btn" data-keys="KeyW,KeyA">&#8598;</button>
+            <button class="touch-btn" data-keys="KeyW">&#9650;</button>
+            <button class="touch-btn" data-keys="KeyW,KeyD">&#8599;</button>
+            <button class="touch-btn" data-keys="KeyA">&#9664;</button>
+            <button class="touch-btn" data-keys="">&#8226;</button>
+            <button class="touch-btn" data-keys="KeyD">&#9654;</button>
+            <button class="touch-btn" data-keys="KeyS,KeyA">&#8601;</button>
+            <button class="touch-btn" data-keys="KeyS">&#9660;</button>
+            <button class="touch-btn" data-keys="KeyS,KeyD">&#8600;</button>
         </div>
         <div id="center-btns">
-            <button class="touch-btn" data-key="KeyE">START</button>
+            <button class="touch-btn" data-keys="KeyE">START</button>
         </div>
         <div id="action-btns">
-            <button class="touch-btn" data-key="KeyK">X</button>
-            <button class="touch-btn" data-key="KeyL">Y</button>
-            <button class="touch-btn" data-key="KeyH">A</button>
-            <button class="touch-btn" data-key="KeyJ">B</button>
+            <button class="touch-btn" data-keys="KeyK">X</button>
+            <button class="touch-btn" data-keys="KeyL">Y</button>
+            <button class="touch-btn" data-keys="KeyH">A</button>
+            <button class="touch-btn" data-keys="KeyJ">B</button>
         </div>
     </div>
 </body>
@@ -237,9 +239,10 @@ document.addEventListener('keyup', e => { keys[e.code] = false; });
 
 // Touch controls
 document.querySelectorAll('.touch-btn').forEach(btn => {
-    const key = btn.dataset.key;
-    const press = (e) => { e.preventDefault(); keys[key] = true; btn.classList.add('pressed'); };
-    const release = (e) => { e.preventDefault(); keys[key] = false; btn.classList.remove('pressed'); };
+    const keyStr = btn.dataset.keys !== undefined ? btn.dataset.keys : btn.dataset.key;
+    const keyList = keyStr ? keyStr.split(',').filter(k => k) : [];
+    const press = (e) => { e.preventDefault(); keyList.forEach(k => keys[k] = true); btn.classList.add('pressed'); };
+    const release = (e) => { e.preventDefault(); keyList.forEach(k => keys[k] = false); btn.classList.remove('pressed'); };
     btn.addEventListener('touchstart', press, { passive: false });
     btn.addEventListener('touchend', release, { passive: false });
     btn.addEventListener('touchcancel', release, { passive: false });
