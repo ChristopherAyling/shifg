@@ -20,14 +20,16 @@ const stbi = @cImport({
     @cInclude("stb_image.h");
 });
 
-fn image_from_file(filename: [:0]const u8) Image {
+const ImageError = error{LoadError};
+
+fn image_from_file(filename: [:0]const u8) ImageError!Image {
     var x: c_int = undefined;
     var y: c_int = undefined;
     var channels_in_file: c_int = undefined;
 
     const raw = stbi.stbi_load(filename.ptr, &x, &y, &channels_in_file, 4) orelse {
-        std.debug.print("Failed to load image: {s}\n", .{filename});
-        @panic("Image load failed");
+        std.log.err("Failed to load image: {s}\n", .{filename});
+        return ImageError.LoadError;
     };
 
     const pixels = @as(usize, @intCast(x)) * @as(usize, @intCast(y));
@@ -47,40 +49,12 @@ fn image_from_file(filename: [:0]const u8) Image {
 }
 
 pub fn load_sprites(self: *SpriteStorage) void {
-    // misc
-    self.images[@intFromEnum(SpriteKey.missing)] = image_from_file("assets/missing.png");
-    self.images[@intFromEnum(SpriteKey.camera)] = image_from_file("assets/camera.png");
-    self.images[@intFromEnum(SpriteKey.splash)] = image_from_file("assets/splash.png");
-
-    // players
-    self.images[@intFromEnum(SpriteKey.genly)] = image_from_file("assets/genly.png");
-
-    // npcs
-    self.images[@intFromEnum(SpriteKey.estraven)] = image_from_file("assets/estraven.png");
-    self.images[@intFromEnum(SpriteKey.argaven)] = image_from_file("assets/argaven.png");
-
-    // editor
-    self.images[@intFromEnum(SpriteKey.cursor)] = image_from_file("assets/cursor.png");
-    self.images[@intFromEnum(SpriteKey.selector)] = image_from_file("assets/selector.png");
-    self.images[@intFromEnum(SpriteKey.selector_active)] = image_from_file("assets/selector-active.png");
-
-    // items
-    self.images[@intFromEnum(SpriteKey.redflag)] = image_from_file("assets/redflag.png");
-    self.images[@intFromEnum(SpriteKey.potion)] = image_from_file("assets/potion.png");
-
-    // portal
-    self.images[@intFromEnum(SpriteKey.portal_source)] = image_from_file("assets/portal_source.png");
-    self.images[@intFromEnum(SpriteKey.portal_dest)] = image_from_file("assets/portal_dest.png");
-
-    // action menu
-    self.images[@intFromEnum(SpriteKey.action_menu_melee)] = image_from_file("assets/sword.png");
-    self.images[@intFromEnum(SpriteKey.action_menu_ranged)] = image_from_file("assets/wand.png");
-    self.images[@intFromEnum(SpriteKey.action_menu_magic)] = image_from_file("assets/missing.png");
-    self.images[@intFromEnum(SpriteKey.action_menu_throw)] = image_from_file("assets/missing.png");
-    self.images[@intFromEnum(SpriteKey.action_menu_hide)] = image_from_file("assets/missing.png");
-    self.images[@intFromEnum(SpriteKey.action_menu_dash)] = image_from_file("assets/missing.png");
-    self.images[@intFromEnum(SpriteKey.action_menu_jump)] = image_from_file("assets/missing.png");
-    self.images[@intFromEnum(SpriteKey.action_menu_shove)] = image_from_file("assets/missing.png");
+    const missing_sprite = image_from_file("assets/missing.png") catch unreachable;
+    for (std.enums.values(SpriteKey)) |sprite_key| {
+        var buf: [256]u8 = undefined;
+        const path = std.fmt.bufPrintZ(&buf, "assets/{s}.png", .{@tagName(sprite_key)}) catch unreachable;
+        self.images[@intFromEnum(sprite_key)] = image_from_file(path) catch missing_sprite;
+    }
 }
 
 // level
@@ -89,10 +63,10 @@ fn level_from_folder(path: []const u8, name: []const u8) Level {
     var buf: [256]u8 = undefined;
 
     const bg_path = std.fmt.bufPrintZ(&buf, "{s}/bg.png", .{path}) catch unreachable;
-    const bg = image_from_file(bg_path);
+    const bg = image_from_file(bg_path) catch unreachable;
 
     const fg_path = std.fmt.bufPrintZ(&buf, "{s}/fg.png", .{path}) catch unreachable;
-    const fg = image_from_file(fg_path);
+    const fg = image_from_file(fg_path) catch unreachable;
 
     return .{
         .name = name,
@@ -129,16 +103,21 @@ const miniaudio = @cImport({
     @cInclude("miniaudio.h");
 });
 
-const music_paths = std.EnumArray(audio.MusicTrack, [:0]const u8).init(.{
-    .splash = "assets/audio/music/missing.wav",
-    .overworld = "assets/audio/music/overworld.wav",
-});
+const music_paths = blk: {
+    var result = std.EnumArray(audio.MusicTrack, [:0]const u8).initUndefined();
+    for (std.enums.values(audio.MusicTrack)) |track| {
+        result.set(track, "assets/audio/music/" ++ @tagName(track) ++ ".wav");
+    }
+    break :blk result;
+};
 
-const sfx_paths = std.EnumArray(audio.SfxTrack, [:0]const u8).init(.{
-    .click = "assets/audio/sfx/click.wav",
-    .close = "assets/audio/sfx/close.wav",
-    .door = "assets/audio/sfx/door.wav",
-});
+const sfx_paths = blk: {
+    var result = std.EnumArray(audio.SfxTrack, [:0]const u8).initUndefined();
+    for (std.enums.values(audio.SfxTrack)) |sfx| {
+        result.set(sfx, "assets/audio/sfx" ++ @tagName(sfx) ++ ".wav");
+    }
+    break :blk result;
+};
 
 pub const AudioSystem = struct {
     engine: miniaudio.ma_engine = undefined,

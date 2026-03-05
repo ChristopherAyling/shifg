@@ -324,6 +324,7 @@ pub const ThingPool = struct {
         thing.spritekey = .selector;
         thing.x = x;
         thing.y = y;
+        thing.visible = false;
         return ref;
     }
 
