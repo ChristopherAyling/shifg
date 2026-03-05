@@ -50,41 +50,43 @@ fn image_from_memory(data: []const u8) Image {
 }
 
 pub fn load_sprites(storage: *SpriteStorage) void {
+    for (std.enums.values(SpriteKey)) |sprite_key| {
+        storage.images[@intFromEnum(sprite_key)] = image_from_memory(assets.sprite_data.get(sprite_key));
+    }
     // misc
-    storage.images[@intFromEnum(SpriteKey.missing)] = image_from_memory(assets.sprite_missing);
-    storage.images[@intFromEnum(SpriteKey.camera)] = image_from_memory(assets.sprite_camera);
-    storage.images[@intFromEnum(SpriteKey.splash)] = image_from_memory(assets.sprite_splash);
+    // storage.images[@intFromEnum(SpriteKey.missing)] = image_from_memory(assets.sprite_missing);
+    // storage.images[@intFromEnum(SpriteKey.camera)] = image_from_memory(assets.sprite_camera);
+    // storage.images[@intFromEnum(SpriteKey.splash)] = image_from_memory(assets.sprite_splash);
 
-    // players
-    storage.images[@intFromEnum(SpriteKey.genly)] = image_from_memory(assets.sprite_genly);
+    // // players
+    // storage.images[@intFromEnum(SpriteKey.genly)] = image_from_memory(assets.sprite_genly);
 
-    // npcs
-    storage.images[@intFromEnum(SpriteKey.estraven)] = image_from_memory(assets.sprite_estraven);
-    storage.images[@intFromEnum(SpriteKey.argaven)] = image_from_memory(assets.sprite_argaven);
+    // // npcs
+    // storage.images[@intFromEnum(SpriteKey.estraven)] = image_from_memory(assets.sprite_estraven);
+    // storage.images[@intFromEnum(SpriteKey.argaven)] = image_from_memory(assets.sprite_argaven);
 
-    // editor
-    storage.images[@intFromEnum(SpriteKey.cursor)] = image_from_memory(assets.sprite_cursor);
-    storage.images[@intFromEnum(SpriteKey.selector)] = image_from_memory(assets.sprite_selector);
-    storage.images[@intFromEnum(SpriteKey.selector_active)] = image_from_memory(assets.sprite_selector_active);
+    // // editor
+    // storage.images[@intFromEnum(SpriteKey.cursor)] = image_from_memory(assets.sprite_cursor);
+    // storage.images[@intFromEnum(SpriteKey.selector)] = image_from_memory(assets.sprite_selector);
+    // storage.images[@intFromEnum(SpriteKey.selector_active)] = image_from_memory(assets.sprite_selector_active);
 
-    // items
-    storage.images[@intFromEnum(SpriteKey.redflag)] = image_from_memory(assets.sprite_redflag);
-    storage.images[@intFromEnum(SpriteKey.potion)] = image_from_memory(assets.sprite_potion);
+    // // items
+    // storage.images[@intFromEnum(SpriteKey.redflag)] = image_from_memory(assets.sprite_redflag);
+    // storage.images[@intFromEnum(SpriteKey.potion)] = image_from_memory(assets.sprite_potion);
 
-    // portals
-    storage.images[@intFromEnum(SpriteKey.portal_source)] = image_from_memory(assets.sprite_missing);
-    storage.images[@intFromEnum(SpriteKey.portal_dest)] = image_from_memory(assets.sprite_missing);
+    // // portals
+    // storage.images[@intFromEnum(SpriteKey.portal_source)] = image_from_memory(assets.sprite_missing);
+    // storage.images[@intFromEnum(SpriteKey.portal_dest)] = image_from_memory(assets.sprite_missing);
 
-
-    // action menu
-    storage.images[@intFromEnum(SpriteKey.action_menu_melee)] = image_from_memory(assets.sprite_sword);
-    storage.images[@intFromEnum(SpriteKey.action_menu_ranged)] = image_from_memory(assets.sprite_wand);
-    storage.images[@intFromEnum(SpriteKey.action_menu_magic)] = image_from_memory(assets.sprite_missing);
-    storage.images[@intFromEnum(SpriteKey.action_menu_throw)] = image_from_memory(assets.sprite_missing);
-    storage.images[@intFromEnum(SpriteKey.action_menu_hide)] = image_from_memory(assets.sprite_missing);
-    storage.images[@intFromEnum(SpriteKey.action_menu_dash)] = image_from_memory(assets.sprite_missing);
-    storage.images[@intFromEnum(SpriteKey.action_menu_jump)] = image_from_memory(assets.sprite_missing);
-    storage.images[@intFromEnum(SpriteKey.action_menu_shove)] = image_from_memory(assets.sprite_missing);
+    // // action menu
+    // storage.images[@intFromEnum(SpriteKey.action_menu_melee)] = image_from_memory(assets.sprite_sword);
+    // storage.images[@intFromEnum(SpriteKey.action_menu_ranged)] = image_from_memory(assets.sprite_wand);
+    // storage.images[@intFromEnum(SpriteKey.action_menu_magic)] = image_from_memory(assets.sprite_missing);
+    // storage.images[@intFromEnum(SpriteKey.action_menu_throw)] = image_from_memory(assets.sprite_missing);
+    // storage.images[@intFromEnum(SpriteKey.action_menu_hide)] = image_from_memory(assets.sprite_missing);
+    // storage.images[@intFromEnum(SpriteKey.action_menu_dash)] = image_from_memory(assets.sprite_missing);
+    // storage.images[@intFromEnum(SpriteKey.action_menu_jump)] = image_from_memory(assets.sprite_missing);
+    // storage.images[@intFromEnum(SpriteKey.action_menu_shove)] = image_from_memory(assets.sprite_missing);
 }
 
 pub fn load_level(name: []const u8) Level {
