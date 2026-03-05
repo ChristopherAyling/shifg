@@ -22,7 +22,7 @@ const stbi = @cImport({
 });
 
 // Embedded assets - provided by build.zig as a module
-const assets = @import("embedded_assets");
+// const assets = @import("embedded_assets.zig");
 
 fn image_from_memory(data: []const u8) Image {
     var x: c_int = undefined;
@@ -49,58 +49,45 @@ fn image_from_memory(data: []const u8) Image {
     return .{ .data = pixel_data[0..pixels], .w = @intCast(x), .h = @intCast(y) };
 }
 
+const sprite_data = init: {
+    var map = std.EnumArray(SpriteKey, []const u8).initUndefined();
+
+    for (std.enums.values(SpriteKey)) |key| {
+        map.set(key, @embedFile("assets/" ++ @tagName(key) ++ ".png"));
+    }
+
+    break :init map;
+};
+
 pub fn load_sprites(storage: *SpriteStorage) void {
     for (std.enums.values(SpriteKey)) |sprite_key| {
-        storage.images[@intFromEnum(sprite_key)] = image_from_memory(assets.sprite_data.get(sprite_key));
+        storage.images[@intFromEnum(sprite_key)] = image_from_memory(sprite_data.get(sprite_key));
     }
-    // misc
-    // storage.images[@intFromEnum(SpriteKey.missing)] = image_from_memory(assets.sprite_missing);
-    // storage.images[@intFromEnum(SpriteKey.camera)] = image_from_memory(assets.sprite_camera);
-    // storage.images[@intFromEnum(SpriteKey.splash)] = image_from_memory(assets.sprite_splash);
-
-    // // players
-    // storage.images[@intFromEnum(SpriteKey.genly)] = image_from_memory(assets.sprite_genly);
-
-    // // npcs
-    // storage.images[@intFromEnum(SpriteKey.estraven)] = image_from_memory(assets.sprite_estraven);
-    // storage.images[@intFromEnum(SpriteKey.argaven)] = image_from_memory(assets.sprite_argaven);
-
-    // // editor
-    // storage.images[@intFromEnum(SpriteKey.cursor)] = image_from_memory(assets.sprite_cursor);
-    // storage.images[@intFromEnum(SpriteKey.selector)] = image_from_memory(assets.sprite_selector);
-    // storage.images[@intFromEnum(SpriteKey.selector_active)] = image_from_memory(assets.sprite_selector_active);
-
-    // // items
-    // storage.images[@intFromEnum(SpriteKey.redflag)] = image_from_memory(assets.sprite_redflag);
-    // storage.images[@intFromEnum(SpriteKey.potion)] = image_from_memory(assets.sprite_potion);
-
-    // // portals
-    // storage.images[@intFromEnum(SpriteKey.portal_source)] = image_from_memory(assets.sprite_missing);
-    // storage.images[@intFromEnum(SpriteKey.portal_dest)] = image_from_memory(assets.sprite_missing);
-
-    // // action menu
-    // storage.images[@intFromEnum(SpriteKey.action_menu_melee)] = image_from_memory(assets.sprite_sword);
-    // storage.images[@intFromEnum(SpriteKey.action_menu_ranged)] = image_from_memory(assets.sprite_wand);
-    // storage.images[@intFromEnum(SpriteKey.action_menu_magic)] = image_from_memory(assets.sprite_missing);
-    // storage.images[@intFromEnum(SpriteKey.action_menu_throw)] = image_from_memory(assets.sprite_missing);
-    // storage.images[@intFromEnum(SpriteKey.action_menu_hide)] = image_from_memory(assets.sprite_missing);
-    // storage.images[@intFromEnum(SpriteKey.action_menu_dash)] = image_from_memory(assets.sprite_missing);
-    // storage.images[@intFromEnum(SpriteKey.action_menu_jump)] = image_from_memory(assets.sprite_missing);
-    // storage.images[@intFromEnum(SpriteKey.action_menu_shove)] = image_from_memory(assets.sprite_missing);
 }
+
+// levels
+
+// Level files - tutorial
+const level_tutorial_bg = @embedFile("assets/levels/tutorial/bg.png");
+const level_tutorial_fg = @embedFile("assets/levels/tutorial/fg.png");
+
+// Level files - parade
+const level_parade_bg = @embedFile("assets/levels/parade/bg.png");
+const level_parade_fg = @embedFile("assets/levels/parade/fg.png");
+const level_parade_things = @embedFile("assets/levels/parade/things.bin");
 
 pub fn load_level(name: []const u8) Level {
     if (std.mem.eql(u8, name, "one")) {
         return .{
             .name = name,
-            .bg = image_from_memory(assets.level_tutorial_bg),
-            .fg = image_from_memory(assets.level_tutorial_fg),
+            .bg = image_from_memory(level_tutorial_bg),
+            .fg = image_from_memory(level_tutorial_fg),
         };
     } else if (std.mem.eql(u8, name, "arch")) {
         return .{
             .name = name,
-            .bg = image_from_memory(assets.level_parade_bg),
-            .fg = image_from_memory(assets.level_parade_fg),
+            .bg = image_from_memory(level_parade_bg),
+            .fg = image_from_memory(level_parade_fg),
         };
     } else {
         @panic("Unknown level name");
@@ -110,7 +97,7 @@ pub fn load_level(name: []const u8) Level {
 pub fn load_level_things(name: []const u8, things: *ThingPool) void {
     if (std.mem.eql(u8, name, "arch")) {
         const bytes = std.mem.asBytes(things);
-        @memcpy(bytes, assets.level_parade_things);
+        @memcpy(bytes, level_parade_things);
     }
     // tutorial has no things.bin, so we leave the pool empty
 }

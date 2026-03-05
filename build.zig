@@ -100,22 +100,12 @@ fn add_wasm(b: *std.Build, optimize: std.builtin.OptimizeMode) void {
         .os_tag = .wasi,
     });
 
-    // Embedded assets module (at project root so it can access assets/)
-    const embedded_assets_module = b.createModule(.{
-        .root_source_file = b.path("embedded_assets.zig"),
-        .target = wasm_target,
-        .optimize = optimize,
-    });
-
     const wasm_game_lib = b.addExecutable(.{
         .name = "game",
         .root_module = b.createModule(.{
             .root_source_file = b.path("src/platform_wasm.zig"),
             .target = wasm_target,
             .optimize = optimize,
-            .imports = &.{
-                .{ .name = "embedded_assets", .module = embedded_assets_module },
-            },
         }),
     });
     wasm_game_lib.addIncludePath(b.path("src"));
@@ -197,11 +187,11 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    b.installDirectory(.{
-        .source_dir = b.path("assets/"),
-        .install_dir = .bin,
-        .install_subdir = "assets",
-    });
+    // b.installDirectory(.{
+    //     .source_dir = b.path("assets/"),
+    //     .install_dir = .bin,
+    //     .install_subdir = "assets",
+    // });
 
     add_game_native(b, target, optimize);
     add_editor_native(b, target, optimize);
