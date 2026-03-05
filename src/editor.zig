@@ -201,7 +201,6 @@ pub fn editor_step(memory: *api.EditorMemory, inputs: *const Inputs, platform_ap
                         return;
                     }
                     if (inputs.a.pressed) {
-                        editor_state.menu.pop();
                         const option: Option = @enumFromInt(editor_options_menu.index);
                         switch (option) {
                             .save => {
@@ -210,6 +209,7 @@ pub fn editor_step(memory: *api.EditorMemory, inputs: *const Inputs, platform_ap
                             },
                             .levels => {
                                 editor_state.menu.push(.{ .editor_level_select = menus.EditorLevelSelectMenuState.init(LEVEL_SELECT_MENU) });
+                                editor_state.menu.pop();
                             },
                             .quit => {
                                 memory.done = true;
@@ -259,6 +259,7 @@ pub fn editor_step(memory: *api.EditorMemory, inputs: *const Inputs, platform_ap
     if (editor_state.level == null) {
         // add level select screen
         editor_state.menu.push(.{ .editor_level_select = menus.EditorLevelSelectMenuState.init(LEVEL_SELECT_MENU) });
+        return;
     }
 
     if (inputs.a.pressed) {
@@ -267,9 +268,20 @@ pub fn editor_step(memory: *api.EditorMemory, inputs: *const Inputs, platform_ap
         return;
     }
 
-    // TODO open settings menu (save etc)
     if (inputs.start.pressed) {
+        // open settings menu
         editor_state.menu.push(.{ .editor_options = menus.EditorOptionsMenuState.init(OPTIONS_MENU) });
+    }
+
+    if (inputs.b.pressed) {
+        // delete things
+        {
+            var it = editor_state.things.iter();
+            while (it.next_active_near(editor_state.cursor_x, editor_state.cursor_y, 8)) |thing| {
+                thing.active = false;
+            }
+        }
+        return;
     }
 
     // cursor movement

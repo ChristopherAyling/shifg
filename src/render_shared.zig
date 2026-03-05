@@ -19,6 +19,9 @@ pub fn render_things(level: *ScreenBuffer, storage: *sprites.SpriteStorage, thin
                 switch (thing.kind) {
                     .PORTAL => {
                         draw.draw_image(level, storage.get(.portal_dest), thing.portal_dest.x, thing.portal_dest.y);
+                        if (show_invisible) {
+                            draw.draw_line(level, thing.x, thing.y, thing.portal_dest.x, thing.portal_dest.y, 0xFFA500);
+                        }
                     },
                     else => {},
                 }

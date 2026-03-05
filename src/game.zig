@@ -113,8 +113,21 @@ fn game_step_overworld(game_state: *api.GameState, inputs: Inputs, platform_api:
 
     // input in menu is next highest priority
     if (game_state.menu.current()) |current| {
-        if (inputs.b.pressed) { // todo disable this if is a dialogue. you can't b out of a dialogue! i think
-            game_state.menu.pop();
+        // if (inputs.b.pressed) { // todo disable this if is a dialogue. you can't b out of a dialogue! i think
+        //     game_state.menu.pop();
+        //     return;
+        if (inputs.b.pressed) {
+            switch (current.*) {
+                // uncancellable states
+                .dialogue,
+                .editor_portal_dest_select,
+                .editor_level_select,
+                => {},
+                // all others are cancellable
+                else => {
+                    game_state.menu.pop();
+                },
+            }
             return;
         } else {
             switch (current.*) {
@@ -185,6 +198,10 @@ fn game_step_overworld(game_state: *api.GameState, inputs: Inputs, platform_api:
                 },
                 .inventory => {
                     // todo inventory system.
+                    if (inputs.start.pressed) {
+                        game_state.menu.pop();
+                        return;
+                    }
                 },
                 // editor only
                 .editor_level_select => unreachable,
@@ -210,6 +227,7 @@ fn game_step_overworld(game_state: *api.GameState, inputs: Inputs, platform_api:
                     var it = game_state.things.iter_ref();
                     while (it.next_match(.selectable_near(player.x, player.y))) |ref| {
                         const thing = game_state.things.get(ref);
+                        if (thing.kind == .PLAYER) continue;
                         game_state.menu.push(.{ .context = .{
                             .context_target_ref = ref,
                             .index = 0,
@@ -219,6 +237,7 @@ fn game_step_overworld(game_state: *api.GameState, inputs: Inputs, platform_api:
                                 else => .move_to,
                             },
                         } });
+                        return;
                     }
                 }
             }
@@ -233,6 +252,7 @@ fn game_step_overworld(game_state: *api.GameState, inputs: Inputs, platform_api:
                 var it = game_state.things.iter();
                 // const q: Que
                 if (it.next_match(.{
+                    .active = true,
                     .kind = .PORTAL,
                     .position = .{ .x = player.x, .y = player.y, .thresh = 8 },
                 })) |portal| {
