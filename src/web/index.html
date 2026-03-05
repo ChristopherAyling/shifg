@@ -146,8 +146,10 @@ const musicBuffers = {}; // track_id -> AudioBuffer
 let currentMusic = null;
 let currentMusicId = null;
 
-// SfxTrack enum: 0=click, 1=close
-const sfxPaths = ['audio/sfx/click.wav', 'audio/sfx/close.wav'];
+// todo replace this hardcoded with something. maybe the build step makes a manifest which we query and then loop through
+
+// SfxTrack enum: 0=click, 1=close, 2=door
+const sfxPaths = ['audio/sfx/click.wav', 'audio/sfx/close.wav', 'audio/sfx/door.wav'];
 // MusicTrack enum: 0=splash, 1=overworld
 const musicPaths = ['audio/music/missing.wav', 'audio/music/overworld.wav'];
 

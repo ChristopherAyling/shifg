@@ -8,4 +8,5 @@ pub const MusicTrack = enum {
 pub const SfxTrack = enum {
     click,
     close,
+    door,
 };

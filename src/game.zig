@@ -226,6 +226,22 @@ fn game_step_overworld(game_state: *api.GameState, inputs: Inputs, platform_api:
                 player.interaction_mode = .SELECT;
                 return;
             }
+            // passive collisions
+            {
+                // check portals
+                // player.euclid_dist(k, y: i32)
+                var it = game_state.things.iter();
+                // const q: Que
+                if (it.next_match(.{
+                    .kind = .PORTAL,
+                    .position = .{ .x = player.x, .y = player.y, .thresh = 8 },
+                })) |portal| {
+                    player.x = portal.portal_dest.x;
+                    player.y = portal.portal_dest.y;
+                    platform_api.playSound(.door);
+                }
+            }
+
             // player movement
             selector.visible = false;
             if (inputs.directions.contains(.up)) player.y -= 1 * PLAYER_VELOCITY;
@@ -313,10 +329,10 @@ fn render_step_inventory(game_state: *const api.GameState, render_state: *Render
 }
 
 fn render_step_overworld(game_state: *api.GameState, render_state: *RenderState) void {
-    // render world
     const player = game_state.things.get_player();
     const selector = game_state.things.get(player.selector_ref);
     const camera = game_state.things.get(player.camera_ref);
+    // render world
     {
         draw.draw_image(&render_state.level, game_state.level.?.bg, 0, 0);
 
