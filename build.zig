@@ -124,6 +124,20 @@ fn add_wasm(b: *std.Build, optimize: std.builtin.OptimizeMode) void {
         "set_input_state",
     };
 
+    // install server exe to web/ subfolder
+
+    const server_exe = b.addExecutable(.{
+        .name = "server",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("src/server.zig"),
+            .target = b.graph.host,
+        }),
+    });
+
+    const install_server = b.addInstallArtifact(server_exe, .{
+        .dest_dir = .{ .override = .{ .custom = "web/" } },
+    });
+
     // Install wasm to web/ subfolder
     const install_wasm = b.addInstallArtifact(wasm_game_lib, .{
         .dest_dir = .{ .override = .{ .custom = "web" } },
@@ -148,50 +162,52 @@ fn add_wasm(b: *std.Build, optimize: std.builtin.OptimizeMode) void {
 
     // Create a "web" step that builds everything for static hosting
     const web_step = b.step("web", "Build web version for static hosting");
+    web_step.dependOn(&install_server.step);
     web_step.dependOn(&install_wasm.step);
     web_step.dependOn(&install_html.step);
     web_step.dependOn(&install_vendor.step);
     web_step.dependOn(&install_audio.step);
 
-    // GitHub Pages publish step - outputs to pub/ for static hosting
-    const pub_step = b.step("pub", "Build for GitHub Pages (outputs to pub/)");
+    const serve_cmd = b.addRunArtifact(server_exe);
+    serve_cmd.step.dependOn(b.getInstallStep());
+    const serve_step = b.step("webdev", "fast local server for developing web platform");
+    serve_step.dependOn(&serve_cmd.step);
 
-    // Install wasm to pub/
-    const pub_wasm = b.addInstallArtifact(wasm_game_lib, .{
-        .dest_dir = .{ .override = .{ .custom = "../pub" } },
-    });
-    pub_step.dependOn(&pub_wasm.step);
+    {
+        // GitHub Pages publish step - outputs to pub/ for static hosting
+        const pub_step = b.step("pub", "Build for GitHub Pages (outputs to pub/)");
 
-    // Copy index.html to pub/
-    const pub_html = b.addInstallFile(b.path("src/web/index.html"), "../pub/index.html");
-    pub_step.dependOn(&pub_html.step);
+        // Install wasm to pub/
+        const pub_wasm = b.addInstallArtifact(wasm_game_lib, .{
+            .dest_dir = .{ .override = .{ .custom = "../pub" } },
+        });
+        pub_step.dependOn(&pub_wasm.step);
 
-    // Copy vendor/ to pub/vendor/
-    const pub_vendor = b.addInstallDirectory(.{
-        .source_dir = b.path("src/web/vendor/"),
-        .install_dir = .prefix,
-        .install_subdir = "../pub/vendor",
-    });
-    pub_step.dependOn(&pub_vendor.step);
+        // Copy index.html to pub/
+        const pub_html = b.addInstallFile(b.path("src/web/index.html"), "../pub/index.html");
+        pub_step.dependOn(&pub_html.step);
 
-    // Copy audio/ to pub/audio/
-    const pub_audio = b.addInstallDirectory(.{
-        .source_dir = b.path("src/assets/audio/"),
-        .install_dir = .prefix,
-        .install_subdir = "../pub/audio",
-    });
-    pub_step.dependOn(&pub_audio.step);
+        // Copy vendor/ to pub/vendor/
+        const pub_vendor = b.addInstallDirectory(.{
+            .source_dir = b.path("src/web/vendor/"),
+            .install_dir = .prefix,
+            .install_subdir = "../pub/vendor",
+        });
+        pub_step.dependOn(&pub_vendor.step);
+
+        // Copy audio/ to pub/audio/
+        const pub_audio = b.addInstallDirectory(.{
+            .source_dir = b.path("src/assets/audio/"),
+            .install_dir = .prefix,
+            .install_subdir = "../pub/audio",
+        });
+        pub_step.dependOn(&pub_audio.step);
+    }
 }
 
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
-
-    // b.installDirectory(.{
-    //     .source_dir = b.path("assets/"),
-    //     .install_dir = .bin,
-    //     .install_subdir = "assets",
-    // });
 
     add_game_native(b, target, optimize);
     add_editor_native(b, target, optimize);
