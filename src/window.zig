@@ -2,7 +2,7 @@ const std = @import("std");
 const Allocator = std.mem.Allocator;
 
 const c = @cImport({
-    @cInclude("fenster.c");
+    @cInclude("vendor/fenster.c");
 });
 
 pub const Window = struct {

@@ -18,7 +18,7 @@ const stbi = @cImport({
     @cDefine("STBI_NO_PIC", "1");
     @cDefine("STBI_NO_PNM", "1");
     @cDefine("STBI_NO_STDIO", "1");
-    @cInclude("stb_image.h");
+    @cInclude("vendor/stb_image.h");
 });
 
 // Embedded assets - provided by build.zig as a module

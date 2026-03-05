@@ -7,8 +7,8 @@ fn configureGameLibrary(b: *std.Build, target: std.Build.ResolvedTarget, exe: *s
 
 fn configurePlatformExecutable(b: *std.Build, target: std.Build.ResolvedTarget, exe: *std.Build.Step.Compile) void {
     exe.addIncludePath(b.path("src"));
-    exe.addCSourceFile(.{ .file = b.path("src/fenster.c"), .flags = &[_][]const u8{} });
-    exe.addCSourceFile(.{ .file = b.path("src/miniaudio.c"), .flags = &[_][]const u8{} });
+    exe.addCSourceFile(.{ .file = b.path("src/vendor/fenster.c"), .flags = &[_][]const u8{} });
+    exe.addCSourceFile(.{ .file = b.path("src/vendor/miniaudio.c"), .flags = &[_][]const u8{} });
 
     switch (target.result.os.tag) {
         .macos => exe.linkFramework("Cocoa"),

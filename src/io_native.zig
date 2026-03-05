@@ -17,7 +17,7 @@ const stbi = @cImport({
     @cDefine("STBI_NO_PSD", "1");
     @cDefine("STBI_NO_PIC", "1");
     @cDefine("STBI_NO_PNM", "1");
-    @cInclude("stb_image.h");
+    @cInclude("vendor/stb_image.h");
 });
 
 const ImageError = error{LoadError};
@@ -102,7 +102,7 @@ pub fn save_level_things(name: []const u8, things: *ThingPool) void {
 // audio
 
 const miniaudio = @cImport({
-    @cInclude("miniaudio.h");
+    @cInclude("vendor/miniaudio.h");
 });
 
 const music_paths = blk: {
