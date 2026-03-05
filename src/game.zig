@@ -306,8 +306,17 @@ fn game_step_overworld(game_state: *api.GameState, inputs: Inputs, platform_api:
             }
 
             if (inputs.a.pressed) { // radial action menu to apply on selector location
-                // player.interaction_mode = .ACTION_MENU;
-                game_state.menu.push(.{ .action = .{ .index = 0 } });
+                const items: [8]?menus.Item = .{
+                    .{ .label = menus.Label.init("hide"), .icon = .missing },
+                    .{ .label = menus.Label.init("dash"), .icon = .missing },
+                    .{ .label = menus.Label.init("jump"), .icon = .missing },
+                    .{ .label = menus.Label.init("throw"), .icon = .missing },
+                    .{ .label = menus.Label.init("investgate"), .icon = .missing },
+                    null,
+                    null,
+                    null,
+                };
+                game_state.menu.push(.{ .action = .{ .index = 0, .items = items } });
             }
 
             // handle selector movement

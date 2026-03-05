@@ -68,9 +68,11 @@ pub const ContextMenuState = struct {
 pub const InventoryState = struct {
     index: usize = 0,
 };
+
 pub const ActionMenuState = struct {
     // TODO preallocate state for 8 action items.
     index: usize = 0,
+    items: [8]?Item,
 
     pub fn set(self: *ActionMenuState, index: usize) void {
         if (index > self.max_index()) return;
@@ -108,7 +110,7 @@ pub const DialogueMenuState = struct {
 
 const MAX_LABEL_LEN = 64;
 
-const Label = struct {
+pub const Label = struct {
     data: [MAX_LABEL_LEN]u8,
     len: usize,
 
@@ -124,7 +126,7 @@ const Label = struct {
     }
 };
 
-const Item = struct {
+pub const Item = struct {
     label: ?Label,
     icon: ?SpriteKey,
 };

@@ -124,6 +124,99 @@ pub fn draw_named_item_list_collection(screen: *ScreenBuffer, storage: *sprites.
     draw_named_item_list(screen, storage, x0, y0, m.get(category), index);
 }
 
+pub fn draw_radial_menu(screen: *ScreenBuffer, sprite_storage: *sprites.SpriteStorage, x0: i32, y0: i32, title: []const u8, state: menus.ActionMenuState) void {
+    const inner_radius = 20;
+    const outer_radius = 40;
+    const math = std.math;
+    const n = state.items.len;
+    const current = state.index;
+
+    if (n == 0) return;
+
+    // Offset by half a slice so items sit at N, NE, E, SE, S, SW, W, NW
+    // and dividing lines fall between them
+    const slice_angle = (2.0 * math.pi) / @as(f32, @floatFromInt(n));
+    const half_slice = slice_angle / 2.0;
+
+    // Start from -pi/2 (north) so index 0 = up
+    const north_offset = -math.pi / 2.0;
+
+    // draw dividing lines between slices
+    for (0..n) |i| {
+        const angle = north_offset + slice_angle * @as(f32, @floatFromInt(i)) - half_slice;
+        const cos_a = math.cos(angle);
+        const sin_a = math.sin(angle);
+        const ix = x0 + @as(i32, @intFromFloat(cos_a * @as(f32, inner_radius)));
+        const iy = y0 + @as(i32, @intFromFloat(sin_a * @as(f32, inner_radius)));
+        const ox = x0 + @as(i32, @intFromFloat(cos_a * @as(f32, outer_radius)));
+        const oy = y0 + @as(i32, @intFromFloat(sin_a * @as(f32, outer_radius)));
+        draw.draw_line(screen, ix, iy, ox, oy, 0xFFFFFF);
+    }
+
+    // draw selected slice as donut wedge
+    const clamped_current = if (current < n) current else 0;
+    {
+        const steps = 8;
+        const a0 = north_offset + slice_angle * @as(f32, @floatFromInt(clamped_current)) - half_slice;
+        const a1 = a0 + slice_angle;
+
+        var points: [(steps + 1) * 2]draw.Point = undefined;
+
+        for (0..steps + 1) |s| {
+            const t = a0 + (a1 - a0) * @as(f32, @floatFromInt(s)) / @as(f32, steps);
+            points[s] = .{
+                .x = x0 + @as(i32, @intFromFloat(math.cos(t) * @as(f32, outer_radius))),
+                .y = y0 + @as(i32, @intFromFloat(math.sin(t) * @as(f32, outer_radius))),
+            };
+        }
+
+        for (0..steps + 1) |s| {
+            const t = a1 - (a1 - a0) * @as(f32, @floatFromInt(s)) / @as(f32, steps);
+            points[steps + 1 + s] = .{
+                .x = x0 + @as(i32, @intFromFloat(math.cos(t) * @as(f32, inner_radius))),
+                .y = y0 + @as(i32, @intFromFloat(math.sin(t) * @as(f32, inner_radius))),
+            };
+        }
+
+        draw.draw_poly(screen, &points, 0xFFFF00, 0x884400);
+    }
+
+    // draw sprites in each slice
+    const sprite_radius = @divFloor(inner_radius + outer_radius, 2);
+    for (0..n) |i| {
+        if (state.items[i]) |item| {
+            const angle = north_offset + slice_angle * @as(f32, @floatFromInt(i));
+            const sprite_x = x0 + @as(i32, @intFromFloat(math.cos(angle) * @as(f32, sprite_radius)));
+            const sprite_y = y0 + @as(i32, @intFromFloat(math.sin(angle) * @as(f32, sprite_radius)));
+            if (item.icon) |sprite_key| {
+                const sprite = sprite_storage.get(sprite_key);
+                // center the sprite
+                const sx = sprite_x - @divFloor(sprite.w, 2);
+                const sy = sprite_y - @divFloor(sprite.h, 2);
+                draw.draw_image(screen, sprite, sx, sy);
+            }
+        }
+    }
+
+    // draw title above with background
+    const title_x = x0 - @as(i32, @intCast(title.len * 2));
+    const title_y = y0 - outer_radius - 10;
+    const title_w: i32 = @intCast(title.len * 4);
+    draw.draw_rec(screen, title_x - 2, title_y - 2, title_x + title_w + 1, title_y + 6, 0x444444, 0x444444);
+    draw.draw_text(screen, title, title_x, title_y, 0xFFFFFF);
+
+    // draw selected item label below with background
+    if (state.items[clamped_current]) |selected_item| {
+        if (selected_item.label) |label| {
+            const label_x = x0 - @as(i32, @intCast(label.len * 2));
+            const label_y = y0 + outer_radius + 5;
+            const label_w: i32 = @intCast(label.len * 4);
+            draw.draw_rec(screen, label_x - 2, label_y - 2, label_x + label_w + 1, label_y + 6, 0x444444, 0x444444);
+            draw.draw_text(screen, label.get(), label_x, label_y, 0xFFFFFF);
+        }
+    }
+}
+
 pub fn render_menu(screen: *ScreenBuffer, storage: *sprites.SpriteStorage, things: *ThingPool, menu_state: *menus.MenuState) void {
     for (0..menu_state.depth) |depth| {
         const menu = menu_state.stack[depth];
@@ -142,16 +235,7 @@ pub fn render_menu(screen: *ScreenBuffer, storage: *sprites.SpriteStorage, thing
                 ui.draw_context_menu(screen, con.NATIVE_W_HALF + con.PLAYER_W, con.NATIVE_H_HALF + con.PLAYER_H, context_menu.index, items);
             },
             .action => |action_menu| {
-                var action_items = ui.RadialMenuItems{};
-                action_items.add("Melee", .action_menu_melee);
-                action_items.add("Ranged", .action_menu_ranged);
-                action_items.add("Magic", .action_menu_magic);
-                action_items.add("Throw", .action_menu_throw);
-                action_items.add("Hide", .action_menu_hide);
-                action_items.add("Dash", .action_menu_dash);
-                action_items.add("Jump", .action_menu_jump);
-                action_items.add("Shove", .action_menu_shove);
-                ui.draw_radial_menu(screen, storage, con.NATIVE_W_HALF, con.NATIVE_H_HALF, action_menu.index, "actions", action_items);
+                draw_radial_menu(screen, storage, con.NATIVE_W_HALF, con.NATIVE_H_HALF, "actions", action_menu);
             },
             .examine => |examine_menu| {
                 const examination_target = things.get(examine_menu.examination_target_ref);
