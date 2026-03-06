@@ -19,6 +19,7 @@ pub const PlatformAPI = struct {
     stopMusic: *const fn () void,
     load_level: *const fn ([]const u8) Level,
     load_level_things: *const fn ([]const u8, *ThingPool) void,
+    // TODO add player save file io
 };
 
 // Rendering resources owned by platform, passed to DLL
