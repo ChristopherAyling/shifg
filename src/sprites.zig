@@ -11,6 +11,8 @@ pub const SpriteKey = enum {
     estraven,
     genly,
     argaven,
+    avowed_priest,
+
     // editor
     cursor,
     //items

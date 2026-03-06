@@ -81,6 +81,8 @@ const LEVELS = std.StaticStringMap([]const u8).initComptime(.{
     // .{ "arch", "/Users/chris/gaming/gam1/src/assets/levels/parade" },
     .{ "one", "src/assets/levels/tutorial" },
     .{ "arch", "src/assets/levels/parade" },
+    .{ "library", "src/assets/levels/library" },
+    .{ "library_gate", "src/assets/levels/library_gate" },
 });
 
 pub fn load_level(name: []const u8) Level {

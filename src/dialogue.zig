@@ -47,6 +47,13 @@ pub const PARADE_ESTRAVEN = DialogueSequence{
     },
 };
 
+// library
+
+const LIBRARY_GATE_AVOWED_PRIEST_INTRO = DialogueSequence{ .id = 0, .lines = &[_]DialogueLine{
+    .{ .speaker_name = "Avowed Priest", .text = "To enter the library," },
+    .{ .speaker_name = "Avowed Priest", .text = "you must provide a work\nnot already in the collection" },
+} };
+
 // TODO probably have some lookup like system like with sprites
 
 pub const MISSING = DialogueSequence{
@@ -63,6 +70,7 @@ pub const DialogKey = enum {
     Prologue,
     ParadeArgaven,
     ParadeEstraven,
+    LibraryGateAvowedPriestIntro,
 };
 
 // pub const DialogLookup = std.EnumArray(DialogKey, DialogueSequence).initUndefined();
@@ -73,5 +81,6 @@ pub const dialog_lookup = init: {
     map.set(.Prologue, PROLOGUE);
     map.set(.ParadeArgaven, PARADE_ARGAVEN);
     map.set(.ParadeEstraven, PARADE_ESTRAVEN);
+    map.set(.LibraryGateAvowedPriestIntro, LIBRARY_GATE_AVOWED_PRIEST_INTRO);
     break :init map;
 };

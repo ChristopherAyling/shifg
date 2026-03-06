@@ -94,7 +94,7 @@ pub fn game_step(memory: *api.GameMemory, inputs: *const Inputs, platform_api: *
 
     if (game_state.mode == .Overworld) {
         // TODO lookup story beat -> level name and load the correct level.
-        ensure_level_loaded(game_state, "arch", platform_api);
+        ensure_level_loaded(game_state, "library", platform_api);
         const player = game_state.things.get_player();
         switch (player.interaction_mode) {
             .NORMAL => {
@@ -378,7 +378,7 @@ fn render_step_overworld(game_state: *api.GameState, render_state: *RenderState)
         draw.draw_image(&render_state.level, game_state.level.?.fg, 0, 0);
 
         // add effects
-        effects.snow(&render_state.level, 0);
+        // effects.snow(&render_state.level, 0);
 
         // render level into screen
         draw.view(&render_state.level, &render_state.screen, camera.x, camera.y);

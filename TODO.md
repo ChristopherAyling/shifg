@@ -13,3 +13,5 @@
 - [ ] inventory system
 
 - [x] per character dialogues
+
+- [ ] fix blacks showing up as transparent 

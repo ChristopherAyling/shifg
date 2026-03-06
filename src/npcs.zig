@@ -5,11 +5,14 @@ const SpriteKey = @import("sprites.zig").SpriteKey;
 pub const NpcKey = enum {
     Argaven,
     Estraven,
+    // candlekeep
+    AvowedPriest,
 
     pub fn get_spritekey(self: NpcKey) SpriteKey {
         return switch (self) {
             .Argaven => .argaven,
             .Estraven => .estraven,
+            .AvowedPriest => .avowed_priest,
         };
     }
 };
@@ -19,5 +22,6 @@ pub const npc_dialog_lookup = init: {
     var map = std.EnumArray(NpcKey, DialogKey).initUndefined();
     map.set(.Argaven, .ParadeArgaven);
     map.set(.Estraven, .ParadeEstraven);
+    map.set(.AvowedPriest, .LibraryGateAvowedPriestIntro);
     break :init map;
 };
