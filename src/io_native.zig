@@ -78,12 +78,11 @@ fn level_from_folder(path: []const u8, name: []const u8) Level {
 }
 
 const LEVELS = std.StaticStringMap([]const u8).initComptime(.{
-    // .{ "one", "/Users/chris/gaming/gam1/src/assets/levels/tutorial" },
-    // .{ "arch", "/Users/chris/gaming/gam1/src/assets/levels/parade" },
     .{ "one", "src/assets/levels/tutorial" },
     .{ "arch", "src/assets/levels/parade" },
     .{ "library", "src/assets/levels/library" },
     .{ "library_gate", "src/assets/levels/library_gate" },
+    .{ "court_of_air", "src/assets/levels/court_of_air" },
 });
 
 pub fn load_level(name: []const u8) Level {

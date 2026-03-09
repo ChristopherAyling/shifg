@@ -95,7 +95,7 @@ pub fn game_step(memory: *api.GameMemory, inputs: *const Inputs, platform_api: *
 
     if (game_state.mode == .Overworld) {
         // TODO lookup story beat -> level name and load the correct level.
-        ensure_level_loaded(game_state, "library_gate", platform_api);
+        ensure_level_loaded(game_state, "court_of_air", platform_api);
         const player = game_state.things.get_player();
         switch (player.interaction_mode) {
             .NORMAL => {

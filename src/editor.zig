@@ -85,7 +85,7 @@ fn place(things: *ThingPool, x: i32, y: i32, category: usize, index: usize) Thin
     }
 }
 
-const LEVEL_SELECT_DATA = [_][]const u8{ "one", "arch", "library", "library_gate" };
+const LEVEL_SELECT_DATA = [_][]const u8{ "one", "arch", "library", "library_gate", "court_of_air" };
 
 fn make_level_select_menu() menus.NamedItemList {
     var levels = menus.NamedItemList.init("levels");
