@@ -54,6 +54,13 @@ const LIBRARY_GATE_AVOWED_PRIEST_INTRO = DialogueSequence{ .id = 0, .lines = &[_
     .{ .speaker_name = "Avowed Priest", .text = "you must provide a work\nnot already in the collection" },
 } };
 
+const LIBRARY_GATE_GARLYTH_INTRO = DialogueSequence{ .id = 0, .lines = &[_]DialogueLine{
+    .{ .speaker_name = "you", .text = "Hello, nice to -" },
+    .{ .speaker_name = "Garlyth Graystock", .text = " - meet you, " },
+    .{ .speaker_name = "Garlyth Graystock", .text = "now I was just on my to TODO aisle." },
+    .{ .speaker_name = "Garlyth Graystock", .text = "Accompany me why don't you." },
+} };
+
 // TODO probably have some lookup like system like with sprites
 
 pub const MISSING = DialogueSequence{
@@ -71,6 +78,7 @@ pub const DialogKey = enum {
     ParadeArgaven,
     ParadeEstraven,
     LibraryGateAvowedPriestIntro,
+    LibraryGateGarlythIntro,
 };
 
 // pub const DialogLookup = std.EnumArray(DialogKey, DialogueSequence).initUndefined();
@@ -82,5 +90,6 @@ pub const dialog_lookup = init: {
     map.set(.ParadeArgaven, PARADE_ARGAVEN);
     map.set(.ParadeEstraven, PARADE_ESTRAVEN);
     map.set(.LibraryGateAvowedPriestIntro, LIBRARY_GATE_AVOWED_PRIEST_INTRO);
+    map.set(.LibraryGateGarlythIntro, LIBRARY_GATE_GARLYTH_INTRO);
     break :init map;
 };

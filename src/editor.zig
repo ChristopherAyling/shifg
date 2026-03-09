@@ -29,6 +29,7 @@ const PLACEMENT_MENU_DATA = [_][]const PlacementEntry{
         .{ .label = "Argaven", .npc_key = .Argaven, .icon = .argaven },
         .{ .label = "Estraven", .npc_key = .Estraven, .icon = .estraven },
         .{ .label = "Avowed Priest", .npc_key = .AvowedPriest, .icon = .avowed_priest },
+        .{ .label = "Garlyth", .npc_key = .GarlythGraystock, .icon = .garlyth },
     },
     // items
     &.{

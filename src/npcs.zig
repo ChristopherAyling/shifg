@@ -7,11 +7,13 @@ pub const NpcKey = enum {
     Estraven,
     // candlekeep
     AvowedPriest,
+    GarlythGraystock,
 
     pub fn get_spritekey(self: NpcKey) SpriteKey {
         return switch (self) {
             .Argaven => .argaven,
             .Estraven => .estraven,
+            .GarlythGraystock => .garlyth,
             .AvowedPriest => .avowed_priest,
         };
     }
@@ -23,5 +25,6 @@ pub const npc_dialog_lookup = init: {
     map.set(.Argaven, .ParadeArgaven);
     map.set(.Estraven, .ParadeEstraven);
     map.set(.AvowedPriest, .LibraryGateAvowedPriestIntro);
+    map.set(.GarlythGraystock, .LibraryGateGarlythIntro);
     break :init map;
 };

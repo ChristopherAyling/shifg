@@ -13,6 +13,7 @@ const con = @import("constants.zig");
 const effects = @import("effects.zig");
 const Level = @import("level.zig").Level;
 const ThingPool = @import("things.zig").ThingPool;
+const Thing = @import("things.zig").Thing;
 const menus = @import("menus.zig");
 const render_shared = @import("render_shared.zig");
 const npc_dlogs = @import("npcs.zig").npc_dialog_lookup;
@@ -38,24 +39,29 @@ pub fn ensure_level_loaded(game_state: *api.GameState, name: []const u8, platfor
     }
 }
 
+pub fn clamp_camera(camera: *Thing) void {
+    // don't go off top or left
+    camera.x = @max(camera.x, con.NATIVE_W_HALF);
+    camera.y = @max(camera.y, con.NATIVE_H_HALF);
+
+    // don't go off the bottom or right
+    camera.x = @min(camera.x, con.LEVEL_W - con.NATIVE_W_HALF);
+    camera.y = @min(camera.y, con.LEVEL_H - con.NATIVE_H_HALF);
+}
+
 pub fn camera_follow_player(self: *api.GameState) void {
     const player = self.things.get_player();
     const camera = self.things.get(player.camera_ref);
     const selector = self.things.get(player.selector_ref);
 
-    // selector follows too
+    // selector follows too TODO move this to player movement spot, camera shouldn't care
     selector.x = player.x;
     selector.y = player.y;
 
-    camera.x = player.x; // + @divFloor(con.PLAYER_W, 2);
-    camera.y = player.y; // + @divFloor(con.PLAYER_H, 2);
+    camera.x = player.x;
+    camera.y = player.y;
 
-    // this is probably wrong, should probably take LEVEL_W etc into account like with the mins.
-    camera.x = @max(camera.x, con.NATIVE_W_HALF);
-    camera.y = @max(camera.y, con.NATIVE_H_HALF);
-
-    camera.x = @min(camera.x, con.LEVEL_W - con.NATIVE_W);
-    camera.y = @min(camera.y, con.LEVEL_H - con.NATIVE_H);
+    clamp_camera(camera);
 }
 
 pub fn camera_follow_selector(self: *api.GameState) void {
@@ -66,12 +72,7 @@ pub fn camera_follow_selector(self: *api.GameState) void {
     camera.x = selector.x; // + @divFloor(con.PLAYER_W, 2);
     camera.y = selector.y; // + @divFloor(con.PLAYER_H, 2);
 
-    // this is probably wrong, should probably take LEVEL_W etc into account like with the mins.
-    camera.x = @max(camera.x, con.NATIVE_W_HALF);
-    camera.y = @max(camera.y, con.NATIVE_H_HALF);
-
-    camera.x = @min(camera.x, con.LEVEL_W - con.NATIVE_W);
-    camera.y = @min(camera.y, con.LEVEL_H - con.NATIVE_H);
+    clamp_camera(camera);
 }
 
 const RenderState = struct {
@@ -94,7 +95,7 @@ pub fn game_step(memory: *api.GameMemory, inputs: *const Inputs, platform_api: *
 
     if (game_state.mode == .Overworld) {
         // TODO lookup story beat -> level name and load the correct level.
-        ensure_level_loaded(game_state, "library", platform_api);
+        ensure_level_loaded(game_state, "library_gate", platform_api);
         const player = game_state.things.get_player();
         switch (player.interaction_mode) {
             .NORMAL => {
