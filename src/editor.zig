@@ -12,6 +12,7 @@ const StoryCheckpoint = @import("story.zig").StoryCheckpoint;
 const con = @import("constants.zig");
 const effects = @import("effects.zig");
 const Level = @import("level.zig").Level;
+const LevelKey = @import("level.zig").LevelKey;
 const ThingPool = @import("things.zig").ThingPool;
 const ThingRef = @import("things.zig").ThingRef;
 const Kind = @import("things.zig").Kind;
@@ -85,12 +86,11 @@ fn place(things: *ThingPool, x: i32, y: i32, category: usize, index: usize) Thin
     }
 }
 
-const LEVEL_SELECT_DATA = [_][]const u8{ "one", "arch", "library", "library_gate", "court_of_air" };
-
 fn make_level_select_menu() menus.NamedItemList {
     var levels = menus.NamedItemList.init("levels");
-    for (LEVEL_SELECT_DATA) |name| {
-        levels.add(name, .missing);
+    // std.enums.values(comptime E: type)
+    for (std.enums.values(LevelKey)) |level_key| {
+        levels.add(@tagName(level_key), .missing);
     }
     return levels;
 }
@@ -150,6 +150,7 @@ pub fn editor_step(memory: *api.EditorMemory, inputs: *const Inputs, platform_ap
                         switch (editor_state.things.get(ref).kind) {
                             .PORTAL => {
                                 // you just placed a portal, now select where it links to.
+                                // select level and x,y in the level
                                 editor_state.menu.push(.{ .editor_portal_dest_select = .{
                                     .portal_ref = ref,
                                     .x = editor_state.cursor_x,
@@ -180,7 +181,7 @@ pub fn editor_step(memory: *api.EditorMemory, inputs: *const Inputs, platform_ap
                 },
                 .editor_level_select => |*editor_level_select_menu| {
                     if (inputs.a.pressed) {
-                        const name = LEVEL_SELECT_DATA[editor_level_select_menu.index];
+                        const name = @tagName(@as(LevelKey, @enumFromInt(editor_level_select_menu.index)));
                         editor_state.level = platform_api.load_level(name);
                         platform_api.load_level_things(name, &editor_state.things);
                         editor_state.cursor_x = con.LEVEL_W_HALF;
@@ -210,8 +211,8 @@ pub fn editor_step(memory: *api.EditorMemory, inputs: *const Inputs, platform_ap
                                 std.log.debug("saved", .{});
                             },
                             .levels => {
-                                editor_state.menu.push(.{ .editor_level_select = menus.EditorLevelSelectMenuState.init(LEVEL_SELECT_MENU) });
                                 editor_state.menu.pop();
+                                editor_state.menu.push(.{ .editor_level_select = menus.EditorLevelSelectMenuState.init(LEVEL_SELECT_MENU) });
                             },
                             .quit => {
                                 memory.done = true;
@@ -229,6 +230,17 @@ pub fn editor_step(memory: *api.EditorMemory, inputs: *const Inputs, platform_ap
                     }
                 },
                 .editor_portal_dest_select => |*editor_portal_dest_select_menu| {
+                    // select the level
+                    if (inputs.x.pressed) {
+                        editor_portal_dest_select_menu.inc_level();
+                        return;
+                    }
+                    if (inputs.y.pressed) {
+                        editor_portal_dest_select_menu.dec_level();
+                        return;
+                    }
+
+                    // select x y in the level
                     if (inputs.directions.contains(.up)) editor_portal_dest_select_menu.y -= 1 * CURSOR_VELOCITY;
                     if (inputs.directions.contains(.down)) editor_portal_dest_select_menu.y += 1 * CURSOR_VELOCITY;
                     if (inputs.directions.contains(.left)) editor_portal_dest_select_menu.x -= 1 * CURSOR_VELOCITY;

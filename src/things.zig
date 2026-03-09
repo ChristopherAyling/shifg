@@ -2,6 +2,7 @@ const std = @import("std");
 const assert = @import("std").debug.assert;
 const sprites = @import("sprites.zig");
 const NpcKey = @import("npcs.zig").NpcKey;
+const LevelKey = @import("level.zig").LevelKey;
 
 pub const Kind = enum {
     UNSET,
@@ -59,7 +60,7 @@ pub const QueryOptions = struct {
 };
 
 pub const PortalDest = struct {
-    level_name: ?[64]u8 = null, // if null, refers to current level
+    level_key: ?LevelKey = null,
     x: i32,
     y: i32,
 };

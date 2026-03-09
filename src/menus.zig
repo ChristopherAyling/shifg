@@ -3,6 +3,7 @@ const assert = @import("std").debug.assert;
 const dialogue = @import("dialogue.zig");
 const ThingRef = @import("things.zig").ThingRef;
 const SpriteKey = @import("sprites.zig").SpriteKey;
+const LevelKey = @import("level.zig").LevelKey;
 
 pub const Screen = union(enum) {
     // game only
@@ -28,12 +29,14 @@ pub const MenuState = struct {
     depth: u2 = 0,
 
     pub fn push(self: *MenuState, screen: Screen) void {
+        std.log.debug("pushing {s}", .{@tagName(screen)});
         if (self.depth >= MAX_MENU_DEPTH) return;
         self.stack[self.depth] = screen;
         self.depth += 1;
     }
 
     pub fn pop(self: *MenuState) void {
+        std.log.debug("popping {s}", .{@tagName(self.current().?.*)});
         self.depth -|= 1;
     }
 
@@ -330,4 +333,18 @@ pub const EditorPortalDestSelectState = struct {
     portal_ref: ThingRef,
     x: i32,
     y: i32,
+    level_index: usize = 0,
+
+    pub fn max_index(self: EditorPortalDestSelectState) usize {
+        _ = self;
+        return @typeInfo(LevelKey).@"enum".fields.len;
+    }
+
+    pub fn inc_level(self: *EditorPortalDestSelectState) void {
+        self.level_index = @min(self.level_index + 1, self.max_index());
+    }
+
+    pub fn dec_level(self: *EditorPortalDestSelectState) void {
+        self.level_index -|= 1;
+    }
 };

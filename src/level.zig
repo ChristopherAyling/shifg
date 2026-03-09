@@ -7,3 +7,9 @@ pub const Level = struct {
     bg: Image,
     fg: Image,
 };
+
+pub const LevelKey = enum {
+    arch,
+    library_gate,
+    court_of_air,
+};
